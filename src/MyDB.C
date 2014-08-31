@@ -153,7 +153,7 @@ MyDB::query(const std::string& sql)
           std::cout << s.getBlob(i) << std::endl;
           break;
         case SQLITE_NULL:
-          std::cout << NULL << std::endl;
+          std::cout << "NULL" << std::endl;
           break;
         case SQLITE_TEXT:
           std::cout << s.getString(i) << std::endl;
