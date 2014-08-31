@@ -3,15 +3,24 @@ CGIDIR = /home/tpw/public_html/kayaking2/cgi
 LOCALLIB = /home/tpw/local/lib
 LOCALINC = /home/tpw/local/include
 
-CXXFLAGS += -Wall -pedantic
-CXXFLAGS += -std=c++0x
-CXXFLAGS += -O3 -g
+CXXSTD = -std=c++0x
 
-LDFLAGS += -L$(LOCALLIB) -lsqlite3
+CXXFLAGS += -Wall -pedantic
+CXXFLAGS += $(CXXSTD)
+CXXFLAGS += -O3 -g
 
 FTFLAGS = $(shell freetype-config --cflags) 
 FTLIBS = $(shell freetype-config --libs)
-PNGLIBS = -lpng -Wl,-rpath $(LOCALLIB)
+
+PNGLIBS = -lpng
+
+ifneq ($(LOCALLIB),)
+PNGLIBS += -Wl,-rpath $(LOCALLIB)
+LDFLAGS += -L$(LOCALLIB)
+endif
+
+LDFLAGS += -lsqlite3
+
 SQLITEFLAGS = -I$(LOCALINC)
 
 ifndef SKIPMYSQL
@@ -19,9 +28,11 @@ MYSQLFLAGS  = $(shell mysql_config --cflags)
 MYSQLFLAGS += -I$(LOCALINC)
 MYSQLLIBS  = $(shell mysql_config --libs)
 MYSQLLIBS += -l mysqlpp -Wl,-rpath $(LOCALLIB)
+
+EXE += bin/cloneMySQL
 endif
 
-ARFLAGS = rouc
+ARFLAGS = ruc
 
 MYLIB = obj/libKayak.a
 
@@ -34,7 +45,6 @@ BINEXE += bin/dbBackup
 
 EXE += bin/key2hash
 EXE += bin/updateLevels
-EXE += bin/cloneMySQL
 
 EXE += $(BINEXE) $(CGIEXE)
 
@@ -67,6 +77,10 @@ $(MYLIB): $(LIBSRC:%.C=obj/%.o)
 obj/BitMapCanvas.o: BitMapCanvas.C
 	@ mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(FTFLAGS) -MD -MT $@ -c -o $@ $<
+
+obj/PNGCanvas.o: PNGCanvas.C
+	@ mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -I/usr/local/include -MD -MT $@ -c -o $@ $<
 
 obj/MyDB.o: MyDB.C
 	@ mkdir -p $(dir $@)
