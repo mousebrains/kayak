@@ -33,4 +33,5 @@ operator << (std::ostream& os,
     case CommonUnknown::IGNORE: os << "Ignore"; return os;
     case CommonUnknown::LASTUSAGE: os << "GotMe"; return os;
   }
+  return os;
 }
