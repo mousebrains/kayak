@@ -1,6 +1,7 @@
 #include "Master.H"
 #include "Tokens.H"
 #include "Convert.H"
+#include "MyException.H"
 #include <sstream>
 #include <ctime>
 #include <iostream>
@@ -106,6 +107,11 @@ Master::plotInfo(const size_t key,
 size_t 
 Master::deHash(const std::string& str)
 {
+  if (str.find_first_not_of(hash) != str.npos) {
+    throw MyException("Unsupported character in hash string(" + str + ")");
+    return 0;
+  }
+
   size_t val(0);
 
   for (int i(str.size()-1), n(hash.size()); i >= 0; --i) {
