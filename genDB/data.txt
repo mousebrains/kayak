@@ -1,0 +1,127 @@
+--
+-- data tables
+--
+
+DROP TABLE IF EXISTS data;
+CREATE TABLE data (dataKey INTEGER, -- key into dataSource table 
+                   type INTEGER, -- 1 -> flow, 2 -> gauge, 3 -> temperature, ...
+                   date INTEGER DEFAULT (strftime('%s', 'now')), -- date of data
+                   urlKey INTEGER, -- key into dataURLs table
+                   obs DOUBLE, -- numerical observation
+                   PRIMARY KEY (dataKey, type, date, urlKey)
+                   );
+CREATE INDEX keyDataIndex ON data(dataKey);
+
+DROP TABLE IF EXISTS dataSource;
+CREATE TABLE dataSource (dataKey INTEGER PRIMARY KEY AUTOINCREMENT, -- key used in data table
+                         name TEXT UNIQUE, -- name from parser
+                         date INTEGER DEFAULT 0, -- date of last write
+                         gaugeKey INTEGER DEFAULT 0 -- key into gauges table
+                        );
+CREATE INDEX dataSourceName ON dataSource(name);
+
+DROP TABLE IF EXISTS dataURLs;
+CREATE TABLE dataURLs (urlKey INTEGER PRIMARY KEY AUTOINCREMENT, -- key used in data table
+                       url TEXT UNIQUE, -- URL used to fetch data
+                       date INTEGER DEFAULT 0, -- time last seen
+                       parser TEXT, -- name of parser to process this url
+                       qRun INTEGER DEFAULT 0, -- should this parser be executed?
+                       monthOfYear TEXT DEFAULT '*', -- crontab like month to run
+                       dayOfMonth TEXT DEFAULT '*', -- crontab like day of month to run
+                       hourOfDay TEXT DEFAULT '*' -- crontab like hour to run
+                      );
+CREATE INDEX dataURLsName ON dataURLs(url);
+
+DROP TABLE IF EXISTS dataUnknown;
+CREATE TABLE dataUnknown (name TEXT, -- parser name
+                          urlKey INTEGER, -- url seen at
+                          date INTEGER DEFAULT 0, -- time last seen
+                          usage INTEGER DEFAULT 0, -- 0=seen, 1=prompted, 2=ignore
+                          PRIMARY KEY (name, urlKey));
+
+--
+-- rating tables
+--
+
+DROP TABLE IF EXISTS rating;
+CREATE TABLE rating (ratingKey INTEGER, -- which entry in ratingSource this applies to
+                     date INTEGER DEFAULT 0, -- date 
+                     urlKey INTEGER, -- key into ratingURLs table
+                     flow DOUBLE, -- flow in CFS
+                     gauge DOUBLE, -- height in feet
+                     PRIMARY KEY(ratingKey, urlKey) 
+                    );
+
+DROP TABLE IF EXISTS ratingSource;
+CREATE TABLE ratingSource (ratingKey INTEGER PRIMARY KEY AUTOINCREMENT, -- key used in rating table
+                           name TEXT UNIQUE, -- name from parser
+                           date INTEGER DEFAULT 0, -- date of last write
+                           gaugeKey INTEGER DEFAULT 0 -- key into gauges table
+                          );
+CREATE INDEX ratingSourceName ON ratingSource(name);
+
+DROP TABLE IF EXISTS ratingURLs;
+CREATE TABLE ratingURLs (urlKey INTEGER PRIMARY KEY AUTOINCREMENT, -- key used in rating table
+                         url TEXT UNIQUE, -- URL used to fetch data
+                         date INTEGER DEFAULT 0, -- time last seen
+                         parser TEXT, -- name of parser to process this url
+                         qRun INTEGER DEFAULT 0, -- should this parser be executed?
+                         monthOfYear TEXT DEFAULT '*', -- crontab like month to run
+                         dayOfMonth TEXT DEFAULT '*', -- crontab like day of month to run
+                         hourOfDay TEXT DEFAULT '*' -- crontab like hour to run
+                        );
+CREATE INDEX rationgURLsName ON ratingURLs(url);
+
+DROP TABLE IF EXISTS ratingUnknown;
+CREATE TABLE ratingUnknown (name TEXT, -- parser name
+                            urlKey INTEGER, -- url seen at
+                            date INTEGER DEFAULT 0, -- time last seen
+                            usage INTEGER DEFAULT 0, -- 0=seen, 1=prompted, 2=ignore
+                            PRIMARY KEY (name, urlKey));
+
+--
+-- gauge table
+--
+
+DROP TABLE IF EXISTS gauges;
+CREATE TABLE gauges (gaugeKey INTEGER PRIMARY KEY AUTOINCREMENT, -- key used in data table
+                     date INTEGER DEFAULT 0, -- date last seen
+                     name TEXT UNIQUE, -- Name of gauge
+                     latitude DOUBLE DEFAULT -1000000, -- latitude of this gauge
+                     longitude DOUBLE DEFAULT -1000000, -- longitude of this gauge
+                     description TEXT, -- description of the gauge from a provider
+                     location TEXT, -- Gauge location
+                     idUSGS TEXT, -- USGS's id
+                     idCBTT TEXT, -- CBTT's id
+                     idUnit TEXT, -- Hydrologic unit
+                     state TEXT, -- State gauge is located in
+                     county TEXT, -- county gauge is located in
+                     elevation DOUBLE, -- elevation of gauge in feet
+                     drainageArea DOUBLE, -- drainage area in square miles
+                     minFlow DOUBLE DEFAULT 0, -- minimum allowed flow in CFS
+                     maxFlow DOUBLE DEFAULT 9000000, -- maximum allowed flow in CFS
+                     minGauge DOUBLE DEFAULT -1000, -- minimum allowed gauge reading in feet
+                     maxGauge DOUBLE DEFAULT 20000, -- maximum allowed gauge reading in feet
+                     minTemperature DOUBLE DEFAULT 32, -- minimum allowed gauge reading in F
+                     maxTemperature DOUBLE DEFAULT 120, -- maximum allowed gauge reading in F
+                     calcFlow TEXT, -- SQL to calculate a flow
+                     calcFlowTime TEXT, -- SQL to calculate a time of flow 
+                     calcGauge TEXT, -- SQL to calculate a gauge
+                     calcGaugeTime TEXT -- SQL to calculate a time of gauge 
+                     );
+CREATE INDEX gaugeIndex ON gauges(name);
+
+
+.headers on
+.indices
+.mode column
+
+-- pragma table_info(data);
+-- pragma table_info(dataSource);
+-- pragma table_info(dataURLs);
+-- pragma table_info(dataUnknown);
+-- pragma table_info(rating);
+-- pragma table_info(ratingSource);
+-- pragma table_info(ratingURLs);
+-- pragma table_info(ratingUnknown);
+-- pragma table_info(gauges);

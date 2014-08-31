@@ -1,0 +1,24 @@
+DROP TABLE IF EXISTS levels;
+CREATE TABLE levels (key INTEGER PRIMARY KEY, -- key in master
+                     sortKey INTEGER, -- sorting key
+                     state TEXT, -- state in master
+                     displayName TEXT, -- displayName in master
+                     location TEXT, -- location in master or gauges
+                     class TEXT, -- class in master or gauges
+                     qCalc INTEGER DEFAULT 0, -- false not a calculation true is a calculation
+                     level INTEGER DEFAULT 0, -- 0 unknown, 1 low, 2 okay, 3 high
+                     flow DOUBLE, -- latest flow observation from data
+                     flowTime INTEGER DEFAULT 0, -- timestamp of flow
+                     flowDelta double DEFAULT 0, -- 24 hour % change 
+                     gauge DOUBLE, -- latest gauge observation from data
+                     gaugeTime INTEGER DEFAULT 0, -- timestamp of gauge
+                     gaugeDelta double DEFAULT 0, -- 24 hour % change 
+                     temperature DOUBLE, -- latest temperature observations from data
+                     temperatureTime INTEGER DEFAULT 0, -- timestamp of temperature
+                     temperatureDelta double DEFAULT 0 -- 24 hour % change 
+                    );
+DROP INDEX IF EXISTS stateLevelsIndex;
+CREATE INDEX stateLevelsIndex ON levels(state);
+
+
+.schema levels

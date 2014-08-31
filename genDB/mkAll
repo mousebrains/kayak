@@ -1,0 +1,11 @@
+#! /bin/bash
+#
+# Create a new database
+#
+TGT=~/kayaking2/files/a.db
+ROOT=`dirname $0`
+
+rm -f $TGT
+$ROOT/mkMaster
+$ROOT/mkData
+$ROOT/mkLevels

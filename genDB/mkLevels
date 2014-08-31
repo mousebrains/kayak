@@ -1,0 +1,8 @@
+#! /bin/bash
+#
+# Create a new database
+#
+TGT=~/kayaking2/files/a.db
+ROOT=`dirname $0`
+
+sqlite3 -batch -init /dev/null $TGT <$ROOT/levels.txt

@@ -1,0 +1,9 @@
+#! /bin/bash -x
+
+ROOT=/home/tpw/kayaking2
+
+time $ROOT/genDB/mkAll
+
+time $ROOT/src/bin/cloneMySQL
+
+time $ROOT/src/bin/updateLevels
