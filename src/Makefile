@@ -14,7 +14,7 @@ CXXFLAGS += -Wall -pedantic
 CXXFLAGS += $(STANDARD)
 CXXFLAGS += -O3
 # LIBS += -Lobj -lKayak
-LIBS += -L/home/tpw/local/lib
+# LIBS += -L/home/tpw/local/lib
 LIBS += -lsqlite3
 LIBS += -lpng
 
