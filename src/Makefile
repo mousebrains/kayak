@@ -19,24 +19,26 @@ LIBS += -lpng
 CXXFLAGS += $(shell freetype-config --cflags)
 LIBS += $(shell freetype-config --libs)
 
-# MySQL Additions
+ifdef SKIPMYSQL # MySQL Additions
 CXXFLAGS += -Wno-long-long
 CXXFLAGS += -I/home/tpw/local/include
 CXXFLAGS += $(shell mysql_config --cflags)
 LIBS += -l mysqlpp -Wl,-rpath /home/tpw/local/lib 
 LIBS += -Wl,-rpath $(shell mysql_config --libs)
+EXE += bin/cloneMySQL
+endif
 
 OBJ = $(patsubst %.C, obj/%.o, $(SRC))
 
-EXE += bin/cloneMySQL bin/key2hash
+EXE += bin/key2hash
 EXE += bin/dbBackup
 EXE += bin/updateLevels
 
-BINEXE = bin/pruneData bin/mkMainPage 
+BINEXE = bin/prune bin/mkMainPage 
 EXE += $(BINEXE)
 
 CGIEXE += bin/printenv 
-CGIEXE += bin/png bin/display
+CGIEXE += bin/png bin/disp
 EXE += $(CGIEXE)
 
 ARFLAGS = -crv
@@ -66,7 +68,7 @@ bin/cloneMySQL: obj/MySQL.o
 
 bin/%: obj/%.o
 	@ mkdir -p $(dir $@)
-	$(LINK.cc) $(CXXFLAGS) $(LIBS) -MD -MT $@ -o $@ $+
+	$(LINK.cc) $(CXXFLAGS) -MD -MT $@ -o $@ $+ $(LIBS)
 
 obj/%.o: %.C
 	@ mkdir -p $(dir $@)
