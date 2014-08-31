@@ -5,7 +5,7 @@
 #include <cstdlib>
 
 namespace {
-  class MyFields : public CommonData::DataFields {
+  class MyFields : public DataFields {
   public:
     MyFields() : DataFields("rating") {}
     const char *flow() const {return "flow";}
@@ -14,7 +14,7 @@ namespace {
 }
 
 Rating::Rating()
-  : CommonData(fields.table())
+  : CommonData(fields)
 {
 }
 
