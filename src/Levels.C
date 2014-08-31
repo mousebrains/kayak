@@ -36,7 +36,7 @@ namespace {
   public:
     void operator () (const time_t t, const double obs) {
       tObs::iterator it(mObs.find(t));
-      if (it == mObs.end());
+      if (it == mObs.end())
         it = mObs.insert(std::make_pair(t, tValues())).first;
       it->second.push_back(obs); 
     }
