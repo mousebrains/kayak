@@ -1,84 +1,83 @@
-USRROOT = /home/tpw
+BINDIR = /home/tpw/kayaking2/bin
+CGIDIR = /home/tpw/public_html/kayaking2/cgi
+LOCALLIB = /home/tpw/local/lib
+LOCALINC = /home/tpw/local/include
 
-ROOTDIR = $(USRROOT)/kayaking2
-BINDIR = $(ROOTDIR)/bin
+CXXFLAGS += -Wall -pedantic
+CXXFLAGS += -std=c++0x
+CXXFLAGS += -O3 -g
 
-WEBROOT = $(USRROOT)/public_html/kayaking2
-CGIDIR = $(WEBROOT)/cgi
+LDFLAGS += -L$(LOCALLIB) -lsqlite3
+
+FTFLAGS = $(shell freetype-config --cflags) 
+FTLIBS = $(shell freetype-config --libs)
+PNGLIBS = -lpng -Wl,-rpath $(LOCALLIB)
+SQLITEFLAGS = -I$(LOCALINC)
+
+ifndef SKIPMYSQL
+MYSQLFLAGS  = $(shell mysql_config --cflags)
+MYSQLFLAGS += -I$(LOCALINC)
+MYSQLLIBS  = $(shell mysql_config --libs)
+MYSQLLIBS += -l mysqlpp -Wl,-rpath $(LOCALLIB)
+endif
+
+ARFLAGS = rouc
 
 MYLIB = obj/libKayak.a
 
-STANDARD=-std=c++0x
+CGIEXE += bin/printenv
+CGIEXE += bin/png
+CGIEXE += bin/disp
 
-CXXFLAGS += -Wall -pedantic
-CXXFLAGS += $(STANDARD)
-CXXFLAGS += -O3
-# LIBS += -Lobj -lKayak
-# LIBS += -L/home/tpw/local/lib
-LIBS += -lsqlite3
-LIBS += -lpng
-
-# Freetype additions
-CXXFLAGS += $(shell freetype-config --cflags)
-LIBS += $(shell freetype-config --libs)
-
-ifndef SKIPMYSQL # MySQL Additions
-CXXFLAGS += -Wno-long-long
-CXXFLAGS += -I/home/tpw/local/include
-CXXFLAGS += $(shell mysql_config --cflags)
-LIBS += -l mysqlpp -Wl,-rpath /home/tpw/local/lib 
-LIBS += -Wl,-rpath $(shell mysql_config --libs)
-EXE += bin/cloneMySQL
-endif
-
-OBJ = $(patsubst %.C, obj/%.o, $(SRC))
+BINEXE += bin/prune
+BINEXE += bin/dbBackup
 
 EXE += bin/key2hash
-EXE += bin/dbBackup
 EXE += bin/updateLevels
+EXE += bin/cloneMySQL
 
-BINEXE = bin/prune bin/mkMainPage 
-EXE += $(BINEXE)
+EXE += $(BINEXE) $(CGIEXE)
 
-CGIEXE += bin/printenv 
-CGIEXE += bin/png bin/disp
-EXE += $(CGIEXE)
-
-ARFLAGS = -crv
+LIBSRC  = CGI.C HTML.C HTTP.C Tokens.C URL.C Axis.C BitMapCanvas.C Calc.C Canvas.C CommonData.C
+LIBSRC += CommonSource.C CommonURLs.C CommonUnknown.C Convert.C Data.C DataGet.C Display.C
+LIBSRC += DisplayDatabase.C DisplayInfo.C DisplayLevels.C DisplayMainPage.C DisplayPlot.C
+LIBSRC += DisplayTable.C Env.C File.C Gauges.C GuideBook.C JSON.C Levels.C MakePlot.C Master.C
+LIBSRC += MyDB.C PNGCanvas.C Paths.C PruneData.C ReadFile.C Table.C afstream.C
 
 .PHONY: all distclean clean install install.cgi install.programs
 .PRECIOUS: obj/%.o
 
 all: $(EXE)
 
-$(MYLIB): $(MYLIB)(obj/Paths.o) $(MYLIB)(obj/Convert.o) $(MYLIB)(obj/Tokens.o) $(MYLIB)(obj/Env.o)
-$(MYLIB): $(MYLIB)(obj/MyDB.o) $(MYLIB)(obj/Data.o) $(MYLIB)(obj/CommonData.o) 
-$(MYLIB): $(MYLIB)(obj/CommonSource.o) $(MYLIB)(obj/CommonURLs.o) $(MYLIB)(obj/CommonUnknown.o) 
-$(MYLIB): $(MYLIB)(obj/DataGet.o) $(MYLIB)(obj/Table.o) $(MYLIB)(obj/Gauges.o) 
-$(MYLIB): $(MYLIB)(obj/Master.o) $(MYLIB)(obj/Canvas.o) $(MYLIB)(obj/BitMapCanvas.o) 
-$(MYLIB): $(MYLIB)(obj/PNGCanvas.o) $(MYLIB)(obj/Axis.o) $(MYLIB)(obj/MakePlot.o) 
-$(MYLIB): $(MYLIB)(obj/CGI.o) $(MYLIB)(obj/HTML.o) $(MYLIB)(obj/HTTP.o) 
-$(MYLIB): $(MYLIB)(obj/URL.o) $(MYLIB)(obj/Calc.o) $(MYLIB)(obj/PruneData.o) 
-$(MYLIB): $(MYLIB)(obj/ReadFile.o) $(MYLIB)(obj/afstream.o) $(MYLIB)(obj/File.o) 
-$(MYLIB): $(MYLIB)(obj/Display.o) $(MYLIB)(obj/DisplayTable.o) $(MYLIB)(obj/DisplayPlot.o)
-$(MYLIB): $(MYLIB)(obj/DisplayMainPage.o) $(MYLIB)(obj/DisplayInfo.o) 
-$(MYLIB): $(MYLIB)(obj/DisplayDatabase.o) $(MYLIB)(obj/DisplayLevels.o)
-$(MYLIB): $(MYLIB)(obj/GuideBook.o) $(MYLIB)(obj/JSON.o) $(MYLIB)(obj/Levels.o)
-
-$(EXE): obj/libKayak.a
-
-bin/cloneMySQL: obj/MySQL.o 
-
-bin/%: obj/%.o
+bin/%: %.C $(MYLIB)
 	@ mkdir -p $(dir $@)
-	$(LINK.cc) $(CXXFLAGS) -MD -MT $@ -o $@ $+ $(LIBS)
+	$(CXX) $(CXXFLAGS) -o $@ $+ $(LDFLAGS) $(LIBS)
+
+bin/cloneMySQL: cloneMySQL.C MySQL.C $(MYLIB)
+	@ mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(MYSQLFLAGS) -o $@ $+ $(LDFLAGS) $(LIBS) $(MYSQLLIBS)
+
+bin/png: png.C $(MYLIB)
+	@ mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -o $@ $+ $(LDFLAGS) $(LIBS) $(FTLIBS) $(PNGLIBS)
+
+$(MYLIB): $(LIBSRC:%.C=obj/%.o)
+	$(AR) $(ARFLAGS) $@ $+
+
+obj/BitMapCanvas.o: BitMapCanvas.C
+	@ mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(FTFLAGS) -MD -MT $@ -c -o $@ $<
+
+obj/MyDB.o: MyDB.C
+	@ mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(SQLITEFLAGS) -MD -MT $@ -c -o $@ $<
 
 obj/%.o: %.C
 	@ mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -MD -MT $@ -c -o $@ $<
 
 distclean clean:
-	$(RM) -rf obj bin
+	$(RM) -rf bin obj
 
 install: $(CGIDIR)/.htaccess install.cgi install.programs
 
