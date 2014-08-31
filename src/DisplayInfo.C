@@ -43,15 +43,6 @@ namespace {
     return false;
   }
 
-  bool maybe(HTML& html, const size_t& key, 
-             const std::string& prefix = "", const std::string& suffix = "") {
-    if (key != 0) {
-      html << "<li>" << prefix << key << suffix << "</li>\n";
-      return true;
-    } 
-    return false;
-  }
-
   bool maybe(HTML& html, const time_t& t, 
              const std::string& prefix = "", const std::string& suffix = "") {
     if (t != 0) {
@@ -63,11 +54,6 @@ namespace {
     return false;
   }
 
-  bool gmaybe(HTML& html, const std::string& str0, const std::string& str1,
-              const std::string& prefix = "", const std::string& suffix = "") {
-    return maybe(html, str0.empty() ? str1 : str0, prefix, suffix);
-  }
-    
   bool gmaybe(HTML& html, const double v0, const double v1,
               const std::string& prefix = "", const std::string& suffix = "") {
     return maybe(html, isnan(v0) || (v0 == 0) ? v1 : v0, prefix, suffix);
