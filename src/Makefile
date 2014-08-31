@@ -8,18 +8,21 @@ CGIDIR = $(WEBROOT)/cgi
 
 MYLIB = obj/libKayak.a
 
+STANDARD=-std=c++0x
+
 CXXFLAGS += -Wall -pedantic
-CXXFLAGS += -std=c++0x
+CXXFLAGS += $(STANDARD)
 CXXFLAGS += -O3
 # LIBS += -Lobj -lKayak
-LIBS += -L/home/tpw/local/lib -lsqlite3
+LIBS += -L/home/tpw/local/lib
+LIBS += -lsqlite3
 LIBS += -lpng
 
 # Freetype additions
 CXXFLAGS += $(shell freetype-config --cflags)
 LIBS += $(shell freetype-config --libs)
 
-ifdef SKIPMYSQL # MySQL Additions
+ifndef SKIPMYSQL # MySQL Additions
 CXXFLAGS += -Wno-long-long
 CXXFLAGS += -I/home/tpw/local/include
 CXXFLAGS += $(shell mysql_config --cflags)
