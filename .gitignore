@@ -25,3 +25,7 @@
 
 # Ignore vm swp files
 .*.swp
+
+# Ignore my locally generated directories
+bin
+files
