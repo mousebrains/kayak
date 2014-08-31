@@ -5,6 +5,7 @@
 TGT=~/kayaking2/files/a.db
 ROOT=`dirname $0`
 
+mkdir -p `dirname $TGT`
 rm -f $TGT
 $ROOT/mkMaster
 $ROOT/mkData
