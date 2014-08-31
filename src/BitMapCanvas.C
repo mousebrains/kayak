@@ -1,19 +1,12 @@
 #include "BitMapCanvas.H"
 #include "Paths.H"
 #include "Convert.H"
+#include "MyException.H"
 #include <sstream>
-#include <exception>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
 namespace {
-  struct MyException : public std::exception {
-    std::string mReason;
-    MyException(const std::string& str) : mReason(str) {}
-    ~MyException() throw () {}
-    const char *what() const throw() {return mReason.c_str();}
-  };
-
   void ftErrChk(FT_Error err, const std::string& msg) {
     if (!err) return;
     std::ostringstream oss;

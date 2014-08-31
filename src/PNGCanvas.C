@@ -1,20 +1,13 @@
 #include "PNGCanvas.H"
 #include "Paths.H"
+#include "MyException.H"
 #include <sstream>
-#include <exception>
 #include <png.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 // #include <iostream>
 
 namespace {
-  struct MyException : public std::exception {
-    std::string mReason;
-    MyException(const std::string& str) : mReason(str) {}
-    ~MyException() throw () {}
-    const char *what() const throw() {return mReason.c_str();}
-  };
-
   std::string pngErrMsg("Setting jump"); // used when setjmp is active
   const size_t pngCompressionLevel(7); // compression level for png
 

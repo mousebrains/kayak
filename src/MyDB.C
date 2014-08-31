@@ -1,10 +1,10 @@
 #include "MyDB.H"
 #include "Paths.H"
+#include "MyException.H"
 #include <unistd.h>
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
-#include <exception>
 #include <cmath>
 
 namespace {
@@ -13,13 +13,6 @@ namespace {
   typedef std::map<std::string, std::pair<int, sqlite3 *> > tDBMap;
   tDBMap dbMap;
  
-  struct MyException : public std::exception {
-    std::string mReason;
-    MyException(const std::string& str) : mReason(str) {}
-    ~MyException() throw () {}
-    const char *what() const throw() {return mReason.c_str();}
-  };
-
   int errChk(sqlite3* db, const int rc, const std::string& msg) {
     std::string id;
  
