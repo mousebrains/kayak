@@ -22,3 +22,6 @@
 
 # Minimized javascript
 *.min.js
+
+# Ignore vm swp files
+.*.swp
