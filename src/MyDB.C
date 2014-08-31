@@ -47,8 +47,10 @@ namespace {
       case SQLITE_FORMAT: id = "SQLITE_FORMAT"; break;
       case SQLITE_RANGE: id = "SQLITE_RANGE"; break;
       case SQLITE_NOTADB: id = "SQLITE_NOTADB"; break;
-      // case SQLITE_NOTICE: id = "SQLITE_NOTICE"; break;
-      // case SQLITE_WARNING: id = "SQLITE_WARNING"; break;
+#if SQLITE_VERSION_NUMBER > 30080000
+      case SQLITE_NOTICE: id = "SQLITE_NOTICE"; break;
+      case SQLITE_WARNING: id = "SQLITE_WARNING"; break;
+#endif // SQLITE_VERSION_NUMBER > 3008000
       default: {
           std::ostringstream oss;
           oss << "unrecognized return code, " << rc;
