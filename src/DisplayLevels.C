@@ -13,41 +13,43 @@ namespace {
   const CGI cgi;
   const time_t tOld(time(0) - 2 * 86400);
 
-  std::string format(const std::string& val, const std::string& hash, 
-                     const std::string& type, const Levels::Level level) {
+  void formatVal(std::ostream& os, const bool q, const double val, const std::string& hash, 
+                 const Levels::Level level, const double delta, 
+                 const std::string& type, const double roundTo) {
+    if (!q) {
+      os << "<td></td>";
+      return;
+    }
+
     const std::string color(level == Levels::LOW  ? " class='lo'" :
                            (level == Levels::OKAY ? " class='ok'" :
                            (level == Levels::HIGH ? " class='hi'" : "")));
     const bool qLink(!hash.empty() && !type.empty());
-    std::string str("<td" + color + ">");
-    if (qLink) str += "<a href='?o=p&amp;h=" + hash + "&amp;t=" + type + "'>";
-    str += val;
-    if (qLink) str += "</a>";
-    str += "</td>";
-    return str;
+
+    os << "<td" << color << ">";
+
+    if (qLink) os << "<a href='?o=p&amp;h=" << hash << "&amp;t=" << type << "'>";
+    { // Arrow
+      const int cnt(fmin(10,round(fabs(delta))));
+      if (cnt) {
+        os << "<span class='lev" << cnt << "'>&"
+           << (delta < 0 ? "d" : "u") << "arr;</span>";
+      }
+    } // Arrow
+    os << Convert::toComma(round(val * roundTo) / roundTo);
+    if (qLink) os << "</a>";
+    os << "</td>";
   }
 
-  std::string formatFlow(const double val, const std::string& hash, const Levels::Level level) {
-    return format(Convert::toComma(round(val)), hash, "f", level);
-  }
-
-  std::string formatGauge(const double val, const std::string& hash, const Levels::Level level) {
-    return format(Convert::toComma(round(val * 10) / 10), hash, "g", level);
-  }
-
-  std::string formatTemp(const double val, const std::string& hash) {
-    return format(Convert::toStr(round(val)), hash, "t", Levels::UNKNOWN);
-  }
-
-  std::string formatTime(const time_t t0, const time_t t1, const time_t t2) {
+  void formatTime(std::ostream& os, const time_t t0, const time_t t1, const time_t t2) {
     const time_t t((t0 > t1) && (t0 > t2) ? t0 : (t1 > t2) ? t1 : t2);
     if (t == 0) {
-      return "<td></td>";
+      os << "<td></td>";
+      return;
     }
-    std::string str("<td");
-    if (t < tOld) str += " class=old";
-    str += ">" + Convert::toStr(t, "%m/%d %H:%M") + "</td>";
-    return str;
+    os << "<td";
+    if (t < tOld) os << " class=old";
+    os << ">" << Convert::toStr(t, "%m/%d %H:%M") << "</td>";
   }
 
   void mkTable(const Levels& levels, HTML& html) {
@@ -77,24 +79,14 @@ namespace {
 
       html << "</a></th>";
      
-      html << formatTime(qf ? it->flowTime : 0, qg ? it->gaugeTime : 0, 
-                         qt ? it->temperatureTime: 0); 
-  
-      if (qf) {
-        html << formatFlow(it->flow, hash, it->level);
-      } else if (levels.qFlow()) {
-        html << "<td></td>";
-      }
-      if (qg) {
-        html << formatGauge(it->gauge, hash, it->level);
-      } else if (levels.qGauge()) {
-        html << "<td></td>";
-      }
-      if (qt) {
-        html << formatTemp(it->temperature, hash);
-      } else if (levels.qTemperature()) {
-        html << "<td></td>";
-      }
+      formatTime(html, 
+                 qf ? it->flowTime : 0, 
+                 qg ? it->gaugeTime : 0, 
+                 qt ? it->temperatureTime: 0); 
+ 
+      formatVal(html, qf, it->flow, hash, it->level, it->flowDelta, "f", 1); 
+      formatVal(html, qg, it->gauge, hash, it->level, it->gaugeDelta, "g", 10); 
+      formatVal(html, qt, it->temperature, hash, Levels::UNKNOWN, it->temperatureDelta, "t", 1); 
 
       if (levels.qClass()) html << "<td>" << it->grade << "</td>";
 
