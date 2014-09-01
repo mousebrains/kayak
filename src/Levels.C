@@ -249,7 +249,7 @@ Levels::update()
       << "," << mf.highGauge()
       << " FROM " << mf.table() 
       << " WHERE " << mf.gaugeKey() << " IN (" << gaugeKeys 
-      << ");";
+      << ") AND qNOSHOW==0;";
 
     int rc;
     while ((rc = s.step()) == SQLITE_ROW) {
