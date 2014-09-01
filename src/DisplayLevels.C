@@ -50,22 +50,8 @@ namespace {
     return str;
   }
 
-  int mkTable(const Levels& levels) {
-    const std::string title(levels.state().empty() ? "WKCC Water Levels" : levels.state());
-
-    HTML html;
-    html << html.header()
-         << "<title>" << title << "</title>\n"
-         << html.myStyle()
-         << html.myScript()
-         << "</head>\n<body>\n"
-         << "<h1>" << title << "</h1>\n"
-         << "<h3>Courtesy of <a href='http://www.wkcc.org'>WKCC</a>, "
-         << "please contact "
-         << "<a href='mailto:pat.kayak@gmail.com'>Pat Welch</a>"
-         << " with any comments about this page.</h3>\n"
-         << "<h4><a href='?o=m'>For other states</a></h4>\n"
-         << "<table>\n"
+  void mkTable(const Levels& levels, HTML& html) {
+    html << "<table>\n"
          << "<thead>\n";
 
     std::string hdr("<tr><th>Name</th><th>Date</th>");
@@ -139,19 +125,39 @@ namespace {
          << "<dd><span class='lev9'>&uarr;&darr;</span> Changing between 8.5% and 9.5% per hour</dd>\n"
          << "<dd><span class='lev10'>&uarr;&darr;</span> Changing between 9.5% and 10.5% per hour</dd>\n"
          << "<dd><span class='lev11'>&uarr;&darr;</span> Changing more than  10.5% per hour</dd>\n"
-         << "</dl>\n"
-         << "</body>\n"
-         << "</html>\n";
-    
-    return HTTP(std::cout).htmlPage(86400, html);
+         << "</dl>\n";
   }
 
   int process(const Levels& levels) {
-    // if (cgi.qJavaScript()) {
-      // levels.json(std::cout) << std::endl;
-    // } else {
-    return mkTable(levels);
-    // }
+    const std::string title(levels.state().empty() ? "WKCC Water Levels" : levels.state());
+
+    HTML html;
+    html << html.header()
+         << "<title>" << title << "</title>\n"
+         << html.myStyle()
+         << html.myScript()
+         << "</head>\n<body>\n"
+         << "<h1>" << title << "</h1>\n"
+         << "<h3>Courtesy of <a href='http://www.wkcc.org'>WKCC</a>, "
+         << "please contact "
+         << "<a href='mailto:pat.kayak@gmail.com'>Pat Welch</a>"
+         << " with any comments about this page.</h3>\n"
+         << "<h4><a href='?o=m'>For other states</a></h4>\n";
+
+    if (!cgi.qJavaScript()) {
+      mkTable(levels, html);
+    } else {
+      html << html.addOnStart()
+           << html.addOnEnd()
+           << "<script>\n"
+           << "lev(" << levels.json(html) << ");\n"
+           << "</script>\n";
+    }
+
+    html << "</body>\n"
+         << "</html>\n";
+    
+    return HTTP(std::cout).htmlPage(86400, html);
   }
 }
 
