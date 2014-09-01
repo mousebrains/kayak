@@ -151,12 +151,11 @@ namespace {
     return std::string();
   }
 
-  std::string mkDeltaIndex(double delta) {
+   void mkDeltaIndex(std::ostream& os, double delta) {
     delta = round(delta);
-    if (isnan(delta) || (delta == 0)) return "";
-    std::string str(delta < 0 ? "-" : "");
-    delta = fabs(delta);
-    return str + (delta < 10 ? Convert::toStr(delta) : "10");
+    if (!isnan(delta) && (delta != 0)) {
+      os << (delta < 0 ? "-" : "") << fmin(11,fabs(delta));
+    }
   }
 } // anonymous
 
@@ -471,7 +470,7 @@ Levels::json(std::ostream& os) const
 
   { // dump times
     std::string delim;
-    os << ",tMin:" << tMin << ",tEnc:'Min',t[";
+    os << ",tMin:" << tMin << ",tEnc:'Min',t:[";
     for(size_type i(0); i < n; ++i) {
       const time_t t(times[i]);
       if (t > 0) {
@@ -512,7 +511,8 @@ Levels::json(std::ostream& os) const
     delim.clear();
     for (size_type i(0); i < n; ++i) {
       if (times[i] > 0) {
-        os << delim << mkDeltaIndex(mInfo[i].flowDelta);
+        os << delim;
+        mkDeltaIndex(os, mInfo[i].flowDelta);
         delim = ",";
       }
     }
@@ -534,7 +534,8 @@ Levels::json(std::ostream& os) const
     delim.clear();
     for (size_type i(0); i < n; ++i) {
       if (times[i] > 0) {
-        os << delim << mkDeltaIndex(mInfo[i].gaugeDelta);
+        os << delim;
+        mkDeltaIndex(os, mInfo[i].gaugeDelta);
         delim = ",";
       }
     }
@@ -556,7 +557,8 @@ Levels::json(std::ostream& os) const
     delim.clear();
     for (size_type i(0); i < n; ++i) {
       if (times[i] > 0) {
-        os << delim << mkDeltaIndex(mInfo[i].temperatureDelta);
+        os << delim;
+        mkDeltaIndex(os, mInfo[i].temperatureDelta);
         delim = ",";
       }
     }
