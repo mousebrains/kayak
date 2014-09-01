@@ -186,6 +186,11 @@ DataGet::json(std::ostream& os) const
 std::ostream&
 DataGet::jsonObs(std::ostream& os) const
 {
+  if (!mMsg.empty()) {
+    os << "{error:'" << errmsg() << "'}";
+    return os;
+  }
+
   os << "{title:'" << title()
      << "',tlabel:'Date" 
      << "',ylabel:'" << ylabel()
