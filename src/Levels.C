@@ -59,7 +59,7 @@ namespace {
         if (!isnan(prevVal)) {
           const double dt(t - prevT);
           const double dv(val - prevVal);
-          fracs.push_back(dv / prevVal / dt * 86400); // rate of change per 24 hours 
+          fracs.push_back(dv / prevVal / dt * 3600); // rate of change per hour
         }
         prevT = t;
         prevVal = val;
