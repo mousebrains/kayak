@@ -30,7 +30,7 @@ namespace {
 
     if (qLink) os << "<a href='?o=p&amp;h=" << hash << "&amp;t=" << type << "'>";
     { // Arrow
-      const int cnt(fmin(10,round(fabs(delta))));
+      const int cnt(fmin(11,round(fabs(delta))));
       if (cnt) {
         os << "<span class='lev" << cnt << "'>&"
            << (delta < 0 ? "d" : "u") << "arr;</span>";
@@ -88,7 +88,7 @@ namespace {
       formatVal(html, qg, it->gauge, hash, it->level, it->gaugeDelta, "g", 10); 
       formatVal(html, qt, it->temperature, hash, Levels::UNKNOWN, it->temperatureDelta, "t", 1); 
 
-      if (levels.qClass()) html << "<td>" << it->grade << "</td>";
+      if (levels.qClass()) html << "<th>" << it->grade << "</th>";
 
       html << "\n";
     }
@@ -133,16 +133,16 @@ namespace {
          << "<h3>Courtesy of <a href='http://www.wkcc.org'>WKCC</a>, "
          << "please contact "
          << "<a href='mailto:pat.kayak@gmail.com'>Pat Welch</a>"
-         << " with any comments about this page.</h3>\n"
-         << "<h4><a href='?o=m'>For other states</a></h4>\n";
+         << " with any comments about this page.\n"
+         << "<a href='?o=m'>For other states</a></h3>\n";
 
     if (!cgi.qJavaScript()) {
       mkTable(levels, html);
     } else {
-      html << html.addOnStart()
-           << html.addOnEnd()
-           << "<script>\n"
-           << "lev(" << levels.json(html) << ");\n"
+      html << "<script>\n"
+           << "lev(";
+      levels.json(html);
+      html << ");\n"
            << "</script>\n";
     }
 
