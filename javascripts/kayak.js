@@ -2,13 +2,194 @@
 
 var pInfo = {}; // Plot object information
 
+function lev(d) {
+  var div = mkDiv(),
+      tbl = document.createElement("table"),
+      thead = tbl.createTHead(), // Header rows
+      tbody = tbl.createTBody(), // Body rows
+      tfoot = tbl.createTFoot(), // Footer rows
+      qFlow = "flow" in d,
+      qGauge = "gauge" in d,
+      qTemp = "temperature" in d,
+      qClass = "class" in d,
+      now = new Date,
+      tOld = now / 1000 - 2 * 86400,
+      colVars = ["indices", "t"],
+      sortDir = [-1, -1],
+      contents = [],
+      header = [],
+      row, 
+      cell, 
+      hash, 
+      arrow, 
+      txt, 
+      i, 
+      n = d.t.length;
+
+  decodeData(d, "t"); // Expand back to seconds
+
+  var sorter = function(index) {
+    var indices = [],
+        x = d[colVars[index]],
+        sgn = sortDir[index],
+        arrow = sgn < 0 ? ' &uarr;' : ' &darr;',
+        n = contents.length,
+        i, e;
+
+    for (i = 0, e = n; i < e; ++i) {
+      indices.push(i); // Build a sequence of indices
+    }
+
+    for (i = 0, e = header.length; i < e; ++i) { // Set arrow in appropriate col and direction
+      thead.rows[0].cells[i].innerHTML = header[i] + (i == index ? arrow : "");
+      tfoot.rows[0].cells[i].innerHTML = thead.rows[0].cells[i].innerHTML;
+    }
+
+    if (typeof x[0] == "string") {
+      indices.sort(function(i,j) {
+          return x[sgn > 0 ? i : j].localeCompare(x[sgn > 0 ? j : i]);
+        });
+    } else { // numeric sort
+      indices.sort(function(i,j) {
+          var aa = x[i] == undefined ? 0 : x[i],
+              bb = x[j] == undefined ? 0 : x[j];
+          return sgn * (aa - bb);
+        });
+    }
+
+    sortDir[index] = -sortDir[index];
+
+    for (i = 0, e = n; i < e; ++i) {
+      tbody.rows[i].outerHTML = contents[indices[i]];
+    }
+  }
+
+  var setHdr = function(cell, index, title) {
+    header.push(title);
+    cell.innerHTML = title + (index == 0 ? " &darr;" : "");
+    cell.className = "hdr";
+    cell.onclick = function() {sorter(index);}
+    return cell;
+  }
+   
+  row = thead.insertRow(-1);
+  i = -1;
+  setHdr(row.insertCell(-1), ++i, "Name");
+  setHdr(row.insertCell(-1), ++i, "Date");
+
+  if (qFlow) {
+    setHdr(row.insertCell(-1), ++i, "Flow<br>CFS");
+    colVars.push("flow");
+    sortDir.push(-1);
+  }
+
+  if (qGauge) {
+    setHdr(row.insertCell(-1), ++i, "Height<br>Feet");
+    colVars.push("gauge");
+    sortDir.push(1);
+  }
+  
+  if (qTemp) {
+    setHdr(row.insertCell(-1), ++i, "Temp<br>F");
+    colVars.push("temperature");
+    sortDir.push(1);
+  }
+
+  if (qClass) {
+    setHdr(row.insertCell(-1), ++i, "Class");
+    colVars.push("grade");
+    sortDir.push(1);
+  }
+
+  var setVal = function(cell, val, hash, level, delta, type) {
+    var names = ["lo", "ok", "hi"];
+    if (val != undefined) {
+      cell.innerHTML = "<a href='?o=p&amp;h=" + hash + "&amp;t=" + type + "'>" + 
+                       ((delta == undefined) ? "" : 
+                        ("<span class='lev" + Math.abs(delta) + "'>&" +
+                         (delta < 0 ? "d" : "u") + "arr;</span>")) +
+                       val.toLocaleString() + "</a>";
+      if (level != undefined) cell.className = names[level - 1];
+    }
+  }
+
+  d.indices = [];
+  d.grade = [];
+
+  for (i = 0; i < n; ++i) {
+    d.indices.push(i);
+    hash = d.hash[i];
+
+    arrow = d.level[i] ? 
+            ("<span class='lev" + Math.abs(d.level[i]) + "'>&" +
+             (d.level[i] < 0 ? "d" : "u") + "arr;</span>") :
+            "";
+
+    row = tbody.insertRow(-1);
+
+    cell = row.insertCell(-1)
+    cell.innerHTML = "<a href='?o=i&h=" + hash +"'>" + d.name[i] + "</a>";
+    cell.className = "hdr";
+
+    cell = row.insertCell(-1);
+    cell.innerHTML = t2str(d.t[i], false);
+    d.t[i] < tOld && (cell.className = "old");
+
+    qFlow && setVal(row.insertCell(-1), d.flow[i], hash, d.level[i], d.flowDelta[i], "f");
+    qGauge && setVal(row.insertCell(-1), d.gauge[i], hash, d.level[i], d.gaugeDelta[i], "g");
+    qTemp && setVal(row.insertCell(-1), d.temperature[i], hash, d.level[i], d.temperatureDelta[i], "t");
+    if (qClass) {
+      txt = d.class[i];
+      cell = row.insertCell(-1);
+      cell.innerHTML = txt;
+      cell.className = "hdr";
+      d.grade.push(txt.search("VI") >= 0 ? 6 :
+                   txt.search("IV") >= 0 ? 4 :
+                   txt.search("V")  >= 0 ? 5 :
+                   txt.search("III")>= 0 ? 3 :
+                   txt.search("II") >= 0 ? 2 :
+                   txt.search("I")  >= 0 ? 1 :
+                   0);
+    }
+
+    contents.push(row.innerHTML);
+  }
+ 
+  tfoot.appendChild(thead.rows[0].cloneNode(true));
+  i = 2 + qFlow + qGauge + qTemp + qClass;
+  tfoot.insertRow(-1).innerHTML = "<th class='lo' colspan='" + i + "'>Low</th>";
+  tfoot.insertRow(-1).innerHTML = "<th class='ok' colspan='" + i + "'>Okay</th>";
+  tfoot.insertRow(-1).innerHTML = "<th class='hi' colspan='" + i + "'>High</th>";
+
+  div.appendChild(tbl); 
+
+  var h1 = document.createElement("h1");
+  h1.innerHTML = "Generated " + now;
+  div.appendChild(h1);
+
+  var dl = document.createElement("DL");
+  var dd;
+  for (i = 1; i <= 10; ++i) {
+    dd = document.createElement("DD");
+    dd.innerHTML = "<span class='lev" + i + "'>&uarr;&darr;</span> Changing between " +
+                   (i-1) + ".5% and " + i + ".5% per hour";
+    dl.appendChild(dd);
+  }
+  dd = document.createElement("DD");
+  dd.innerHTML = "<span class='lev11'>&uarr;&darr;</span> Changing more than 10.5% per hour";
+  dl.appendChild(dd);
+
+  div.appendChild(dl); 
+}
+
 function tbl(d) {
   initTblPlt(d, "Table");
   mkTbl();
 }
 
 function mkTbl() {
-  var div = mkDiv(), // Where to put everything
+  var names = ["t", "y", "y1", "y2", "y3", "y4"],
+      div = mkDiv(), // Where to put everything
       tbl = document.createElement("table"), // Table to put stuff in
       thead = tbl.createTHead(), // Header rows
       tbody = tbl.createTBody(), // Body rows
@@ -18,15 +199,25 @@ function mkTbl() {
       qLow  = "low" in pInfo,
       qHigh = "high" in pInfo,
       qOkay = qLow && qHigh,
-      sortDir = [1, 1],
-      header = ["Date", pInfo.ylabel + "<br>" + pInfo.units],
+      sortDir = [],
+      header = [],
+      cols = [],
       contents = [],
-      t = pInfo.t,
-      y = pInfo.y,
-      n = t.length,
-      row, i, e, y, cell, cell0;
+      var1, var2, var3,
+      row, i, e, j, je, cell, val;
 
-  
+  for (i = 0, e = names.length; i < e; ++i) {
+    var1 = names[i];
+    if (var1 in pInfo) {
+      var2 = var1 + "label";
+      var3 = var1 + "units";
+      cols.push(var1);
+      header.push((var2 in pInfo ? pInfo[var2] : "") + 
+                  (var3 in pInfo ? ("<br>" + pInfo[var3]) : ""));
+      sortDir.push(1);
+    }
+  }
+ 
   h1.innerHTML = '<a href="?o=i&amp;' + infoStr + '">' + pInfo.title + '</a>';
 
   div.appendChild(h1);
@@ -34,23 +225,30 @@ function mkTbl() {
   tbl.setAttribute("id", "myTable");
 
   var sorter = function(col) {
-    var arrow = ['', ''],
-        a = [],
-        n = pInfo.t.length,
+    var a = [],
+        y = pInfo[cols[col]],
+        n = y.length,
+        qString = typeof y[0] === 'string',
+        arrow = sortDir[col] < 0 ? ' &uarr;' : ' &darr;',
         i, e;
 
-    arrow[col] = (sortDir[col] < 0) ? ' &uarr;' : ' &darr;',
-    thead.rows[0].cells[0].innerHTML = header[0] + arrow[0];
-    thead.rows[0].cells[1].innerHTML = header[1] + arrow[1];
-    tfoot.rows[0].cells[0].innerHTML = header[0] + arrow[0];
-    tfoot.rows[0].cells[1].innerHTML = header[1] + arrow[1];
+    for (i = 0, e = header.length; i < e; ++i) { // Set arrow in appropriate col and direction
+      thead.rows[0].cells[i].innerHTML = header[i] + (i == col ? arrow : "");
+      tfoot.rows[0].cells[i].innerHTML = thead.rows[0].cells[i].innerHTML;
+    }
 
-    for (i = 0; i < n; ++i) { a.push(i); }
+    for (i = 0; i < n; ++i) {  // array of indices, 0...n-1
+      a.push(i); 
+    }
 
-    if (col == 0) {
-      a.sort(function(i,j) {return sortDir[col] * (pInfo.t[i] - pInfo.t[j])});
-    } else {
-      a.sort(function(i,j) {return sortDir[col] * (pInfo.y[i] - pInfo.y[j]);});
+    if (qString) {
+      a.sort(function(i,j) {
+        var aa = y[sortDir[col] > 0 ? i : j].toLowerCase(),
+            bb = y[sortDir[col] > 0 ? j : i].toLowerCase();
+        return aa < bb ? -1 : aa > bb ? 1 : 0;
+      });
+    } else { // numeric sort
+      a.sort(function(i,j) {return sortDir[col] * (y[i] - y[j])});
     }
     sortDir[col] = -sortDir[col];
     for (i = 0; i < n; ++i) {
@@ -66,42 +264,47 @@ function mkTbl() {
   }
    
   row = thead.insertRow(-1);
-  var hcells = [setHdr(row.insertCell(-1), 0, header[0] + " &uarr;"),
-                setHdr(row.insertCell(-1), 1, header[1])];
+
+  for (i = 0, e = cols.length; i < e; ++i) {
+    setHdr(row.insertCell(-1), i, header[i] + (i == 0 ? " &uarr;" : ""));
+  }
 
   var qClass = false;
-  for (i = n-1; i >= 0; --i) {
+
+  for (i = pInfo[cols[0]].length-1; i >= 0; --i) {
     row = tbody.insertRow(-1);
-    cell0 = row.insertCell(-1);
-    cell0.innerHTML = t2str(t[i]);
-    
-    cell = row.insertCell(-1);
-    cell.innerHTML = y[i].toLocaleString(); // Comma deliminated
-
-    if (qHigh && pInfo.high < y[i]) {
-      cell.className = "hi";
-      qClass = true;
-    } else if (qLow && pInfo.low > y[i]) {
-      cell.className = "lo";
-      qClass = true;
-    } else if (qOkay) {
-      cell.className = "ok";
-      qClass = true;
+    for (j = 0, je = cols.length; j < je; ++j) { // Insert data
+      val = pInfo[cols[j]][i];
+      cell = row.insertCell(-1);
+      if (j == 0) { // time
+        cell.innerHTML = t2str(val, true);
+      } else { // not time
+        cell.innerHTML = val.toLocaleString(); // Comma deliminated
+      }
+      if (j == 1) { // Check high/low
+        if (qHigh && pInfo.high < val) {
+          cell.className = "hi";
+          qClass = true;
+        } else if (qLow && pInfo.low > val) {
+          cell.className = "lo";
+          qClass = true;
+        } else if (qOkay) {
+          cell.className = "ok";
+          qClass = true;
+        }
+      }
     }
-
     contents.push(row.outerHTML);
   }
 
-  row = tfoot.insertRow(-1);
-  var tcells = [setHdr(row.insertCell(-1), 0, hcells[0].innerHTML),
-                setHdr(row.insertCell(-1), 1, hcells[1].innerHTML)]
+  tfoot.appendChild(thead.rows[0].cloneNode(true));
 
   if (qClass) {
       var labFun = function(label, cname) {
         var cell = tfoot.insertRow(-1).insertCell(-1);
         cell.innerHTML = label;
         cell.className = cname + " hdr";
-        cell.setAttribute("colspan", 2);
+        cell.setAttribute("colspan", cols.length);
       }
 
     labFun("High", "hi");
@@ -214,7 +417,7 @@ function draw() {
   // y Axis label 
   ctx.font = fontLabel;
   ctx.textBaseline = "top";
-  rotText(ctx, pInfo.ylabel + " (" + pInfo.units + ")", 0, Math.round((nBot + nTop)/2));
+  rotText(ctx, pInfo.ylabel + " (" + pInfo.yunits + ")", 0, Math.round((nBot + nTop)/2));
 
   // Draw axis labels
   ctx.font = Math.min(taxis.fs, yaxis.fs) + fontSuffix;
@@ -271,8 +474,8 @@ function draw() {
 }
 
 function mkyAxis(lhsFrame, rhsFrame, lhsBox, rhsBox, fsMax, rhoTgt) {
-  var min = pInfo.ymin,
-      max = pInfo.ymax,
+  var min = pInfo.yMin,
+      max = pInfo.yMax,
       ax;
 
   if (min == max) {
@@ -285,8 +488,8 @@ function mkyAxis(lhsFrame, rhsFrame, lhsBox, rhsBox, fsMax, rhoTgt) {
 } // mkyAxis
 
 function mktAxis(lhsFrame, rhsFrame, lhsBox, rhsBox, fsMax, rhoTgt) {
-  var min = pInfo.tmin,
-      max = pInfo.tmax,
+  var min = pInfo.tMin,
+      max = pInfo.tMax,
       range = max - min,
       etime,
       ax,
@@ -630,14 +833,14 @@ function axis(lhs, rhs, lhsFrame, rhsFrame, lhsBox, rhsBox, fsMax, rhoTgt) {
           break;
         }
 
-        netScore *= 0.9 / nTicks;
+        netScore *= 0.9 / Math.max(1, nTicks);
         netScore += 0.1 * qZeroExtended;
         score = (netScore + 3) / 4;
         if (score <= best.score) {
            continue;
         }
         for (fs = fsMax; fs >= fsMin; --fs) { // Walk through font sizes
-          fsScore = (fs - fsMin) / (fsMax - fsMin);
+          fsScore = (fs - fsMin) / Math.max(1, fsMax - fsMin);
           score = (netScore + fsScore + 2) / 4;
           if (score <= best.score) {
             break;
@@ -772,7 +975,7 @@ function myMouse(e) {
 
   date = new Date(t * 1000);
   pop.clearRect(pInfo.txt.left, pInfo.txt.top, pInfo.txt.width, pInfo.txt.height);
-  pop.fillText(y + "(" + pInfo.units + ") " + date.toLocaleString(),
+  pop.fillText(y + "(" + pInfo.yunits + ") " + date.toLocaleString(),
                pInfo.txt.x, pInfo.txt.y);
 
   pInfo.timeout = setTimeout(function() {
@@ -837,62 +1040,32 @@ function noCanvas() { // Browser does not support a canvas, so fall back to imag
 }
 
 function addData(d) {
-  var qExist = "t" in pInfo, // Not the first time, so I'll have to sort data
-      fields = ["title", "ylabel", "units", "type", "low", "high", "lowOptimal", "highOptimal"],
-      indices = [],
-      t,
-      y,
-      n, 
+  var names = ["title", "type", 
+               "low", "high", "lowOptimal", "highOptimal",
+               "t", "tMin", "tMax", "tlabel", "tunits",
+               "y",  "yMin",  "yMax",  "ylabel",  "yunits", 
+               "y1", "y1Min", "y1Max", "y1label", "y1units",
+               "y2", "y2Min", "y2Max", "y2label", "y2units",
+               "y3", "y3Min", "y3Max", "y3label", "y3units",
+               "y4", "y4Min", "y4Max", "y4label", "y4units"],
       i, 
       e;
 
   "error" in d && errmsg(d.error);
 
-  for (i = 0, e = fields.length; i < e; ++i) {
-    fields[i] in d && (pInfo[fields[i]] = d[fields[i]]);
+  for (i = 0, e = names.length; i < e; ++i) {
+    names[i] in d && (pInfo[names[i]] = d[names[i]]);
   }
-
-  if (!qExist) {
-    pInfo.ymin = d.ymin;
-    pInfo.ymax = d.ymax;
-    pInfo.t = [];
-    pInfo.y = [];
-  } // if !qExist
-
-  for (i = 0, e = pInfo.t.length; i < e; ++i) {
-    indices.push(i);
-  } // for
-
-  for (i = 0, e = d.t.length; i < e; ++i) {
-    pInfo.t.push(d.t[i] * d.dt + d.t0);
-    pInfo.y.push(d.y[i] + d.ymin);
-    n = pInfo.t.length - 1;
-    indices.push(n);
-    pInfo.y[n] < pInfo.ymin && (pInfo.ymin = pInfo.y[n]);
-    pInfo.y[n] > pInfo.ymax && (pInfo.ymax = pInfo.y[n]);
-  }
-
-  if (qExist) { // Sort the data by time since we appended data
-    indices.sort(function(i,j) {return pInfo.t[i] - pInfo.t[j];});
-    t = [];
-    y = [];
-    t.push(pInfo.t[0]);
-    y.push(pInfo.y[0]);
-    for (i = 1, e = pInfo.t.length; i < e; ++i) {
-      if (pInfo.t[i] != pInfo.t[i-1]) {
-        t.push(pInfo.t[i]);
-        y.push(pInfo.y[i]);
-      }
-    }
-    pInfo.t = t;
-    pInfo.y = y;
-  }
-  
-  pInfo.tmin = pInfo.t[0];
-  pInfo.tmax = pInfo.t[pInfo.t.length-1];
 } // addData
 
 function initTblPlt(d, mode) {
+  var names = ["t", "y", "y1", "y2", "y3", "y4"],
+      i, e;
+
+  for (i = 0, e = names.length; i < e; ++i) {
+    (names[i] in d) && decodeData(d, names[i]);
+  }
+
   addData(d);
 
   document.title = pInfo.title;
@@ -902,10 +1075,40 @@ function initTblPlt(d, mode) {
   updateForm(); // Update the start/stop dates
 } // initTblPlt 
 
+function decodeData(d, name) {
+  var enc = name + "Enc",
+      data, a, b, i, e;
+
+  if (name in d && enc in d) {
+    data = d[name];
+    a = d[enc];
+    if (a == "Step") {
+      a = d[name + "Step"];
+      b = d[name + "Min"];
+      for (i = 0, e = data.length; i < e; ++i) {
+        data[i] = (data[i] * a) + b;
+      }
+    } else if (a == "Min") {
+      b = d[name + "Min"];
+      for (i = 0, e = data.length; i < e; ++i) {
+        data[i] = data[i] + b;
+      }
+    } else if (a == "Map") {
+      b = d[name + "Map"];
+      for (i = 0, e = data.length; i < e; ++i) {
+        data[i] = b[data[i]];
+      }
+    } else {
+      console.log("Unrecognized encoding '" + a + "'");
+    }
+    delete d[enc];
+  }
+} // decodeData
+
 function updateForm(frm) {
   var x = (frm ? frm : document.getElementById("frm")).elements,
-      d0 = new Date(pInfo.tmin * 1000),
-      d1 = new Date(pInfo.tmax * 1000);
+      d0 = new Date(pInfo.tMin * 1000),
+      d1 = new Date(pInfo.tMax * 1000);
 
   pInfo.sdate = d0;
   pInfo.edate = d1;
@@ -967,8 +1170,11 @@ function getDates(f) { // Get sdate and edate from form f, and return as an obje
 
 function frmClick(e) {
   var tgt = e.target,
-      dates = getDates(tgt.parentNode),
-      qChanged = ((dates.sdate - pInfo.sdate) !== 0) || ((dates.edate - pInfo.edate) !== 0),
+      frm = tgt.parentNode,
+      dates = getDates(frm),
+      qChanged = (pInfo.type !== frm.t.value) ||
+                 ((dates.sdate - pInfo.sdate) !== 0) || 
+                 ((dates.edate - pInfo.edate) !== 0),
       fmtDate = function(d) {return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate()},
       url,
       xhr,
@@ -990,7 +1196,9 @@ function frmClick(e) {
 
   // Fetch new data
 
-  url = "?" + buildQueryString("h") + "&o=d&sdate=" + fmtDate(dates.sdate) + 
+  url = "?h=" + frm.h.value + 
+        "&t=" + frm.t.value +
+        "&o=d&sdate=" + fmtDate(dates.sdate) + 
         "&edate=" + fmtDate(dates.edate);
   xhr = new XMLHttpRequest();
   xhr.open("GET", url);
@@ -1013,13 +1221,15 @@ function qCanvas() {
   return canvas && canvas.getContext("2d");
 } // qCanvas
 
-function t2str(t) {
+function t2str(t, qYear) {
   var date = new Date(t * 1000),
       mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
       hour = date.getHours(),
-      min = date.getMinutes();
+      min = date.getMinutes(),
+      str = date.getDate() + "-" + mon[date.getMonth()];
 
-  return date.getDate() + "-" + mon[date.getMonth()] + "-" + date.getFullYear() + 
+  qYear && (str += "-" + date.getFullYear());
+  return str + 
          " " + (hour < 10 ? "0" + hour : hour) +
          ":" + (min < 10 ? "0" + min : min); 
 } // t2str
