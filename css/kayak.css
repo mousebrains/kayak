@@ -1,0 +1,28 @@
+td {border: 1px solid black; text-align: right;}
+table,th {border: 1px solid black; border-collapse: collapse;}
+
+ul {line-height: 95%;}
+
+form {display: inline-block;}
+
+.hdr {text-align: center; font-weight: bold;}
+
+.hi {background-color:red;}
+.ok {background-color:paleGreen;}
+.lo {background-color:goldenRod;}
+
+.lev1 {color:silver;}
+.lev2 {color:lime;}
+.lev3 {color:green;}
+.lev4 {color:teal;}
+.lev5 {color:navy;}
+.lev6 {color:blue;}
+.lev7 {color:aqua;}
+.lev8 {color:purple}
+.lev9 {color:maroon;}
+.lev10 {color:red;}
+.lev11 {color:fuchsia;}
+
+#pltCanvas,#popCanvas {position: absolute; touch-action: none;}
+#pltCanvas {z-index: 0;}
+#popCanvas {z-index: 1;}
