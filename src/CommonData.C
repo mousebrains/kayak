@@ -14,11 +14,11 @@ CommonData::decodeType(const std::string& str)
 {
   const std::string s(Convert::tolower(str));
 
-  if (s.find("flow") == 0) {
+  if ((s.find("flow") == 0) || (s == "f")) {
     return FLOW;
-  } else if (s.find("gauge") == 0) {
+  } else if ((s.find("gauge") == 0) || (s == "g")) {
     return GAUGE;
-  } else if (s.find("temp") == 0) {
+  } else if ((s.find("temp") == 0) || (s == "t")) {
     return TEMPERATURE;
   }
   return LASTTYPE;
