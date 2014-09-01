@@ -292,7 +292,7 @@ Levels::update()
   }
 
   { // Update latest observations
-    const int nDays(10); // Number of days to look back in time for data
+    const int nDays(3); // Number of days to look back in time for data
     const time_t tMin(time(0) - nDays * 86400); // Only look at data for the previous nDays
     const Data::tRawObs obs(data.rawObservations(dataKeys, tMin)); // recent data
     for (Data::tRawObs::const_iterator it(obs.begin()), et(obs.end()); it != et; ++it) {
