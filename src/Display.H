@@ -15,6 +15,7 @@ namespace Display {
   int plot();
   int info();
   int database();
+  int data();
 } // Display
 
 #endif // INC_Display_H_

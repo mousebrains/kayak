@@ -25,6 +25,9 @@ main (int argc,
   if (page == "l") { // levels page
     return Display::levels();
   }
+  if (page == "d") { // data json
+    return Display::data();
+  }
   if ((page == "t") || (page == "Table")) { // Table
     return Display::table();
   }
