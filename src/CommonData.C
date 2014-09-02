@@ -27,10 +27,10 @@ CommonData::decodeType(const std::string& str)
 CommonData::tKeys
 CommonData::allKeys()
 {
-  std::ostringstream oss;
-  oss << "SELECT DISTINCT " << mFields.key() << " FROM " << mFields.table() << ";";
+  MyDB::Stmt s(mDB);
+  s << "SELECT DISTINCT " << mFields.key() << " FROM " << mFields.table() << ";";
 
-  MyDB::tInts k(mDB.queryInts(oss.str()));
+  MyDB::Stmt::tInts k(s.queryInts());
   tKeys keys;
 
   keys.insert(k.begin(), k.end());
@@ -46,10 +46,10 @@ CommonData::dropRows(const tKeys& keys)
 size_t 
 CommonData::nRows(const int key)
 {
-  std::ostringstream oss;
-  oss << "SELECT count(*) FROM " << mFields.table() 
-      << " WHERE " << mFields.key() << "=" << key << ";";
-  MyDB::tInts a(mDB.queryInts(oss.str()));
+  MyDB::Stmt s(mDB);
+  s << "SELECT count(*) FROM " << mFields.table() 
+    << " WHERE " << mFields.key() << "=" << key << ";";
+  MyDB::tInts a(s.queryInts());
   return a.empty() ? 0 : (size_t) a[0];
 }
 

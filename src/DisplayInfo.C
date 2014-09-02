@@ -206,9 +206,7 @@ Display::info()
     // maybe(html, ginfo.minTemperature, "Gauge Minimum Temperature: ", " F");
     // maybe(html, ginfo.maxTemperature, "Gauge Maximum Temperature: ", " F");
     maybe(html, ginfo.calcFlow, "Gauge Flow Calculation: ");
-    maybe(html, ginfo.calcFlowTime, "Gauge Flow Calculation Time: ");
     maybe(html, ginfo.calcGauge, "Gauge Gauge Height Calculation: ");
-    maybe(html, ginfo.calcGaugeTime, "Gauge Gauge Height Calculation Time: ");
   }
 
   maybe(html, info.sortKey, "Sort Key: ");

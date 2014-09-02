@@ -1,7 +1,6 @@
 #include "CommonUnknown.H"
 #include "Fields.H"
 #include "Tokens.H"
-#include <sstream>
 
 CommonUnknown::CommonUnknown(const std::string& prefix)
   : Table(UnknownFields(prefix))
@@ -16,10 +15,10 @@ CommonUnknown::~CommonUnknown()
 CommonUnknown::Usage
 CommonUnknown::usage(const int key)
 {
-  std::ostringstream oss;
-  oss << "SELECT " << mFields.usage() << " FROM " << mFields.table() 
-      << " WHERE " << mFields.key() << "=" << key << ";";
-  MyDB::tInts a(mDB.queryInts(oss.str()));
+  MyDB::Stmt s(mDB);
+  s << "SELECT " << mFields.usage() << " FROM " << mFields.table() 
+    << " WHERE " << mFields.key() << "=" << key << ";";
+  MyDB::tInts a(s.queryInts());
   return a.empty() ? SEEN : (Usage) a[0];
 }
 

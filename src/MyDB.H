@@ -47,11 +47,21 @@ public:
     double getDouble() {return getDouble(mIndex++);}
     std::string getString() {return getString(mIndex++);}
     std::string getBlob() {return getBlob(mIndex++);}
+
+    typedef std::vector<std::string> tStrings;
+    typedef std::vector<int> tInts;
+    typedef std::vector<double> tDoubles;
+
+    void query();
+    tStrings queryStrings();
+    tInts queryInts();
+    tDoubles queryDoubles();
   }; // Stmt
 
-  typedef std::vector<std::string> tStrings;
-  typedef std::vector<int> tInts;
-  typedef std::vector<double> tDoubles;
+  typedef Stmt::tStrings tStrings;
+  typedef Stmt::tInts tInts;
+  typedef Stmt::tDoubles tDoubles;
+
   typedef std::set<size_t> tRows;
   typedef std::vector<std::pair<std::string, int> > tStringInt;
   typedef std::multimap<time_t, size_t> tTimeKeys;

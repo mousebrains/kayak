@@ -131,98 +131,25 @@ MyDB::lastInsertRowid()
 void
 MyDB::query(const std::string& sql)
 {
-  Stmt s(*this, sql);
-  int rc;
-
-  while ((rc = s.step()) == SQLITE_ROW) {
-    for (int i(0), e(s.columnCount()); i < e; ++i) {
-      const int type(s.columnType(i));
-      switch (type) {
-        case SQLITE_INTEGER:
-          std::cout << s.getInt(i) << std::endl;
-          break;
-        case SQLITE_FLOAT:
-          std::cout << s.getDouble(i) << std::endl;
-          break;
-        case SQLITE_BLOB:
-          std::cout << s.getBlob(i) << std::endl;
-          break;
-        case SQLITE_NULL:
-          std::cout << "NULL" << std::endl;
-          break;
-        case SQLITE_TEXT:
-          std::cout << s.getString(i) << std::endl;
-          break;
-        default:
-          std::cerr << "Unknown column type " << type << std::endl;
-          break;
-      }
-    }
-  }
-
-  if (rc != SQLITE_DONE) {
-    errorCheck(rc, "query, " + s.str());
-  }
+  Stmt(*this, sql).query();
 }
 
 MyDB::tStrings
 MyDB::queryStrings(const std::string& sql)
 {
-  tStrings a;
-  Stmt s(*this, sql);
-  int rc;
-
-  while ((rc = s.step()) == SQLITE_ROW) {
-    for (int i(0), e(s.columnCount()); i < e; ++i) {
-      a.push_back(s.getString(i));
-    }
-  }
-
-  if (rc != SQLITE_DONE) {
-    errorCheck(rc, "queryStrings, " + sql);
-  }
-
-  return a;
+  return Stmt(*this, sql).queryStrings();
 }
 
 MyDB::tInts
 MyDB::queryInts(const std::string& sql)
 {
-  tInts a;
-  Stmt s(*this, sql);
-  int rc;
-
-  while ((rc = s.step()) == SQLITE_ROW) {
-    for (int i(0), e(s.columnCount()); i < e; ++i) {
-      a.push_back(s.getInt(i));
-    }
-  }
-
-  if (rc != SQLITE_DONE) {
-    errorCheck(rc, "queryInts, " + sql);
-  }
-
-  return a;
+  return Stmt(*this, sql).queryInts();
 }
 
 MyDB::tDoubles
 MyDB::queryDoubles(const std::string& sql)
 {
-  tDoubles a;
-  Stmt s(*this, sql);
-  int rc;
-
-  while ((rc = s.step()) == SQLITE_ROW) {
-    for (int i(0), e(s.columnCount()); i < e; ++i) {
-      a.push_back(s.getDouble(i));
-    }
-  }
-
-  if (rc != SQLITE_DONE) {
-    errorCheck(rc, "queryDoubles, " + sql);
-  }
- 
-  return a;
+  return Stmt(*this, sql).queryDoubles();
 }
 
 
@@ -417,6 +344,99 @@ MyDB::Stmt::getBlob(const int col)
   if (!mStmt) prepare();
   const void *ptr(sqlite3_column_blob(mStmt, col));
   return ptr ? std::string((const char *) ptr, sqlite3_column_bytes(mStmt, col)) : std::string();
+}
+
+void
+MyDB::Stmt::query()
+{
+  int rc;
+
+  while ((rc = step()) == SQLITE_ROW) {
+    for (int i(0), e(columnCount()); i < e; ++i) {
+      const int type(columnType(i));
+      switch (type) {
+        case SQLITE_INTEGER:
+          std::cout << getInt(i) << std::endl;
+          break;
+        case SQLITE_FLOAT:
+          std::cout << getDouble(i) << std::endl;
+          break;
+        case SQLITE_BLOB:
+          std::cout << getBlob(i) << std::endl;
+          break;
+        case SQLITE_NULL:
+          std::cout << "NULL" << std::endl;
+          break;
+        case SQLITE_TEXT:
+          std::cout << getString(i) << std::endl;
+          break;
+        default:
+          std::cerr << "Unknown column type " << type << std::endl;
+          break;
+      }
+    }
+  }
+
+  if (rc != SQLITE_DONE) {
+    errorCheck(rc, "query");
+  }
+}
+
+MyDB::Stmt::tStrings
+MyDB::Stmt::queryStrings()
+{
+  tStrings a;
+  int rc;
+
+  while ((rc = step()) == SQLITE_ROW) {
+    for (int i(0), e(columnCount()); i < e; ++i) {
+      a.push_back(getString(i));
+    }
+  }
+
+  if (rc != SQLITE_DONE) {
+    errorCheck(rc, "queryStrings");
+  }
+
+  return a;
+}
+
+MyDB::Stmt::tInts
+MyDB::Stmt::queryInts()
+{
+  tInts a;
+  int rc;
+
+  while ((rc = step()) == SQLITE_ROW) {
+    for (int i(0), e(columnCount()); i < e; ++i) {
+      a.push_back(getInt(i));
+    }
+  }
+
+  if (rc != SQLITE_DONE) {
+    errorCheck(rc, "queryInts");
+  }
+
+  return a;
+}
+
+MyDB::Stmt::tDoubles
+MyDB::Stmt::queryDoubles()
+{
+  tDoubles a;
+  int rc;
+
+  while ((rc = step()) == SQLITE_ROW) {
+    for (int i(0), e(columnCount()); i < e; ++i) {
+      a.push_back(getDouble(i));
+    }
+  }
+
+  if (rc != SQLITE_DONE) {
+    errorCheck(rc, "queryDoubles");
+  }
+ 
+  return a;
 }
 
 void

@@ -131,11 +131,11 @@ Data::tTimeKeys
 Data::timeKeys(const int key,
                const Type t)
 {
-  std::ostringstream oss;
-  oss << "SELECT " << fields.time() << ",rowid FROM " << fields.table()
-      << " WHERE " << fields.key() << "=" << key
-      << " AND " << fields.type() << "=" << (int) t << ";";
-  MyDB::tInts info(mDB.queryInts(oss.str()));
+  MyDB::Stmt s(mDB);
+  s << "SELECT " << fields.time() << ",rowid FROM " << fields.table()
+    << " WHERE " << fields.key() << "=" << key
+    << " AND " << fields.type() << "=" << (int) t << ";";
+  MyDB::tInts info(s.queryInts());
 
   tTimeKeys tk;
 
@@ -194,13 +194,13 @@ Data::observations(const MyDB::tInts& keys,
 MyDB::tInts
 Data::types(const MyDB::tInts& keys) // Which types are know for these source keys
 {
-  std::ostringstream oss;
-  oss << "SELECT DISTINCT " << fields.type() << " FROM "
-      << fields.table() 
-      << whereKeysTime(keys)
-      << ";";
+  MyDB::Stmt s(mDB);
+  s << "SELECT DISTINCT " << fields.type() << " FROM "
+    << fields.table() 
+    << whereKeysTime(keys)
+    << ";";
 
-  MyDB::tInts result(mDB.queryInts(oss.str()));
+  MyDB::tInts result(s.queryInts());
 
   std::sort(result.begin(), result.end());
 

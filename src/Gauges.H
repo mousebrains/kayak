@@ -79,9 +79,7 @@ public:
     double minTemperature; 
     double maxTemperature; 
     std::string calcFlow; 
-    std::string calcFlowTime; 
     std::string calcGauge; 
-    std::string calcGaugeTime; 
 
     Info();
     Info(MyDB::Stmt& s);

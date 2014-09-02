@@ -15,9 +15,9 @@ namespace {
 Master::tSet
 Master::allStates()
 {
-  std::ostringstream oss;
-  oss << "SELECT DISTINCT " << fields.state() << " FROM " << fields.table() << ";";
-  MyDB::tStrings result(mDB.queryStrings(oss.str()));
+  MyDB::Stmt s(mDB);
+  s << "SELECT DISTINCT " << fields.state() << " FROM " << fields.table() << ";";
+  MyDB::tStrings result(s.queryStrings());
 
   tSet a;
 
@@ -31,9 +31,9 @@ Master::allStates()
 bool
 Master::qModifiedSince(const time_t t)
 {
-  std::ostringstream oss;
-  oss << "SELECT max(" << fields.modified() << ") FROM " << fields.table() << ";";
-  MyDB::tInts result(mDB.queryInts(oss.str()));
+  MyDB::Stmt s(mDB);
+  s << "SELECT max(" << fields.modified() << ") FROM " << fields.table() << ";";
+  MyDB::tInts result(s.queryInts());
 
   return result.empty() ? true : ((t-60) <= (time_t) result[0]);
 }
@@ -41,10 +41,10 @@ Master::qModifiedSince(const time_t t)
 size_t
 Master::gaugeKey(const size_t key)
 {
-  std::ostringstream oss;
-  oss << "SELECT " << fields.gaugeKey() << " FROM " << fields.table()
-      << " WHERE " << fields.key() << "=" << key << ";";
-  MyDB::tInts result(mDB.queryInts(oss.str()));
+  MyDB::Stmt s(mDB);
+  s << "SELECT " << fields.gaugeKey() << " FROM " << fields.table()
+    << " WHERE " << fields.key() << "=" << key << ";";
+  MyDB::tInts result(s.queryInts());
   return (result.empty() || (result[0] < 0)) ? 0 : result[0];
 }
 
@@ -269,30 +269,30 @@ Master::getAll()
 MyDB::tInts
 Master::stateKeysWithGauges(const std::string& state)
 {
-  std::ostringstream oss;
-  oss << "SELECT " << fields.key() 
-      << " FROM " << fields.table() 
-      << " WHERE " << fields.state() << " like '%" << state << "%' AND "
-      << fields.gaugeKey() << "!=0;";
+  MyDB::Stmt s(mDB);
+  s << "SELECT " << fields.key() 
+    << " FROM " << fields.table() 
+    << " WHERE " << fields.state() << " like '%" << state << "%' AND "
+    << fields.gaugeKey() << "!=0;";
         
-  return mDB.queryInts(oss.str());
+  return s.queryInts();
 }
 
 MyDB::tInts
 Master::keysWithGauges(const MyDB::tInts& keys)
 {
-  std::ostringstream oss;
-  oss << "SELECT " << fields.key() 
-      << " FROM " << fields.table() 
-      << " WHERE ";
+  MyDB::Stmt s(mDB);
+  s << "SELECT " << fields.key() 
+    << " FROM " << fields.table() 
+    << " WHERE ";
 
   if (keys.size() == 1) {
-    oss << fields.key() << "=" << keys[0] << " ";
+    s << fields.key() << "=" << keys[0] << " ";
   } else if (keys.size() > 1) {
-    oss << fields.key() << "in (" << keys << ") ";
+    s << fields.key() << "in (" << keys << ") ";
   }
 
-  oss << fields.gaugeKey() << "!=0;";
+  s << fields.gaugeKey() << "!=0;";
         
-  return mDB.queryInts(oss.str());
+  return s.queryInts();
 }

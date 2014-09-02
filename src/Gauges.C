@@ -29,9 +29,7 @@ namespace {
     const char *minTemperature() {return "minTemperature";}
     const char *maxTemperature() {return "maxTemperature";}
     const char *calcFlow() {return "calcFlow";}
-    const char *calcFlowTime() {return "calcFlowTime";}
     const char *calcGauge() {return "calcGauge";}
-    const char *calcGaugeTime() {return "calcGaugeTime";}
   };
   MyFields fields;
 
@@ -59,13 +57,13 @@ Gauges::latLon(const int key,
                const double lon)
 {
   if ((lat >= -90) && (lat <= 90) && (lon >= -180) && (lon <= 180)) {
-    std::ostringstream oss;
-    oss << "UPDATE " << fields.table() << " SET " 
-        << fields.latitude() << "=" << lat 
-        << ","
-        << fields.longitude() << "=" << lon
-        << " WHERE " << fields.key() << "=" << key << ";";
-    mDB.query(oss.str());
+    MyDB::Stmt s(mDB);
+    s << "UPDATE " << fields.table() << " SET " 
+      << fields.latitude() << "=" << lat 
+      << ","
+      << fields.longitude() << "=" << lon
+      << " WHERE " << fields.key() << "=" << key << ";";
+    s.query();
   }
 }
 
@@ -85,10 +83,10 @@ Gauges::updateString(const int key,
                      const std::string& field)
 {
   if (!value.empty()) {
-    std::ostringstream oss;
-    oss << "UPDATE " << fields.table() << " SET " << field << "='" << value 
-        << "' WHERE " << fields.key() << "=" << key << ";";
-    mDB.query(oss.str());
+    MyDB::Stmt s(mDB);
+    s << "UPDATE " << fields.table() << " SET " << field << "='" << value 
+      << "' WHERE " << fields.key() << "=" << key << ";";
+    s.query();
   }
 }
 
@@ -98,10 +96,10 @@ Gauges::updateDouble(const int key,
                      const std::string& field)
 {
   if (!isnan(value)) {
-    std::ostringstream oss;
-    oss << "UPDATE " << fields.table() << " SET " << field << "=" << value 
-        << " WHERE " << fields.key() << "=" << key << ";";
-    mDB.query(oss.str());
+    MyDB::Stmt s(mDB);
+    s << "UPDATE " << fields.table() << " SET " << field << "=" << value 
+      << " WHERE " << fields.key() << "=" << key << ";";
+    s.query();
   }
 }
 
@@ -215,9 +213,7 @@ Gauges::Info::Info(MyDB::Stmt& s)
   , minTemperature(s.getDouble())
   , maxTemperature(s.getDouble())
   , calcFlow(s.getString())
-  , calcFlowTime(s.getString())
   , calcGauge(s.getString())
-  , calcGaugeTime(s.getString())
 {
 }
 

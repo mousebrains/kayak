@@ -190,9 +190,9 @@ Levels::Levels(const MyDB::tInts& keys)
 Levels::tStates
 Levels::states()
 {
-  std::ostringstream oss;
-  oss << "SELECT " << fields.state() << " FROM " << fields.table() << ";";
-  MyDB::tStrings a(mDB.queryStrings(oss.str()));
+  MyDB::Stmt s(mDB);
+  s << "SELECT " << fields.state() << " FROM " << fields.table() << ";";
+  MyDB::tStrings a(s.queryStrings());
   tStates states;
   for (MyDB::tStrings::size_type i(0), e(a.size()); i < e; ++i) {
     Tokens toks(a[i], ", \t\n");
@@ -494,6 +494,17 @@ Levels::json(std::ostream& os) const
       }
     }
     os << "']";
+  }
+  { // qCalc
+    std::string delim;
+    os << ",qCalc:[";
+    for (size_type i(0); i < n; ++i) {
+      if (times[i] > 0) {
+        os << delim << (mInfo[i].qCalc ? "1" : "");
+        delim = ",";
+      }
+    }
+    os << "]";
   }
 
   if (qFlow()) { // flow

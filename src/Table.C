@@ -37,25 +37,25 @@ Table::name2key(const std::string& name,
     return it->second.key;
   }
 
-  std::ostringstream oss;
-  oss << "SELECT " << mFields.key() << "," << mFields.time() 
-      << " FROM " << mFields.table() 
-      << " WHERE " << mFields.name() << "='" << name << "';";
-  MyDB::tInts info(mDB.queryInts(oss.str()));
+  MyDB::Stmt s(mDB);
+  s << "SELECT " << mFields.key() << "," << mFields.time() 
+    << " FROM " << mFields.table() 
+    << " WHERE " << mFields.name() << "='" << name << "';";
+  MyDB::tInts info(s.queryInts());
 
   if (info.empty()) { // Not set, so insert
     if (!qInsert) {
       return 0;
     }
 
-    std::ostringstream os1;
-    os1 << "INSERT " 
-        << " INTO " << mFields.table() << " ("
-        << mFields.name() << "," << mFields.time() 
-        << ") VALUES('" << name << "'," << t << ");";
-    mDB.query(os1.str());
+    MyDB::Stmt s1(mDB);
+    s1 << "INSERT " 
+       << " INTO " << mFields.table() << " ("
+       << mFields.name() << "," << mFields.time() 
+       << ") VALUES('" << name << "'," << t << ");";
+    s1.query();
 
-    info = mDB.queryInts(oss.str()); // Get key again
+    info = mDB.queryInts(s.str()); // Get key again
   }
 
   struct Info item;

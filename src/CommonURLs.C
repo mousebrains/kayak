@@ -1,7 +1,6 @@
 #include "CommonURLs.H"
 #include "Fields.H"
 #include "Tokens.H"
-#include <sstream>
 
 namespace {
   bool chkOkay(const int a, const std::string& b) {
@@ -33,10 +32,10 @@ CommonURLs::~CommonURLs()
 std::string 
 CommonURLs::parser(const int key)
 {
-  std::ostringstream oss;
-  oss << "SELECT " << mFields.parser() << " FROM " << mFields.table() 
-      << " WHERE " << mFields.key() << "=" << key << ";";
-  MyDB::tStrings a(mDB.queryStrings(oss.str()));
+  MyDB::Stmt s(mDB);
+  s << "SELECT " << mFields.parser() << " FROM " << mFields.table() 
+    << " WHERE " << mFields.key() << "=" << key << ";";
+  MyDB::tStrings a(s.queryStrings());
   return a.empty() ? std::string() : a[0];
 }
 

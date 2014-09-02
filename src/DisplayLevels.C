@@ -73,11 +73,13 @@ namespace {
       const std::string& hash(Master::mkHash(it->key));
  
       html << "<tr>"
-           << "<th><a href='?o=i&h=" << hash << "'>" << it->name;
+           << "<th><a href='?o=i&h=" << hash << "'>" 
+           << it->name;
 
       if (!it->location.empty()) html << "@" << it->location;
-
-      html << "</a></th>";
+      html << "</a>";
+      if (it->qCalc) html << "<span class='red'>(est)</span>";
+      html << "</th>";
      
       formatTime(html, 
                  qf ? it->flowTime : 0, 

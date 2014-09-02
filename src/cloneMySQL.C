@@ -21,25 +21,37 @@ public:
 private:
   typedef std::vector<std::string> tVec;
   tVec mExpr;
-  tVec mTime;
 
   tVec split(const std::string& a);
   bool remap(const tHash2Key& hash2key, tVec& a);
+  std::string rewrite(std::string field) const; // Rewrite greatest to max ...
 public:
   Calc(const std::string& expr, const std::string& time);
 
-  bool remap(const tHash2Key& h2k) {return remap(h2k, mExpr) && remap(h2k, mTime);}
+  bool remap(const tHash2Key& h2k) {return remap(h2k, mExpr);}
 
   std::string expr() const;
-  std::string time() const;
 };
 
 
 Calc::Calc(const std::string& expr,
            const std::string& time)
   : mExpr(split(expr))
-  , mTime(split(time))
 {
+}
+
+std::string
+Calc::rewrite(std::string field) const
+{
+  typedef std::map<std::string, std::string> tf2f;
+  const tf2f f2f({
+        {"greatest", "max"}, 
+        {"least", "min"}
+        });
+
+  tf2f::const_iterator it(f2f.find(Convert::tolower(field)));
+
+  return it == f2f.end() ? field : it->second;
 }
 
 Calc::tVec
@@ -54,12 +66,12 @@ Calc::split(const std::string& expr)
     while (!str.empty()) {
       const std::string::size_type j(str.find_first_of(uniOps));
       if (j == str.npos) { // No ops left
-        a.push_back(str);
+        a.push_back(rewrite(str));
         str.clear();
         break;
       }
       if (j != 0) { // Not first, so pull off what is in front
-        a.push_back(str.substr(0, j));
+        a.push_back(rewrite(str.substr(0, j)));
       }
       a.push_back(str.substr(j,1)); // push operator
       str = str.substr(j+1); // drop past operator
@@ -78,23 +90,6 @@ Calc::expr() const
   return str;
 }
 
-std::string
-Calc::time() const
-{
-  if (mTime.size() == 1) {
-    return mTime[0];
-  }
-
-  std::string str;
-  std::string delim;
-
-  for (tVec::const_iterator it(mTime.begin()), et(mTime.end()); it != et; ++it) {
-    str += delim + *it;
-    delim = " ";
-  }
-  return str;
-}
-
 bool
 Calc::remap(const tHash2Key& h2k,
             tVec& vec)
@@ -108,9 +103,7 @@ Calc::remap(const tHash2Key& h2k,
         std::cout << "Did not find a key for '" << key << "'" << std::endl;
         return false;
       }
-std::cout << "Calc::remap '" << *it << "'" << std::endl; 
       *it = Convert::toStr(jt->second) + it->substr(i);
-std::cout << "Calc::remap '" << jt->first << "' '" << jt->second << "' '" << *it << "'" << std::endl; 
     } 
   }
   return true;
@@ -488,18 +481,18 @@ namespace {
         std::cout << "Failed to remap calculation " << a.calcExpr << " " << a.calcTime << std::endl;
         continue;
       }
-      std::ostringstream oss; // Individual commands since calcs are expressions
-      oss << "UPDATE gauges SET ";
+      MyDB::Stmt s(db);
+      s << "UPDATE gauges SET ";
       if (a.calcType == "flow") {
-        oss << "calcFlow='" << calc.expr() << "', calcFlowTime='" << calc.time();
+        s << "calcFlow='" << calc.expr() << "'";
       } else if (a.calcType == "gauge") {
-        oss << "calcGauge='" << calc.expr() << "', calcGaugeTime='" << calc.time();
+        s << "calcGauge='" << calc.expr() << "'";
       } else {
         std::cerr << "Unsupported calculation type '" << a.calcType << "'" << std::endl;
         continue;
       }
-      oss << "' WHERE gaugeKey=" << a.gaugeKey << ";";
-      db.query(oss.str());
+      s << " WHERE gaugeKey=" << a.gaugeKey << ";";
+      s.query();
     }
     db.endTransaction();
     std::cout << "Saved " << calcs.size() << " calculations" << std::endl;
@@ -640,20 +633,20 @@ namespace {
         continue;
       }
       if (!contents.empty()) {
-        std::ostringstream oss;
-        oss << "INSERT INTO master (";
+        MyDB::Stmt s(db);
+        s << "INSERT INTO master (";
         std::string delim;
         for (tMap::const_iterator jt(contents.begin()), jet(contents.end()); jt != jet; ++jt) {
-          oss << delim << jt->first;
+          s << delim << jt->first;
           delim = ",";
         }
         delim = ") VALUES ('";
         for (tMap::const_iterator jt(contents.begin()), jet(contents.end()); jt != jet; ++jt) {
-          oss << delim << jt->second;
+          s << delim << jt->second;
           delim = "','";
         }
-        oss << "');";
-        db.query(oss.str());
+        s << "');";
+        s.query();
         row.insert(std::make_pair("key", Convert::toStr(db.lastInsertRowid())));
       }
     }
@@ -697,9 +690,9 @@ namespace {
     for (tBook2key::iterator it(book2key.begin()), et(book2key.end()); it != et; ++it) {
       const bool qSoggy(it->first == "Soggy Sneakers");
       const std::string url(qSoggy ? "http://www.wkcc.org/content/soggy-sneakers" : "");
-      std::ostringstream oss;
-      oss << "INSERT INTO GuideBooks (name,url) VALUES('" << it->first << "','" << url << "');";
-      db.query(oss.str());
+      MyDB::Stmt s(db);
+      s << "INSERT INTO GuideBooks (name,url) VALUES('" << it->first << "','" << url << "');";
+      s.query();
       it->second = db.lastInsertRowid();
     }
 
@@ -714,10 +707,10 @@ namespace {
       const std::string page(row.find("PageNumber") == row.end() ? "" : row.find("PageNumber")->second);
       const std::string run(row.find("RunNumber") == row.end() ? "" : row.find("RunNumber")->second);
       const size_t bookKey(book2key[name]);
-      std::ostringstream oss;
-      oss << "INSERT INTO Guides (key,bookKey,pageNumber,runNumber) VALUES("
-          << key << "," << bookKey << ",'" << page << "','" << run << "');";
-      db.query(oss.str());
+      MyDB::Stmt s(db);
+      s << "INSERT INTO Guides (key,bookKey,pageNumber,runNumber) VALUES("
+        << key << "," << bookKey << ",'" << page << "','" << run << "');";
+      s.query();
     }
 
     db.endTransaction();
