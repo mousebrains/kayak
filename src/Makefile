@@ -45,10 +45,11 @@ BINEXE += bin/dbBackup
 
 EXE += bin/key2hash
 EXE += bin/updateLevels
+EXE += bin/updateCalcs
 
 EXE += $(BINEXE) $(CGIEXE)
 
-LIBSRC  = CGI.C HTML.C HTTP.C Tokens.C URL.C Axis.C BitMapCanvas.C Calc.C Canvas.C CommonData.C
+LIBSRC  = CGI.C HTML.C HTTP.C Tokens.C URL.C Axis.C BitMapCanvas.C Canvas.C CommonData.C
 LIBSRC += CommonSource.C CommonURLs.C CommonUnknown.C Convert.C Data.C DataGet.C Display.C
 LIBSRC += DisplayDatabase.C DisplayInfo.C DisplayLevels.C DisplayMainPage.C DisplayPlot.C
 LIBSRC += DisplayTable.C Env.C File.C Gauges.C GuideBook.C JSON.C Levels.C MakePlot.C Master.C
