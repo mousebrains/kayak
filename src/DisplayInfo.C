@@ -1,6 +1,7 @@
 #include "Display.H"
 #include "Master.H"
 #include "Gauges.H"
+#include "Calc.H"
 #include "CGI.H"
 #include "HTML.H"
 #include "HTTP.H"
@@ -12,46 +13,38 @@
 namespace {
   bool maybe(HTML& html, const std::string& str, 
              const std::string& prefix = "", const std::string& suffix = "") {
-    if (!str.empty()) {
-      html << "<li>" << prefix << str << suffix << "</li>\n";
-      return true;
-    } 
-    return false;
+    if (str.empty()) return false;
+    html << "<li>" << prefix << str << suffix << "</li>\n";
+    return true;
   }
 
   bool maybe(HTML& html, const double value, 
              const std::string& prefix = "", const std::string& suffix = "") {
-    if (!isnan(value) && value != 0) {
-      html << "<li>" << prefix << value << suffix << "</li>\n";
-      return true;
-    }
-    return false;
+    if (isnan(value) || value == 0) return false;
+    html << "<li>" << prefix << value << suffix << "</li>\n";
+    return true;
   }
 
   bool maybe(HTML& html, const double val0, const double val1,
              const std::string& prefix = "", const std::string& suffix = "") {
-    if ((!isnan(val0) && val0 != 0) || (!isnan(val1) && val1 != 0)) {
-      html << "<li>" << prefix;
-      if (val0 != 0 && val1 != 0) {
-        html << val0 << " to " << val1;
-      } else {
-        html << (val0 != 0 ? val0 : val1);
-      }
-      html << suffix << "</li>";
-      return true;
+    if ((isnan(val0) || val0 == 0) && (isnan(val1) || val1 == 0)) return false;
+    html << "<li>" << prefix;
+    if (val0 != 0 && val1 != 0) {
+      html << val0 << " to " << val1;
+    } else {
+      html << (val0 != 0 ? val0 : val1);
     }
-    return false;
+    html << suffix << "</li>";
+    return true;
   }
 
   bool maybe(HTML& html, const time_t& t, 
              const std::string& prefix = "", const std::string& suffix = "") {
-    if (t != 0) {
-      html << "<li>" << prefix 
-           << Convert::toStr(t, "%Y-%m-%d")
-           << suffix << "</li>\n";
-      return true;
-    } 
-    return false;
+    if (t == 0) return false;
+    html << "<li>" << prefix 
+         << Convert::toStr(t, "%Y-%m-%d")
+         << suffix << "</li>\n";
+    return true;
   }
 
   bool gmaybe(HTML& html, const double v0, const double v1,
@@ -62,18 +55,34 @@ namespace {
   bool maybeLatLon(HTML& html, const double lat, const double lon, 
                    const std::string& prefix = "") { 
     const std::string wx(html.weatherURL(lat, lon));
-    if (!wx.empty()) {
-      const std::string map(html.mapURL(lat, lon));
-      html << "<li>" << prefix << "Lat/Lon: "  
-           << "<a href='" << map << "'>"
-           << Convert::toLatLon(lat) << ", " 
-           << Convert::toLatLon(lon) 
-           << "</a>"
-           << "<a href='" << wx << "'>Weather Forecast</a></li>\n";
-      return true;
-    }
-    return false;
+    if (wx.empty()) return false;
+    const std::string map(html.mapURL(lat, lon));
+    html << "<li>" << prefix << "Lat/Lon: "  
+         << "<a href='" << map << "'>"
+         << Convert::toLatLon(lat) << ", " 
+         << Convert::toLatLon(lon) 
+         << "</a>"
+         << "<a href='" << wx << "'>Weather Forecast</a></li>\n";
+    return true;
   }
+
+  bool maybeCalc(HTML& html, const std::string& str, 
+                 const std::string& prefix="", const std::string& suffix="") {
+    if (str.empty()) return false;
+    Calc calc(0, str, Data::FLOW);
+    html << "<li>" << prefix << (prefix.empty() ? "" : " ");
+    for (Calc::size_type i(0), e(calc.size()); i < e; ++i) {
+      if (calc[i].qRef()) {
+        html << "<a href='?o=i&amp;h=" << Master::mkHash(calc[i].key()) << "'>"
+             << calc[i].str()
+             << "</a>";
+      } else {
+        html << calc[i].str();
+      }
+    }
+    html << (suffix.empty() ? "" : " ") << suffix << "</li>\n";
+    return true;
+  } // maybeCalc
 } // anonymouse
 
 int
@@ -205,8 +214,8 @@ Display::info()
     // maybe(html, ginfo.maxGauge, "Gauge Maximum Height: ", " Feet");
     // maybe(html, ginfo.minTemperature, "Gauge Minimum Temperature: ", " F");
     // maybe(html, ginfo.maxTemperature, "Gauge Maximum Temperature: ", " F");
-    maybe(html, ginfo.calcFlow, "Gauge Flow Calculation: ");
-    maybe(html, ginfo.calcGauge, "Gauge Gauge Height Calculation: ");
+    maybeCalc(html, ginfo.calcFlow, "Gauge Flow Calculation: ");
+    maybeCalc(html, ginfo.calcGauge, "Gauge Height Calculation: ");
   }
 
   maybe(html, info.sortKey, "Sort Key: ");

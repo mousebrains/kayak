@@ -6,16 +6,16 @@
 
 Calc::Calc(const int gaugeKey)
   : mGaugeKey(gaugeKey)
-  , mDataKey(-1)
+  , mType(Data::LASTTYPE)
 {
   MyDB::Stmt s(mDB);
   s << "SELECT calcFlow,calcGauge FROM gauges WHERE gaugeKey=" << gaugeKey << ";";
   MyDB::Stmt::tStrings result(s.queryStrings());
   const MyDB::Stmt::tStrings::size_type n(result.size());
-  if (n > 0 && !result[0].empty()) {
-    load(result[0], Data::FLOW);
-  } else if (n > 1 && !result[1].empty()) {
-    load(result[0], Data::GAUGE);
+  if (n > 0 && !result[0].empty()) { // A flow calculation
+    split(result[0], Data::FLOW);
+  } else if (n > 1 && !result[1].empty()) { // A gauge calculation
+    split(result[0], Data::GAUGE);
   }
 }
 
@@ -23,16 +23,18 @@ Calc::Calc(const int gaugeKey,
            const std::string& expr,
            const Data::Type type)
   : mGaugeKey(gaugeKey)
-  , mDataKey(-1)
+  , mType(type)
 {
-  load(expr, type);
+  split(expr, type);
 }
 
-Calc::tStrings
-Calc::split(const std::string& expr)
+void
+Calc::split(const std::string& expr,
+            const Data::Type type)
 {
+  mType = type;
+
   const Tokens a(expr, " \t\n"); // Split on whitespace
-  tStrings toks;
 
   for (Tokens::const_iterator it(a.begin()), et(a.end()); it != et; ++it) {
     const std::string uniOps("(),*/+-"); // Unary operators
@@ -40,138 +42,103 @@ Calc::split(const std::string& expr)
     while (!str.empty()) {
       const std::string::size_type j(str.find_first_of(uniOps));
       if (j == str.npos) { // No ops left
-        toks.push_back(str);
+        mExpr.push_back(Field(str));
         break;
       }
       if (j != 0) { // Not first char, so pull off what is in front
-        toks.push_back(str.substr(0, j));
+        mExpr.push_back(Field(str.substr(0, j)));
       }
-      toks.push_back(str.substr(j, 1));
-      str = str.substr(j+1); // Drop past operator
+      mExpr.push_back(str.substr(j, 1)); // Push the unary operator
+      str = str.substr(j+1); // Drop past the operator
     } // while
   } // for
 
-  return toks;
-}
-
-void
-Calc::load(const std::string& expr,
-           const Data::Type type)
-{
-  mType = type;
-  tStrings toks(split(expr));
-
-  for (tStrings::iterator it(toks.begin()), et(toks.end()); it != et; ++it) {
-    const std::string::size_type i(it->find("::"));
-    if (i == it->npos) {
-      mExpr += *it;
-      continue; 
+  for (size_type i(0), e(mExpr.size()); i < e; ++i) { // Find reference fields a::b::c
+    if (mExpr[i].qRef()) {
+      mTime.insert(std::make_pair(mExpr[i].key(), mExpr[i].type()));
     }
-    const std::string::size_type j(it->rfind("::"));
-    if (i == j) {
-      mExpr += *it;
-      continue; 
-    }
-    const std::string key(it->substr(0, i));
-    const std::string type(it->substr(j+2));
-    mExpr += buildQuery("AVG(obs)", key, type);
-    mTime.push_back(buildQuery("date", key, type));
-  } // for
+  }
 } // Calc::load
 
-std::string
-Calc::buildQuery(const std::string& name,
-                 const std::string& gaugeKey,
-                 const std::string& type) const
+void
+Calc::update(Data& data,
+             time_t t0, 
+             time_t dt)
 {
-  std::ostringstream oss;
-  oss << "(SELECT " << name 
-      << " FROM data WHERE dataKey in (SELECT dataKey FROM dataSource WHERE gaugeKey="
-      << gaugeKey
-      << ") AND type="
-      << (int) Data::decodeType(type)
-      << " GROUP BY date ORDER BY date DESC LIMIT 1)";
-  return oss.str();
+  t0 = t0 <= 0 ? (time(0) - 3 * 86400) : t0; // As of now
+  dt = dt <= 0 ? 7200 : dt; // +- 2 hours
+
+  int nBindings(0);
+  MyDB::Stmt s(mDB); // Time query
+  s << "SELECT ";
+  { // Build observation query
+    for (tFields::size_type i(0), e(mExpr.size()); i < e; ++i) {
+      const Field& f(mExpr[i]);
+      if (f.qRef()) {
+        nBindings += mkQuery(s, "AVG(obs)", f.key(), f.type(), t0, dt);
+      } else {
+        s << f.str();
+      }
+    }
+  }
+  s << ",";
+  { // Build query for time
+    std::string delim;
+    s << "(SELECT MAX(";
+    for (tTimes::const_iterator it(mTime.begin()), et(mTime.end()); it != et; ++it) {
+      s << delim;
+      nBindings += mkQuery(s, "date", it->first, it->second, t0, dt);
+      delim = ",";
+    }
+    s << "))";
+  }
+  s << ";";
+
+  const std::string& name(mkName());
+  int rc;
+
+  while ((rc = s.step()) == SQLITE_ROW) {
+    const double v(s.getDouble());
+    const time_t t(s.getInt());
+    data.add(name, t, v, mType, std::string());
+  }
+
+  if (rc != SQLITE_DONE) {
+    s.errorCheck(rc, std::string(__FILE__) + " at line " + Convert::toStr(__LINE__));
+  }
 }
 
 int
-Calc::dataKey()
+Calc::mkQuery(MyDB::Stmt& s,
+              const std::string& field,
+              const int gaugeKey,
+              const Data::Type type,
+              const time_t t0,
+              const time_t dt) const
 {
-  if (mDataKey > 0) return mDataKey;
+  s << "(SELECT " << field
+    << " FROM data WHERE dataKey in (SELECT dataKey FROM dataSource WHERE gaugeKey=" << gaugeKey
+    << ") AND type=" << (int) type
+    << " AND abs(date-" << t0 << ")<=" << dt
+    << " GROUP BY abs(date-" << t0 << ") ORDER BY abs(date-" << t0 << ") LIMIT 1)";
+  return 3; // Number of times t0 needs to bound to 
+}
 
-  { // Get an existing dataKey
-    MyDB::Stmt s(mDB);
-    s << "SELECT dataKey FROM dataSource WHERE gaugeKey=" << mGaugeKey << ";";
-    MyDB::Stmt::tInts result(s.queryInts());
-    if (!result.empty()) {
-      mDataKey = result[0];
-      return result[0];
-    }
+const std::string&
+Calc::mkName()
+{
+  if (mName.empty()) {
+    mName = "calc." + Convert::toStr(mGaugeKey);
   }
-  MyDB::Stmt s(mDB);
-  s << "INSERT INTO dataSource (name,gaugeKey) VALUES('calcFor" 
-    << mGaugeKey << "'," << mGaugeKey << ");";
-  s.query();
-  mDataKey = mDB.lastInsertRowid();
-  return mDataKey;
-}
-
-time_t
-Calc::time()
-{
-  MyDB::Stmt s(mDB);
-  s << "SELECT MIN(";
-  for (tStrings::size_type i(0), e(mTime.size()); i < e; ++i) {
-    s << (i != 0 ? "," : "") << mTime[i];
-  }
-  s << ");";
-  MyDB::Stmt::tInts a(s.queryInts());
-  return (time_t) (a.empty() ? 0 : a[0]);
-}
-
-double
-Calc::calc()
-{
-  MyDB::Stmt s(mDB);
-  s << "SELECT AVG(" << mExpr << ");";
-  MyDB::Stmt::tDoubles a(s.queryDoubles());
-  return a.empty() ? NAN : a[0];
-}
-
-void
-Calc::update()
-{
-  if ((mType != Data::FLOW) && (mType != Data::GAUGE)) return;
-  const time_t t(time());
-  if (t <= 0) return;
-  const double x(calc());
-  if (isnan(x)) return;
-  const int key(dataKey());
-  if (key <= 0) return;
-
-  MyDB::Stmt s(mDB);
-  s << "INSERT OR REPLACE INTO data (dataKey,type,date,urlKey,obs) VALUES(" 
-    << key
-    << "," << (int) mType
-    << "," << t
-    << ",0"
-    << "," << x
-    << ");";
-  s.query();
+  return mName;
 }
 
 std::ostream&
 operator << (std::ostream& os,
-             Calc& calc)
+             const Calc& calc)
 {
-  os << "Calc gaugeKey " << calc.mGaugeKey << " type " << calc.mType 
-     << " dataKey " << calc.dataKey()
-     << " time " << calc.time()
-     << " calc " << calc.calc()
-     << std::endl;
-  // os << calc.mExpr << std::endl;
-  // for (Calc::tStrings::size_type i(0), e(calc.mTime.size()); i < e; ++i) {
-    // os << "time[" << i << "] = '" << calc.mTime[i] << "'" << std::endl;
-  // }
+  for (Calc::size_type i(0), e(calc.size()); i < e; ++i) {
+    os << calc[i].str();
+  }
   return os;
 }

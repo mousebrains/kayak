@@ -10,103 +10,43 @@
 #include "Tokens.H"
 #include "Gauges.H"
 #include "Data.H"
+#include "Calc.H"
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
 #include <sstream>
 
-class Calc {
-public:
+namespace {
+  void rewriteCalc(Calc& calc) {
+    typedef std::map<std::string, std::string> tf2f;
+    const tf2f f2f({
+          {"greatest", "max"}, 
+          {"least", "min"}
+          });
+
+    for (Calc::size_type i(0), e(calc.size()); i < e; ++i) {
+      const std::string field(Convert::tolower(calc[i].str()));
+      tf2f::const_iterator it(f2f.find(field));
+      if (it != tf2f.end()) {
+        calc[i] = Calc::Field(it->second);
+      }
+    }
+  } // rewriteCalc
+
   typedef std::map<std::string, int> tHash2Key;
-private:
-  typedef std::vector<std::string> tVec;
-  tVec mExpr;
 
-  tVec split(const std::string& a);
-  bool remap(const tHash2Key& hash2key, tVec& a);
-  std::string rewrite(std::string field) const; // Rewrite greatest to max ...
-public:
-  Calc(const std::string& expr, const std::string& time);
-
-  bool remap(const tHash2Key& h2k) {return remap(h2k, mExpr);}
-
-  std::string expr() const;
-};
-
-
-Calc::Calc(const std::string& expr,
-           const std::string& time)
-  : mExpr(split(expr))
-{
-}
-
-std::string
-Calc::rewrite(std::string field) const
-{
-  typedef std::map<std::string, std::string> tf2f;
-  const tf2f f2f({
-        {"greatest", "max"}, 
-        {"least", "min"}
-        });
-
-  tf2f::const_iterator it(f2f.find(Convert::tolower(field)));
-
-  return it == f2f.end() ? field : it->second;
-}
-
-Calc::tVec
-Calc::split(const std::string& expr)
-{
-  const std::string uniOps("(),+-*/");
-  const Tokens toks(expr, " \t\n"); // whitespace split
-  tVec a;
-
-  for (Tokens::const_iterator it(toks.begin()), et(toks.end()); it != et; ++it) {
-    std::string str(*it);
-    while (!str.empty()) {
-      const std::string::size_type j(str.find_first_of(uniOps));
-      if (j == str.npos) { // No ops left
-        a.push_back(rewrite(str));
-        str.clear();
-        break;
+  bool remapCalc(Calc& calc, const tHash2Key& hash2key) {
+    for (Calc::size_type i(0), e(calc.size()); i < e; ++i) {
+      if (calc[i].qRef()) { // A reference 
+        const std::string key(calc[i].keyString());
+        tHash2Key::const_iterator it(hash2key.find(key));
+        if (it == hash2key.end()) return false;
+        const std::string body(calc[i].comment());
+        const Data::Type type(calc[i].type());
+        calc[i].encode(it->second, body, type);
       }
-      if (j != 0) { // Not first, so pull off what is in front
-        a.push_back(rewrite(str.substr(0, j)));
-      }
-      a.push_back(str.substr(j,1)); // push operator
-      str = str.substr(j+1); // drop past operator
-    } // while
-  } // for
-  return a;
-} // split
-
-std::string
-Calc::expr() const
-{
-  std::string str;
-  for (tVec::const_iterator it(mExpr.begin()), et(mExpr.end()); it != et; ++it) {
-    str += *it;
-  }
-  return str;
-}
-
-bool
-Calc::remap(const tHash2Key& h2k,
-            tVec& vec)
-{
-  for (tVec::iterator it(vec.begin()), et(vec.end()); it != et; ++it) {
-    std::string::size_type i(it->find("::"));
-    if (i != it->npos) { // Found it, so strip off key and remap
-      const std::string key(it->substr(0,i));
-      tHash2Key::const_iterator jt(h2k.find(key));
-      if (jt == h2k.end()) {
-        std::cout << "Did not find a key for '" << key << "'" << std::endl;
-        return false;
-      }
-      *it = Convert::toStr(jt->second) + it->substr(i);
-    } 
-  }
-  return true;
+    }
+  } // remapCalc
 }
 
 namespace {
@@ -451,7 +391,7 @@ namespace {
     // Get gaugeKey's from what was just inserted
 
     MyDB::tInts keys(db.queryInts("SELECT gaugeKey FROM gauges;"));
-    Calc::tHash2Key hash2gauge;
+    tHash2Key hash2gauge;
 
     // insert into dataSource table with gaugeKey 
 
@@ -476,17 +416,17 @@ namespace {
 
     for (tSet::const_iterator it(calcs.begin()), et(calcs.end()); it != et; ++it) {
       const GaugeInfo& a(info.find(*it)->second);
-      Calc calc(a.calcExpr, a.calcTime);
-      if (!calc.remap(hash2gauge)) {
-        std::cout << "Failed to remap calculation " << a.calcExpr << " " << a.calcTime << std::endl;
+      Calc calc(0, a.calcExpr, Data::FLOW);
+      if (!remapCalc(calc, hash2gauge)) {
+        std::cout << "Failed to remap calculation " << a.calcExpr << std::endl;
         continue;
       }
       MyDB::Stmt s(db);
       s << "UPDATE gauges SET ";
       if (a.calcType == "flow") {
-        s << "calcFlow='" << calc.expr() << "'";
+        s << "calcFlow='" << calc << "'";
       } else if (a.calcType == "gauge") {
-        s << "calcGauge='" << calc.expr() << "'";
+        s << "calcGauge='" << calc << "'";
       } else {
         std::cerr << "Unsupported calculation type '" << a.calcType << "'" << std::endl;
         continue;
