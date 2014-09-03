@@ -105,7 +105,7 @@ CREATE TABLE gauges (gaugeKey INTEGER PRIMARY KEY AUTOINCREMENT, -- key used in 
                      minTemperature DOUBLE DEFAULT 32, -- minimum allowed gauge reading in F
                      maxTemperature DOUBLE DEFAULT 120, -- maximum allowed gauge reading in F
                      calcFlow TEXT, -- SQL to calculate a flow
-                     calcGauge TEXT, -- SQL to calculate a gauge
+                     calcGauge TEXT -- SQL to calculate a gauge
                      );
 CREATE INDEX gaugeIndex ON gauges(name);
 
