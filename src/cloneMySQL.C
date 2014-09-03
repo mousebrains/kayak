@@ -27,7 +27,7 @@ namespace {
     for (Calc::size_type i(0), e(calc.size()); i < e; ++i) {
       const std::string field(Convert::tolower(calc[i].str()));
       tf2f::const_iterator it(f2f.find(field));
-      if (it != tf2f.end()) {
+      if (it != f2f.end()) {
         calc[i] = Calc::Field(it->second);
       }
     }
@@ -46,6 +46,7 @@ namespace {
         calc[i].encode(it->second, body, type);
       }
     }
+    return true;
   } // remapCalc
 }
 
@@ -421,6 +422,7 @@ namespace {
         std::cout << "Failed to remap calculation " << a.calcExpr << std::endl;
         continue;
       }
+      rewriteCalc(calc); // Change various function names
       MyDB::Stmt s(db);
       s << "UPDATE gauges SET ";
       if (a.calcType == "flow") {
