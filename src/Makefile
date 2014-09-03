@@ -1,3 +1,5 @@
+-include Makefile.local # Local variable overrides
+
 PATHS_USER_ROOT = /home/tpw
 PATHS_PREFIX = $(PATHS_USER_ROOT)/kayaking2
 PATHS_WEB_ROOT = $(PATHS_USER_ROOT)/public_html/kayaking2

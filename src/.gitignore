@@ -2,3 +2,6 @@
 bin
 obj
 old
+
+# Ignore local overrides ot Makefile
+Makefile.local
