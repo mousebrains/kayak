@@ -1,7 +1,12 @@
-BINDIR = /home/tpw/kayaking2/bin
-CGIDIR = /home/tpw/public_html/kayaking2/cgi
-LOCALLIB = /home/tpw/local/lib
-LOCALINC = /home/tpw/local/include
+PATHS_USER_ROOT = /home/tpw
+PATHS_PREFIX = $(PATHS_USER_ROOT)/kayaking2
+PATHS_WEB_ROOT = $(PATHS_USER_ROOT)/public_html/kayaking2
+PATHS_LOCAL_ROOT = $(PATHS_USER_ROOT)/local
+
+BINDIR = $(PATHS_USER_ROOT)/bin
+CGIDIR = $(PATHS_WEB_ROOT)/cgi
+LOCALLIB = $(PATHS_LOCAL_ROOT)/lib
+LOCALINC = $(PATHS_LOCAL_ROOT)/include
 
 CXXSTD = -std=c++0x
 
@@ -87,6 +92,10 @@ obj/PNGCanvas.o: PNGCanvas.C
 obj/MyDB.o: MyDB.C
 	@ mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(SQLITEFLAGS) -MD -MT $@ -c -o $@ $<
+
+obj/Paths.o: Paths.C
+	@ mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(SQLITEFLAGS) -D PATHS_USER_ROOT='"$(PATHS_USER_ROOT)"' -D PATHS_PREFIX='"$(PATHS_PREFIX)"' -MD -MT $@ -c -o $@ $<
 
 obj/%.o: %.C
 	@ mkdir -p $(dir $@)

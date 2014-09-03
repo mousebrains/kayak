@@ -1,8 +1,16 @@
 #include "Paths.H"
 
+#ifndef PATHS_USER_ROOT
+#define PATHS_USER_ROOT "/home/tpw"
+#endif // PATHS_USER_ROOT
+
+#ifndef PATHS_PREFIX
+#define PATHS_PREFIX PATHS_USER_ROOT "/kayaking2"
+#endif // PATHS_PREFIX
+
 namespace {
-  std::string userRoot() {return "/home/tpw";}
-  std::string root() {return userRoot() + "/kayaking2";}
+  std::string userRoot() {return std::string(PATHS_USER_ROOT);}
+  std::string root() {return std::string(PATHS_PREFIX);}
   std::string files() {return root() + "/files";}
 
   std::string templates() {return root() + "/templates";}
