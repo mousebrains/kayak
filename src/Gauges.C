@@ -44,6 +44,10 @@ namespace {
     }
     return oss.str();
   }
+
+  bool withinLimits(const double a, const double lLim, const double uLim) {
+    return !isnan(a) && (a >= lLim) && (a <= uLim);
+  }
 } // anonymous
 
 Gauges::Gauges()
@@ -103,36 +107,43 @@ Gauges::updateDouble(const int key,
   }
 }
 
-const Gauges::Limits&
-Gauges::limits(const int key)
+bool
+Gauges::chkLimits(const int key,
+                  const Data::Type type,
+                  const double val)
 {
-  if (key <= 0) {
-    static const Limits l;
-    return l;
-  }
+  if ((key <= 0) | isnan(val)) return false;
 
   tLimits::const_iterator it(mLimits.find(key));
-  if (it != mLimits.end()) {
-    return it->second;
-  }
 
-  std::stringstream oss;
-  oss << "SELECT " 
+  if (it == mLimits.end()) {
+    MyDB::Stmt s(mDB);
+    s << "SELECT " 
       << fields.minFlow() << "," << fields.maxFlow()
       << "," << fields.minGauge() << "," << fields.maxGauge()
       << "," << fields.minTemperature() << "," << fields.maxTemperature()
       << " FROM " << fields.table() 
       << " WHERE " << fields.key() << "=" << key << ";";
+    MyDB::tDoubles items(s.queryDoubles());
 
-  MyDB::tDoubles items(mDB.queryDoubles(oss.str()));
-
-  if (items.size() >= 6) {
-    Limits l(items[0], items[1], items[2], items[3], items[4], items[5]);
-    it = mLimits.insert(std::make_pair(key, l)).first;
-  } else {
-    it = mLimits.insert(std::make_pair(key, Limits())).first;
+    if (items.size() >= 6) {
+      Limits l(items[0], items[1], items[2], items[3], items[4], items[5]);
+      it = mLimits.insert(std::make_pair(key, l)).first;
+    } else {
+      it = mLimits.insert(std::make_pair(key, Limits())).first;
+    }
   }
-  return it->second;
+
+  const Limits& lim(it->second);
+
+  switch (type) {
+    case Data::INFLOW:
+    case Data::FLOW: return (val >= lim.minFlow) && (val <= lim.maxFlow);
+    case Data::GAUGE: return (val >= lim.minGauge) && (val <= lim.maxGauge);
+    case Data::TEMPERATURE: return (val >= lim.minTemperature) && (val <= lim.maxTemperature);
+    case Data::LASTTYPE: return false;
+  }
+  return false;
 }
 
 Gauges::PlotInfo

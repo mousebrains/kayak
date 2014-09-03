@@ -93,24 +93,7 @@ Data::dump()
     const int key(mSource.name2key(datum.name, datum.t));
     const int url(mURLs.name2key(datum.url, datum.t));
 
-    bool qGood(false);
-    const Gauges::Limits& limits(gauges.limits(key));
-    switch (datum.tNum) {
-      case FLOW:
-      case INFLOW: 
-        qGood = limits.chkFlow(datum.value); 
-        break;
-      case GAUGE: 
-        qGood = limits.chkGauge(datum.value); 
-        break;
-      case TEMPERATURE: 
-        qGood = limits.chkTemperature(datum.value); 
-        break;
-      case LASTTYPE: 
-        break;
-    }
-
-    if (qGood) {
+    if (gauges.chkLimits(key, datum.tNum, datum.value)) {
       s.bind(key);
       s.bind(datum.tNum);
       s.bind(datum.t);

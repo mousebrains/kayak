@@ -1,7 +1,7 @@
 #ifndef INC_Gauges_H_
 #define INC_Gauges_H_
 
-#include "Table.H"
+#include "Data.H"
 #include <iosfwd>
 
 class Gauges : public Table {
@@ -17,10 +17,6 @@ public:
            const double mint, const double maxt)
       : minFlow(minf), maxFlow(maxf), minGauge(ming), maxGauge(maxg)
       , minTemperature(mint), maxTemperature(maxt) {}
-
-    bool chkFlow(const double a) const {return a >= minFlow && a <= maxFlow;}
-    bool chkGauge(const double a) const {return a >= minGauge && a <= maxGauge;}
-    bool chkTemperature(const double a) const {return a >= minTemperature && a <= maxTemperature;}
   };
 private:
   void updateString(const int key, const std::string& value, const std::string& name);
@@ -42,7 +38,7 @@ public:
   void elevation(const int key, const double a);
   void drainageArea(const int key, const double a);
 
-  const Limits& limits(const int key);
+  bool chkLimits(const int key, const Data::Type type, const double val);
 
   struct PlotInfo {
     std::string name;
