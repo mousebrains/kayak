@@ -100,7 +100,9 @@ Calc::update(Data& data,
   while ((rc = s.step()) == SQLITE_ROW) {
     const double v(s.getDouble());
     const time_t t(s.getInt());
-    data.add(name, t, v, mType, std::string());
+    if (t > 0 && !isnan(v)) {
+      data.add(name, t, v, mType, std::string());
+    }
   }
 
   if (rc != SQLITE_DONE) {
