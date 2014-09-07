@@ -15,7 +15,8 @@ namespace {
     const char *type() const {return "type";}
   } fields;
 
-  std::string whereKeysTime(const MyDB::tInts keys, const time_t tMin=0, const time_t tMax=0) {
+  std::string whereKeysTime(const MyDB::Stmt::tInts keys, 
+                            const time_t tMin=0, const time_t tMax=0) {
     if (keys.empty() && (tMin <= 0) && (tMax <= 0)) {
       return std::string();
     }
@@ -118,11 +119,11 @@ Data::timeKeys(const int key,
   s << "SELECT " << fields.time() << ",rowid FROM " << fields.table()
     << " WHERE " << fields.key() << "=" << key
     << " AND " << fields.type() << "=" << (int) t << ";";
-  MyDB::tInts info(s.queryInts());
+  MyDB::Stmt::tInts info(s.queryInts());
 
   tTimeKeys tk;
 
-  for (MyDB::tInts::const_iterator it(info.begin()), et(info.end()); it != et; ++it) {
+  for (MyDB::Stmt::tInts::const_iterator it(info.begin()), et(info.end()); it != et; ++it) {
     const time_t t(*it);
     const size_t r(*(++it));
     tk.insert(std::make_pair(t, r));
@@ -132,7 +133,7 @@ Data::timeKeys(const int key,
 }
 
 Data::tObs
-Data::observations(const MyDB::tInts& keys, 
+Data::observations(const MyDB::Stmt::tInts& keys, 
                    const Type t, 
                    const time_t tMin,
                    const time_t tMax)
@@ -174,8 +175,8 @@ Data::observations(const MyDB::tInts& keys,
   return obs;
 }
 
-MyDB::tInts
-Data::types(const MyDB::tInts& keys) // Which types are know for these source keys
+MyDB::Stmt::tInts
+Data::types(const MyDB::Stmt::tInts& keys) // Which types are know for these source keys
 {
   MyDB::Stmt s(mDB);
   s << "SELECT DISTINCT " << fields.type() << " FROM "
@@ -183,7 +184,7 @@ Data::types(const MyDB::tInts& keys) // Which types are know for these source ke
     << whereKeysTime(keys)
     << ";";
 
-  MyDB::tInts result(s.queryInts());
+  MyDB::Stmt::tInts result(s.queryInts());
 
   std::sort(result.begin(), result.end());
 
@@ -211,7 +212,7 @@ Data::AnObs::operator <(const AnObs& rhs) const
 }
 
 Data::tAnObs
-Data::observations(const MyDB::tInts& keys, 
+Data::observations(const MyDB::Stmt::tInts& keys, 
                    const time_t tMin, 
                    const time_t tMax)
 {
@@ -265,12 +266,11 @@ Data::observations(const MyDB::tInts& keys,
 }
 
 Data::tRawObs
-Data::rawObservations(const MyDB::tInts& keys, 
+Data::rawObservations(const MyDB::Stmt::tInts& keys, 
                       const time_t tMin,
                       const time_t tMax)
 {
   MyDB::Stmt s(mDB);
-
   s << "SELECT " 
     << fields.key()
     << "," << fields.time()

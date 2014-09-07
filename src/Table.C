@@ -1,8 +1,6 @@
 #include "Table.H"
 #include "Fields.H"
-#include <sstream>
 #include <memory>
-#include <iostream>
 
 Table::Table(const Fields& fields)
   : mqModified(false)
@@ -41,7 +39,7 @@ Table::name2key(const std::string& name,
   s << "SELECT " << mFields.key() << "," << mFields.time() 
     << " FROM " << mFields.table() 
     << " WHERE " << mFields.name() << "='" << name << "';";
-  MyDB::tInts info(s.queryInts());
+  MyDB::Stmt::tInts info(s.queryInts());
 
   if (info.empty()) { // Not set, so insert
     if (!qInsert) {
@@ -55,7 +53,7 @@ Table::name2key(const std::string& name,
        << ") VALUES('" << name << "'," << t << ");";
     s1.query();
 
-    info = mDB.queryInts(s.str()); // Get key again
+    info = MyDB::Stmt(mDB, s.str()).queryInts(); // Get key again
   }
 
   struct Info item;
@@ -83,11 +81,11 @@ Table::key2name(const int key)
     return it->second;
   }
 
-  std::ostringstream oss;
-  oss << "SELECT " << mFields.name() << "," << mFields.time()
-      << " FROM " << mFields.table()
-      << " WHERE " << mFields.key() << "=" << key << ";";
-  MyDB::tStringInt info(mDB.queryStringInt(oss.str()));
+  MyDB::Stmt s(mDB);
+  s << "SELECT " << mFields.name() << "," << mFields.time()
+    << " FROM " << mFields.table()
+    << " WHERE " << mFields.key() << "=" << key << ";";
+  MyDB::Stmt::tStringInt info(s.queryStringInt());
      
   if (info.empty()) { // Does not exist
     return std::string();
@@ -107,13 +105,13 @@ Table::key2name(const int key)
 Table::tNameKey
 Table::allNameKeys()
 {
-  std::ostringstream oss;
-  oss << "SELECT " << mFields.name() << "," << mFields.key()
-      << " FROM " << mFields.table() << ";";
-  MyDB::tStringInt info(mDB.queryStringInt(oss.str()));
+  MyDB::Stmt s(mDB);
+  s << "SELECT " << mFields.name() << "," << mFields.key()
+    << " FROM " << mFields.table() << ";";
+  MyDB::Stmt::tStringInt info(s.queryStringInt());
   tNameKey name2key;
 
-  for (MyDB::tStringInt::const_iterator it(info.begin()), et(info.end()); it != et; ++it) {
+  for (MyDB::Stmt::tStringInt::const_iterator it(info.begin()), et(info.end()); it != et; ++it) {
     name2key.insert(std::make_pair(it->first, it->second));
   }
   return name2key;

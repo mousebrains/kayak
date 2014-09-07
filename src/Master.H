@@ -15,8 +15,8 @@ public:
 
   MyDB& db() {return mDB;}
 
-  MyDB::tInts stateKeysWithGauges(const std::string& state);
-  MyDB::tInts keysWithGauges(const MyDB::tInts& keys);
+  MyDB::Stmt::tInts stateKeysWithGauges(const std::string& state);
+  MyDB::Stmt::tInts keysWithGauges(const MyDB::Stmt::tInts& keys);
   
   typedef std::set<std::string> tSet;
   tSet allStates();

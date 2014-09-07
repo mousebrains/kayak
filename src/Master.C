@@ -17,11 +17,11 @@ Master::allStates()
 {
   MyDB::Stmt s(mDB);
   s << "SELECT DISTINCT " << fields.state() << " FROM " << fields.table() << ";";
-  MyDB::tStrings result(s.queryStrings());
+  MyDB::Stmt::tStrings result(s.queryStrings());
 
   tSet a;
 
-  for (MyDB::tStrings::const_iterator it(result.begin()), et(result.end()); it != et; ++it) {
+  for (MyDB::Stmt::tStrings::const_iterator it(result.begin()), et(result.end()); it != et; ++it) {
     const Tokens toks(*it);
     a.insert(toks.begin(), toks.end());
   }
@@ -33,7 +33,7 @@ Master::qModifiedSince(const time_t t)
 {
   MyDB::Stmt s(mDB);
   s << "SELECT max(" << fields.modified() << ") FROM " << fields.table() << ";";
-  MyDB::tInts result(s.queryInts());
+  MyDB::Stmt::tInts result(s.queryInts());
 
   return result.empty() ? true : ((t-60) <= (time_t) result[0]);
 }
@@ -44,7 +44,7 @@ Master::gaugeKey(const size_t key)
   MyDB::Stmt s(mDB);
   s << "SELECT " << fields.gaugeKey() << " FROM " << fields.table()
     << " WHERE " << fields.key() << "=" << key << ";";
-  MyDB::tInts result(s.queryInts());
+  MyDB::Stmt::tInts result(s.queryInts());
   return (result.empty() || (result[0] < 0)) ? 0 : result[0];
 }
 
@@ -266,7 +266,7 @@ Master::getAll()
   return getLike(oss.str());
 }
 
-MyDB::tInts
+MyDB::Stmt::tInts
 Master::stateKeysWithGauges(const std::string& state)
 {
   MyDB::Stmt s(mDB);
@@ -278,8 +278,8 @@ Master::stateKeysWithGauges(const std::string& state)
   return s.queryInts();
 }
 
-MyDB::tInts
-Master::keysWithGauges(const MyDB::tInts& keys)
+MyDB::Stmt::tInts
+Master::keysWithGauges(const MyDB::Stmt::tInts& keys)
 {
   MyDB::Stmt s(mDB);
   s << "SELECT " << fields.key() 

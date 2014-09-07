@@ -54,7 +54,7 @@ private:
 public:
   Levels();
   explicit Levels(const std::string& state);
-  explicit Levels(const MyDB::tInts& keys);
+  explicit Levels(const MyDB::Stmt::tInts& keys);
 
   void update();
 

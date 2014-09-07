@@ -164,7 +164,7 @@ Display::levels()
     return process(Levels(state));
   }
   const Tokens tokens(cgi.get("h", std::string()));
-  MyDB::tInts keys;
+  MyDB::Stmt::tInts keys;
   for (Tokens::const_iterator it(tokens.begin()), et(tokens.end()); it != et; ++it) {
     keys.push_back(Convert::strTo<int>(*it));
   }

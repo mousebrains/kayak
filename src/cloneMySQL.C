@@ -391,7 +391,7 @@ namespace {
 
     // Get gaugeKey's from what was just inserted
 
-    MyDB::tInts keys(db.queryInts("SELECT gaugeKey FROM gauges;"));
+    MyDB::Stmt::tInts keys(MyDB::Stmt(db, "SELECT gaugeKey FROM gauges;").queryInts());
     tHash2Key hash2gauge;
 
     // insert into dataSource table with gaugeKey 
@@ -666,7 +666,9 @@ namespace {
        if ((row.find("parser") != row.end()) && (row.find("URL") != row.end())) {
          const std::string& url(row.find("URL")->second);
          const std::string& parser(row.find("parser")->second);
-         db.query("INSERT INTO dataURLs (url,parser) VALUES('" + url + "','" + parser + "');");
+         MyDB::Stmt s(db);
+         s << "INSERT INTO dataURLs (url,parser) VALUES('" << url << "','" << parser << "');";
+         s.query();
       }
     }
   }

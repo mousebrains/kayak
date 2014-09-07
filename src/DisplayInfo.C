@@ -106,7 +106,7 @@ Display::info()
   const double lat(fabs(info.latitudePutin) <= 90 ? info.latitudePutin : ginfo.latitude);
   const double lon(fabs(info.longitudePutin) <= 180 ? info.longitudePutin : ginfo.longitude);
   const GuideBook guides(key);
-  const MyDB::tInts types(data.types(data.source().gaugeKey2Keys(info.gaugeKey)));
+  const MyDB::Stmt::tInts types(data.types(data.source().gaugeKey2Keys(info.gaugeKey)));
 
   HTML html;
   html << html.header()
@@ -124,7 +124,7 @@ Display::info()
       bool qFirst(true);
       html << "<select name='t'>\n";
       
-      for (MyDB::tInts::const_iterator it(types.begin()), et(types.end()); it != et; ++it) {
+      for (MyDB::Stmt::tInts::const_iterator it(types.begin()), et(types.end()); it != et; ++it) {
         html << "<option";
         if (qFirst) {
           html << " selected";

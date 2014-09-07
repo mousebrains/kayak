@@ -51,19 +51,16 @@ public:
     typedef std::vector<std::string> tStrings;
     typedef std::vector<int> tInts;
     typedef std::vector<double> tDoubles;
+    typedef std::vector<std::pair<std::string, int> > tStringInt;
 
     void query();
     tStrings queryStrings();
     tInts queryInts();
     tDoubles queryDoubles();
+    tStringInt queryStringInt();
   }; // Stmt
 
-  typedef Stmt::tStrings tStrings;
-  typedef Stmt::tInts tInts;
-  typedef Stmt::tDoubles tDoubles;
-
   typedef std::set<size_t> tRows;
-  typedef std::vector<std::pair<std::string, int> > tStringInt;
   typedef std::multimap<time_t, size_t> tTimeKeys;
 
   typedef std::pair<int, time_t> tKeyTime;
@@ -87,14 +84,10 @@ public:
 
   void errorCheck(const int rc, const std::string& msg);
 
-  void beginTransaction() {query("BEGIN;");}
-  void endTransaction() {query("COMMIT;");}
+  void beginTransaction() {Stmt(*this, "BEGIN;").query();}
+  void endTransaction() {Stmt(*this, "COMMIT;").query();}
 
-  void query(const std::string& sql);
-  tStrings queryStrings(const std::string& sql);
-  tInts queryInts(const std::string& sql);
-  tDoubles queryDoubles(const std::string& sql);
-  tStringInt queryStringInt(const std::string& sql);
+  void query(const std::string& sql) {Stmt(*this, sql).query();}
 
   size_t lastInsertRowid();
 
@@ -103,9 +96,9 @@ public:
   void checkPoint();
 };
 
-std::ostream& operator << (std::ostream& os, const MyDB::tStrings& a);
-std::ostream& operator << (std::ostream& os, const MyDB::tInts& a);
-std::ostream& operator << (std::ostream& os, const MyDB::tDoubles& a);
+std::ostream& operator << (std::ostream& os, const MyDB::Stmt::tStrings& a);
+std::ostream& operator << (std::ostream& os, const MyDB::Stmt::tInts& a);
+std::ostream& operator << (std::ostream& os, const MyDB::Stmt::tDoubles& a);
 std::ostream& operator << (std::ostream& os, const MyDB::tRows& a);
 
 #endif // INC_MyDB_H_

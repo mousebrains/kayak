@@ -129,61 +129,21 @@ MyDB::lastInsertRowid()
 }
 
 void
-MyDB::query(const std::string& sql)
+MyDB::dropRows(const std::string& table,
+               const tRows& rowid)
 {
-  Stmt(*this, sql).query();
-}
+  std::ostringstream oss;
+  oss << "DELETE FROM " << table << " WHERE rowid == ?;";
+  Stmt s(*this, oss.str());
 
-MyDB::tStrings
-MyDB::queryStrings(const std::string& sql)
-{
-  return Stmt(*this, sql).queryStrings();
-}
+  beginTransaction();
 
-MyDB::tInts
-MyDB::queryInts(const std::string& sql)
-{
-  return Stmt(*this, sql).queryInts();
-}
-
-MyDB::tDoubles
-MyDB::queryDoubles(const std::string& sql)
-{
-  return Stmt(*this, sql).queryDoubles();
-}
-
-
-MyDB::tStringInt
-MyDB::queryStringInt(const std::string& sql)
-{
-  tStringInt a;
-  Stmt s(*this, sql);
-  int rc;
-
-  while ((rc = s.step()) == SQLITE_ROW) {
-    if (s.columnCount() != 2) {
-      std::ostringstream oss;
-      oss << "Error, '" << sql << "' produced " 
-          << s.columnCount() << " columns, but should have produced 2.";
-      MyException e(oss.str());
-      throw e;
-    }
-    if (s.columnType(0) != SQLITE_TEXT) {
-      std::ostringstream oss;
-      oss << "Error, '" << sql << "' first column is not text, " << s.columnType(0);
-      MyException e(oss.str());
-      throw e;
-    }
-    if (s.columnType(1) != SQLITE_INTEGER) {
-      std::ostringstream oss;
-      oss << "Error, '" << sql << "' second column is not integer, " << s.columnType(1);
-      MyException e(oss.str());
-      throw e;
-    }
-    a.push_back(std::make_pair(s.getString(0), s.getInt(1)));
+  for (tRows::const_reverse_iterator it(rowid.rbegin()), et(rowid.rend()); it != et; ++it) {
+    s.bind(*it);
+    s.step();
+    s.reset();
   }
-
-  return a;
+  endTransaction();
 }
 
 MyDB::Stmt::Stmt(const Stmt& a)
@@ -439,30 +399,44 @@ MyDB::Stmt::queryDoubles()
   return a;
 }
 
-void
-MyDB::dropRows(const std::string& table,
-               const tRows& rowid)
+MyDB::Stmt::tStringInt
+MyDB::Stmt::queryStringInt()
 {
-  std::ostringstream oss;
-  oss << "DELETE FROM " << table << " WHERE rowid == ?;";
-  Stmt s(*this, oss.str());
+  tStringInt a;
+  int rc;
 
-  beginTransaction();
-
-  for (tRows::const_reverse_iterator it(rowid.rbegin()), et(rowid.rend()); it != et; ++it) {
-    s.bind(*it);
-    s.step();
-    s.reset();
+  while ((rc = step()) == SQLITE_ROW) {
+    if (columnCount() != 2) {
+      std::ostringstream oss;
+      oss << "Error, '" << str() << "' produced " 
+          << columnCount() << " columns, but should have produced 2.";
+      MyException e(oss.str());
+      throw e;
+    }
+    if (columnType(0) != SQLITE_TEXT) {
+      std::ostringstream oss;
+      oss << "Error, '" << str() << "' first column is not text, " << columnType(0);
+      MyException e(oss.str());
+      throw e;
+    }
+    if (columnType(1) != SQLITE_INTEGER) {
+      std::ostringstream oss;
+      oss << "Error, '" << str() << "' second column is not integer, " << columnType(1);
+      MyException e(oss.str());
+      throw e;
+    }
+    a.push_back(std::make_pair(getString(0), getInt(1)));
   }
-  endTransaction();
+
+  return a;
 }
 
 std::ostream&
 operator << (std::ostream& os,
-             const MyDB::tStrings& a)
+             const MyDB::Stmt::tStrings& a)
 {
   std::string delim;
-  for (MyDB::tStrings::const_iterator it(a.begin()), et(a.end()); it != et; ++it) {
+  for (MyDB::Stmt::tStrings::const_iterator it(a.begin()), et(a.end()); it != et; ++it) {
     os << delim << *it;
     delim = ",";
   }
@@ -471,10 +445,10 @@ operator << (std::ostream& os,
 
 std::ostream&
 operator << (std::ostream& os,
-             const MyDB::tInts& a)
+             const MyDB::Stmt::tInts& a)
 {
   std::string delim;
-  for (MyDB::tInts::const_iterator it(a.begin()), et(a.end()); it != et; ++it) {
+  for (MyDB::Stmt::tInts::const_iterator it(a.begin()), et(a.end()); it != et; ++it) {
     os << delim << *it;
     delim = ",";
   }
@@ -483,10 +457,10 @@ operator << (std::ostream& os,
 
 std::ostream&
 operator << (std::ostream& os,
-             const MyDB::tDoubles& a)
+             const MyDB::Stmt::tDoubles& a)
 {
   std::string delim;
-  for (MyDB::tDoubles::const_iterator it(a.begin()), et(a.end()); it != et; ++it) {
+  for (MyDB::Stmt::tDoubles::const_iterator it(a.begin()), et(a.end()); it != et; ++it) {
     os << delim << *it;
     delim = ",";
   }

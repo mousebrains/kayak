@@ -33,7 +33,7 @@ namespace {
   };
   MyFields fields;
 
-  std::string whereKeys(const MyDB::tInts& keys) {
+  std::string whereKeys(const MyDB::Stmt::tInts& keys) {
     if (keys.empty()) return std::string();
     std::ostringstream oss;
     oss << " WHERE " << fields.key();
@@ -124,7 +124,7 @@ Gauges::chkLimits(const int key,
       << "," << fields.minTemperature() << "," << fields.maxTemperature()
       << " FROM " << fields.table() 
       << " WHERE " << fields.key() << "=" << key << ";";
-    MyDB::tDoubles items(s.queryDoubles());
+    MyDB::Stmt::tDoubles items(s.queryDoubles());
 
     if (items.size() >= 6) {
       Limits l(items[0], items[1], items[2], items[3], items[4], items[5]);
@@ -269,7 +269,7 @@ Gauges::getAll()
 }
 
 Gauges::tLevelInfo
-Gauges::levelInfo(const MyDB::tInts& gaugeKeys)
+Gauges::levelInfo(const MyDB::Stmt::tInts& gaugeKeys)
 {
   MyDB::Stmt s(mDB);
 

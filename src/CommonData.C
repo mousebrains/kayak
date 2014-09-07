@@ -49,7 +49,7 @@ CommonData::nRows(const int key)
   MyDB::Stmt s(mDB);
   s << "SELECT count(*) FROM " << mFields.table() 
     << " WHERE " << mFields.key() << "=" << key << ";";
-  MyDB::tInts a(s.queryInts());
+  MyDB::Stmt::tInts a(s.queryInts());
   return a.empty() ? 0 : (size_t) a[0];
 }
 

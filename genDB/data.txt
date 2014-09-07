@@ -10,7 +10,7 @@ CREATE TABLE data (dataKey INTEGER, -- key into dataSource table
                    obs DOUBLE, -- numerical observation
                    PRIMARY KEY (dataKey, type, date, urlKey)
                    );
-CREATE INDEX keyDataIndex ON data(dataKey);
+CREATE INDEX keyDateDataIndex ON data(dataKey,date);
 
 DROP TABLE IF EXISTS dataSource;
 CREATE TABLE dataSource (dataKey INTEGER PRIMARY KEY AUTOINCREMENT, -- key used in data table

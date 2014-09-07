@@ -35,7 +35,7 @@ CommonURLs::parser(const int key)
   MyDB::Stmt s(mDB);
   s << "SELECT " << mFields.parser() << " FROM " << mFields.table() 
     << " WHERE " << mFields.key() << "=" << key << ";";
-  MyDB::tStrings a(s.queryStrings());
+  MyDB::Stmt::tStrings a(s.queryStrings());
   return a.empty() ? std::string() : a[0];
 }
 

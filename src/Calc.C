@@ -65,8 +65,11 @@ Calc::update(Data& data,
              time_t t0, 
              time_t dt)
 {
-  t0 = t0 <= 0 ? (time(0) - 3 * 86400) : t0; // As of now
-  dt = dt <= 0 ? 7200 : dt; // +- 2 hours
+  const int daysBack(1); 
+  const int windowSeconds(2 * 3600);
+
+  t0 = t0 <= 0 ? (time(0) - daysBack * 86400) : t0; // As of now
+  dt = dt <= 0 ? windowSeconds : dt; // +- 2 hours
 
   int nBindings(0);
   MyDB::Stmt s(mDB); // Time query

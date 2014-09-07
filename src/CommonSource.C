@@ -39,19 +39,19 @@ CommonSource::setGauge(const std::string& name,
   mKeyMap.insert(std::make_pair(name, gauge));
 }
 
-MyDB::tInts
+MyDB::Stmt::tInts
 CommonSource::gaugeKey2Keys(const size_t gaugeKey)
 {
-  std::ostringstream oss;
-  oss << "SELECT " << mFields.key() 
-      << " FROM " << mFields.table()
-      << " WHERE " << mFields.gaugeKey() << "=" << gaugeKey << ";";
+  MyDB::Stmt s(mDB);
+  s << "SELECT " << mFields.key() 
+    << " FROM " << mFields.table()
+    << " WHERE " << mFields.gaugeKey() << "=" << gaugeKey << ";";
 
-  return mDB.queryInts(oss.str());
+  return s.queryInts();
 }
 
 CommonSource::tSourceKey2GaugeKey
-CommonSource::dataKeys(const MyDB::tInts& gaugeKeys)
+CommonSource::dataKeys(const MyDB::Stmt::tInts& gaugeKeys)
 {
   MyDB::Stmt s(mDB);
 

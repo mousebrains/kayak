@@ -94,7 +94,7 @@ public:
     bool qCalc;
   }; // LevelInfo
   typedef std::vector<LevelInfo> tLevelInfo;
-  tLevelInfo levelInfo(const MyDB::tInts& gaugeKeys);
+  tLevelInfo levelInfo(const MyDB::Stmt::tInts& gaugeKeys);
 };
 
 std::ostream& operator << (std::ostream& os, const Gauges::Limits& l);
