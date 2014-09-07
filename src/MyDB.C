@@ -122,7 +122,7 @@ MyDB::errorCheck(const int rc,
   errChk(mDB, rc, msg);
 }
  
-size_t
+int
 MyDB::lastInsertRowid()
 {
   return sqlite3_last_insert_rowid(mDB);

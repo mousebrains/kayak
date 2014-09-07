@@ -1,5 +1,6 @@
 #include "Calc.H"
 #include "Tokens.H"
+#include "Gauges.H"
 #include <sstream>
 #include <iostream>
 #include <cmath>
@@ -71,14 +72,13 @@ Calc::update(Data& data,
   t0 = t0 <= 0 ? (time(0) - daysBack * 86400) : t0; // As of now
   dt = dt <= 0 ? windowSeconds : dt; // +- 2 hours
 
-  int nBindings(0);
   MyDB::Stmt s(mDB); // Time query
   s << "SELECT ";
   { // Build observation query
     for (tFields::size_type i(0), e(mExpr.size()); i < e; ++i) {
       const Field& f(mExpr[i]);
       if (f.qRef()) {
-        nBindings += mkQuery(s, "AVG(obs)", f.key(), f.type(), t0, dt);
+        mkQuery(s, "AVG(obs)", f.key(), f.type(), t0, dt);
       } else {
         s << f.str();
       }
@@ -90,7 +90,7 @@ Calc::update(Data& data,
     s << "(SELECT MAX(";
     for (tTimes::const_iterator it(mTime.begin()), et(mTime.end()); it != et; ++it) {
       s << delim;
-      nBindings += mkQuery(s, "date", it->first, it->second, t0, dt);
+      mkQuery(s, "date", it->first, it->second, t0, dt);
       delim = ",";
     }
     s << "))";
@@ -98,6 +98,8 @@ Calc::update(Data& data,
   s << ";";
 
   const std::string& name(mkName());
+  data.source().setGauge(name, mGaugeKey); // Make sure this calc source is know and points to gkey
+
   int rc;
 
   while ((rc = s.step()) == SQLITE_ROW) {

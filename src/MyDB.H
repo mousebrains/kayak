@@ -89,7 +89,7 @@ public:
 
   void query(const std::string& sql) {Stmt(*this, sql).query();}
 
-  size_t lastInsertRowid();
+  int lastInsertRowid();
 
   void dropRows(const std::string& table, const tRows& rowids);
 

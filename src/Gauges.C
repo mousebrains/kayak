@@ -55,6 +55,7 @@ Gauges::Gauges()
 {
 }
 
+#ifdef TPW
 void
 Gauges::latLon(const int key,
                const double lat,
@@ -106,6 +107,7 @@ Gauges::updateDouble(const int key,
     s.query();
   }
 }
+#endif // TPW
 
 bool
 Gauges::chkLimits(const int key,

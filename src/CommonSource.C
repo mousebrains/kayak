@@ -9,34 +9,19 @@ CommonSource::CommonSource(const std::string& prefix)
 {
 }
 
-CommonSource::~CommonSource()
-{
-  if (!mKeyMap.empty()) {
-    Gauges gauges;
-    MyDB::Stmt s(mDB);
-    s << "UPDATE " << mFields.table() << " SET "
-      << mFields.gaugeKey() << "=? WHERE " << mFields.key() << "=?;";
-    mDB.beginTransaction();
-
-    for (tKeyMap::const_iterator it(mKeyMap.begin()), et(mKeyMap.end()); it != et; ++it) {
-      const int gKey(gauges.name2key(it->second));
-      if (gKey > 0) {
-        const int pKey(name2key(it->first, 0));
-        s.bind(gKey);
-        s.bind(pKey);
-        s.step();
-        s.reset();
-      }
-    }
-    mDB.endTransaction();
-  }
-}
-
 void
 CommonSource::setGauge(const std::string& name,
-                       const std::string& gauge)
+                       const int gaugeKey)
 {
-  mKeyMap.insert(std::make_pair(name, gauge));
+  if (!name.empty() && (gaugeKey > 0)) {
+    MyDB::Stmt s(mDB);
+    s << "INSERT OR REPLACE INTO " << mFields.table() 
+      << " (" << mFields.name() << "," << mFields.gaugeKey() 
+      << ") VALUES ('"
+      << name << "'," << gaugeKey
+      << ");";
+    s.query();
+  }
 }
 
 MyDB::Stmt::tInts

@@ -9,17 +9,14 @@
 class CommonSource : public Table {
 protected:
   const SourceFields mFields;
-
-  typedef std::map<std::string, std::string> tKeyMap; // CommonSource key to gauge key
-  tKeyMap mKeyMap;
 public:
   explicit CommonSource(const std::string& prefix);
 
-  virtual ~CommonSource();
+  virtual ~CommonSource() {}
 
   const SourceFields& fields() const {return mFields;}
 
-  void setGauge(const std::string& name, const std::string& gauge);
+  void setGauge(const std::string& name, const int gaugeKey);
 
   MyDB::Stmt::tInts gaugeKey2Keys(const size_t gaugeKey);
 

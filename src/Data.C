@@ -75,8 +75,6 @@ Data::dump()
 {
   Gauges gauges;
 
-  std::cout << "Dumping " << mData.size() << std::endl;
-
   MyDB::Stmt s(mDB);
 
   s << "REPLACE INTO " << fields.table() << " (" 
@@ -89,12 +87,15 @@ Data::dump()
 
   mDB.beginTransaction();
 
+  int cnt(0);
+
   for (tData::size_type i(0), e(mData.size()); i < e; ++i) {
     const Datum& datum(mData[i]);
     const int key(mSource.name2key(datum.name, datum.t));
     const int url(mURLs.name2key(datum.url, datum.t));
 
     if (gauges.chkLimits(key, datum.tNum, datum.value)) {
+      ++cnt;
       s.bind(key);
       s.bind(datum.tNum);
       s.bind(datum.t);
@@ -106,6 +107,8 @@ Data::dump()
   }
 
   mDB.endTransaction();
+
+  std::cout << "Dumped " << cnt << " out of " << mData.size() << std::endl;
 
   // Clear out existing information
   mData.clear();

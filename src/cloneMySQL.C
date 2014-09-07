@@ -684,17 +684,7 @@ namespace {
       if (offset == name.npos) continue;
       const std::string type(name.substr(0,offset));
       const std::string src(name.substr(offset+1));
-      Data::Type tNum;
-      if (type == "flow") {
-        tNum = Data::FLOW;
-      } else if (type == "gauge") {
-        tNum = Data::GAUGE;
-      } else if (type == "temperature") {
-        tNum = Data::TEMPERATURE;
-      } else {
-        std::cerr << "Unrecognized type '" << type << "'" << std::endl;
-        exit(1);
-      } 
+      Data::Type tNum(Data::decodeType(type));
       MySQL::tData rows(sql.data(name));
       std::cout << name << " " << tNum << " " << rows.size() << std::endl;
       for (MySQL::tData::const_iterator jt(rows.begin()), jet(rows.end()); jt != jet; ++jt) {

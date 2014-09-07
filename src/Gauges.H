@@ -19,24 +19,24 @@ public:
       , minTemperature(mint), maxTemperature(maxt) {}
   };
 private:
-  void updateString(const int key, const std::string& value, const std::string& name);
-  void updateDouble(const int key, const double value, const std::string& name);
+  // void updateString(const int key, const std::string& value, const std::string& name);
+  // void updateDouble(const int key, const double value, const std::string& name);
 
   typedef std::map<int, Limits> tLimits;
   tLimits mLimits;
 public:
   Gauges();
   
-  void latLon(const int key, const double latitude, const double longitude);
-  void idUSGS(const int key, const std::string& id);
-  void idCBTT(const int key, const std::string& id);
-  void idUnit(const int key, const std::string& id);
-  void location(const int key, const std::string& loci);
-  void description(const int key, const std::string& a);
-  void state(const int key, const std::string& a);
-  void county(const int key, const std::string& a);
-  void elevation(const int key, const double a);
-  void drainageArea(const int key, const double a);
+  // void latLon(const int key, const double latitude, const double longitude);
+  // void idUSGS(const int key, const std::string& id);
+  // void idCBTT(const int key, const std::string& id);
+  // void idUnit(const int key, const std::string& id);
+  // void location(const int key, const std::string& loci);
+  // void description(const int key, const std::string& a);
+  // void state(const int key, const std::string& a);
+  // void county(const int key, const std::string& a);
+  // void elevation(const int key, const double a);
+  // void drainageArea(const int key, const double a);
 
   bool chkLimits(const int key, const Data::Type type, const double val);
 
