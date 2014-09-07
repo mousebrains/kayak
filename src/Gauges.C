@@ -44,10 +44,6 @@ namespace {
     }
     return oss.str();
   }
-
-  bool withinLimits(const double a, const double lLim, const double uLim) {
-    return !isnan(a) && (a >= lLim) && (a <= uLim);
-  }
 } // anonymous
 
 Gauges::Gauges()
