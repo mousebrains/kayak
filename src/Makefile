@@ -1,14 +1,14 @@
 -include Makefile.local # Local variable overrides
 
 PATHS_USER_ROOT = /home/tpw
-PATHS_PREFIX = $(PATHS_USER_ROOT)/kayaking2
+PATHS_PREFIX ?= $(PATHS_USER_ROOT)/kayaking2
 PATHS_WEB_ROOT = $(PATHS_USER_ROOT)/public_html/kayaking2
 PATHS_LOCAL_ROOT = $(PATHS_USER_ROOT)/local
 
 BINDIR = $(PATHS_USER_ROOT)/bin
 CGIDIR = $(PATHS_WEB_ROOT)/cgi
-LOCALLIB = $(PATHS_LOCAL_ROOT)/lib
-LOCALINC = $(PATHS_LOCAL_ROOT)/include
+LOCALLIB ?= $(PATHS_LOCAL_ROOT)/lib
+LOCALINC ?= $(PATHS_LOCAL_ROOT)/include
 
 CXXSTD = -std=c++0x
 
