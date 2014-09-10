@@ -93,11 +93,14 @@ CREATE TABLE gauges (gaugeKey INTEGER PRIMARY KEY AUTOINCREMENT, -- key used in 
                      location TEXT, -- Gauge location
                      idUSGS TEXT, -- USGS's id
                      idCBTT TEXT, -- CBTT's id
+                     idUSBR TEXT, -- US Bureau of Reclamation id, like CBTT, but not exactly
                      idUnit TEXT, -- Hydrologic unit
                      state TEXT, -- State gauge is located in
                      county TEXT, -- county gauge is located in
                      elevation DOUBLE, -- elevation of gauge in feet
                      drainageArea DOUBLE, -- drainage area in square miles
+                     bankfullStage DOUBLE, -- bank full level in feet
+                     floodStage DOUBLE, -- flood level in feet
                      minFlow DOUBLE DEFAULT 0, -- minimum allowed flow in CFS
                      maxFlow DOUBLE DEFAULT 9000000, -- maximum allowed flow in CFS
                      minGauge DOUBLE DEFAULT -1000, -- minimum allowed gauge reading in feet
@@ -107,7 +110,8 @@ CREATE TABLE gauges (gaugeKey INTEGER PRIMARY KEY AUTOINCREMENT, -- key used in 
                      calcFlow TEXT, -- SQL to calculate a flow
                      calcGauge TEXT -- SQL to calculate a gauge
                      );
-CREATE INDEX gaugeIndex ON gauges(name);
+CREATE INDEX idUSGSGaugesIndex ON gauges(idUSGS);
+CREATE INDEX idCBTTGaugesIndex ON gauges(idCBTT);
 
 
 .headers on
