@@ -5,4 +5,4 @@
 ROOT=`dirname $0`
 TGT=$ROOT/../files/a.db
 
-sqlite3 -batch -init /dev/null $TGT <$ROOT/master.txt
+sqlite3 -batch -init /dev/null $TGT <$ROOT/translate.txt

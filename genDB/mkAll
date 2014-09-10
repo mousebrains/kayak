@@ -2,8 +2,8 @@
 #
 # Create a new database
 #
-TGT=~/kayaking2/files/a.db
 ROOT=`dirname $0`
+TGT=$ROOT/../files/a.db
 
 mkdir -p `dirname $TGT`
 rm -f $TGT
