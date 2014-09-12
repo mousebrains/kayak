@@ -4,6 +4,7 @@
 #include "rapidxml.hpp"
 #include <string>
 #include <vector>
+#include <iosfwd>
 
 class XMLParser {
 private:
@@ -11,7 +12,7 @@ private:
   rapidxml::xml_document<> mDoc;
 
 public:
-  XMLParser(const std::string& str);
+  explicit XMLParser(const std::string& str);
 
   class Attr {
   private:
@@ -21,11 +22,27 @@ public:
 
     operator bool () const {return mAttr;}
 
-    const char *name() const {return mAttr->name();}
-    const char *value() const {return mAttr->value();}
+    const char *name() const {return mAttr ? mAttr->name() : "";}
+    const char *value() const {return mAttr ? mAttr->value() : "";}
+ 
+    Attr next(const char *name=0) const {
+      return mAttr ? Attr(mAttr->next_attribute(name)) : Attr();
+    }
 
-    void next(const char *name=0) {mAttr = mAttr->next_attribute(name);}
-    void next(const std::string& name) {return next(name.c_str());}
+    Attr next(const std::string& name) const {return next(name.c_str());}
+
+    Attr& operator ++ () {
+      mAttr = mAttr ? mAttr->next_attribute() : mAttr; 
+      return *this;
+    }
+
+    Attr& operator -- () {
+      mAttr = mAttr ? mAttr->previous_attribute() : mAttr; 
+      return *this;
+    }
+
+    Attr operator ++ (int) {Attr a(mAttr); ++(*this); return a;}
+    Attr operator -- (int) {Attr a(mAttr); --(*this); return a;}
   }; // Attr
 
   class Node {
@@ -36,28 +53,55 @@ public:
 
     operator bool () const {return mNode;}
 
-    const char *name() const {return mNode->name();}
-    const char *value() const {return mNode->value();}
+    const char *name() const {return mNode ? mNode->name() : "";}
+    const char *value() const {return mNode ? mNode->value() : "";}
 
     enum Type {
-      NODE = rapidxml::node_element
+      DOCUMENT = rapidxml::node_document,
+      NODE = rapidxml::node_element,
+      DATA = rapidxml::node_data,
+      CDATA = rapidxml::node_cdata,
+      COMMENT = rapidxml::node_comment,
+      DECLARATION = rapidxml::node_declaration,
+      DOCTYPE = rapidxml::node_doctype,
+      PI = rapidxml::node_pi,
+      EMPTY
     };
 
-    Type type() const {return (Type) mNode->type();}
+    Type type() const {return mNode ? (Type) mNode->type() : EMPTY;}
 
-    void next(const char *name=0) {mNode = mNode->next_sibling(name);}
-    void next(const std::string& name) {return next(name.c_str());}
+    Node& operator ++ () {mNode = mNode ? mNode->next_sibling() : mNode; return *this;}
+    Node& operator -- () {mNode = mNode ? mNode->previous_sibling() : mNode; return *this;}
 
-    Node firstChild(const char *name=0) const {return Node(mNode->first_node(name));}
+    Node operator ++ (int) {Node n(mNode); ++(*this); return n;}
+    Node operator -- (int) {Node n(mNode); --(*this); return n;}
+
+
+    Node next(const char *name=0) const {return mNode ? Node(mNode->next_sibling(name)) : Node();}
+    Node next(const std::string& name) const {return next(name.c_str());}
+
+    Node firstChild(const char *name=0) const {
+      return mNode ? Node(mNode->first_node(name)) : Node();
+    }
     Node firstChild(const std::string& name) const {return firstChild(name.c_str());}
 
-    Attr firstAttr(const char *name=0) const { return Attr(mNode->first_attribute(name));}
+    Attr firstAttr(const char *name=0) const {
+      return mNode ? Attr(mNode->first_attribute(name)) : Attr();
+    }
     Attr firstAttr(const std::string& name) const {return firstAttr(name.c_str());}
+
+    Node parent() const {return mNode ? Node(mNode->parent()) : Node();}
+
+    Node findNode(const char *name) const;
+    std::string findValue(const char *name) const;
+    std::string findAttr(const char *name) const;
+
+    void traverse(std::ostream& os, const int level=0) const;
   }; // Node
      
     
   Node first(const char *name=0) const {return Node(mDoc.first_node(name));}
-  Node first(const std::string& name) const {return Node(mDoc.first_node(name.c_str()));}
+  Node first(const std::string& name) const {return first(name.c_str());}
 }; // XMLParser
 
 #endif // INC_XMLParser_H_
