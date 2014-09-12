@@ -20,6 +20,7 @@ FTFLAGS = $(shell freetype-config --cflags)
 FTLIBS = $(shell freetype-config --libs)
 
 PNGLIBS = -lpng
+CURLLIBS = -lcurl
 
 ifneq ($(LOCALLIB),)
 PNGLIBS += -Wl,-rpath $(LOCALLIB)
@@ -53,6 +54,7 @@ BINEXE += bin/dbBackup
 EXE += bin/key2hash
 EXE += bin/updateLevels
 EXE += bin/updateCalcs
+EXE += bin/fetch
 
 EXE += $(BINEXE) $(CGIEXE)
 
@@ -61,7 +63,8 @@ LIBSRC += CommonSource.C CommonURLs.C CommonUnknown.C Convert.C Data.C DataGet.C
 LIBSRC += DisplayDatabase.C DisplayInfo.C DisplayLevels.C DisplayMainPage.C DisplayPlot.C
 LIBSRC += DisplayTable.C Env.C File.C Gauges.C GuideBook.C JSON.C Levels.C MakePlot.C Master.C
 LIBSRC += MyDB.C PNGCanvas.C Paths.C PruneData.C Rating.C ReadFile.C Table.C afstream.C
-LIBSRC += DisplayData.C Calc.C TimeIt.C Curl.C XMLParser.C
+LIBSRC += DisplayData.C Calc.C TimeIt.C Curl.C XMLParser.C GaugeTranslate.C
+LIBSRC += ParserUSGS0.C
 
 .PHONY: all distclean clean install install.cgi install.programs
 .PRECIOUS: obj/%.o
@@ -79,6 +82,10 @@ bin/cloneMySQL: cloneMySQL.C MySQL.C $(MYLIB)
 bin/png: png.C $(MYLIB)
 	@ mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -o $@ $+ $(LDFLAGS) $(LIBS) $(FTLIBS) $(PNGLIBS)
+
+bin/fetch: fetch.C $(MYLIB)
+	@ mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -o $@ $+ $(LDFLAGS) $(LIBS) $(CURLLIBS)
 
 $(MYLIB): $(LIBSRC:%.C=obj/%.o)
 	$(AR) $(ARFLAGS) $@ $+
