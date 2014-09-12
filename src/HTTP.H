@@ -17,6 +17,8 @@ public:
   int htmlPage(const time_t duration, HTML& html);
 
   static std::string date(const time_t& when);
+  static const char *statusMsg(const int code);
+
   HTTP& expires(const time_t& when);
   HTTP& modified(const time_t& when);
   HTTP& content(const std::string& type="text/html");

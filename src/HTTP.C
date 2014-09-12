@@ -105,45 +105,51 @@ HTTP::status(const int code,
     return *this;
   }
 
-  switch (code) {
-    // case 100: oss << " Continue\n"; break;
-    // case 101: oss << " Switching Protocols\n"; break;
-    case 200: *this << " Ok\n"; break;
-    // case 201: oss << " Created\n"; break;
-    // case 202: oss << " Accepted\n"; break;
-    // case 203: oss << " Non-Authoritative Information\n"; break;
-    // case 204: oss << " No Content\n"; break;
-    // case 205: oss << " Reset Content\n"; break;
-    // case 206: oss << " Partial Content\n"; break;
-    // case 300: oss << " Multiple Choices\n"; break;
-    // case 301: oss << " Moved Permanently\n"; break;
-    // case 302: oss << " Found\n"; break;
-    // case 303: oss << " See Other\n"; break;
-    // case 304: oss << " Not Modified\n"; break;
-    // case 305: oss << " Use Proxy\n"; break;
-    // case 307: oss << " Temporary Redirect\n"; break;
-    case 400: *this << " Bad Request\n"; break;
-    // case 401: oss << " Unauthorized\n"; break;
-    // case 402: oss << " Payment Required\n"; break;
-    // case 403: oss << " Forbidden\n"; break;
-    // case 404: oss << " Not Found\n"; break;
-    // case 405: oss << " Method Not Allowed\n"; break;
-    // case 406: oss << " Not Acceptable\n"; break;
-    // case 407: oss << " Proxy Authentication Required\n"; break;
-    // case 408: oss << " Request Time-out\n"; break;
-    // case 409: oss << " Conflict\n"; break;
-    // case 410: oss << " Gone\n"; break;
-    // case 411: oss << " Length Required\n"; break;
-    // case 412: oss << " Precondition Failed\n"; break;
-    // case 413: oss << " Request Entity Too Large\n"; break;
-    // case 414: oss << " Request-URI Too Large\n"; break;
-    // case 415: oss << " Unsupported Media Type\n"; break;
-    // case 416: oss << " Requested range not satistifed\n"; break;
-    // case 417: oss << " Expectation Failed\n"; break;
-    default: *this << " Unknown reason\n"; break;
-  }
-
+  *this << " " << statusMsg(code) << "\n";
   return *this;
+}
+
+const char *
+HTTP::statusMsg(const int code)
+{
+  switch (code) {
+    case 100: return "Continue";
+    case 101: return "Switching Protocols";
+    case 200: return "Ok";
+    case 201: return "Created";
+    case 202: return "Accepted";
+    case 203: return "Non-Authoritative Information";
+    case 204: return "No Content";
+    case 205: return "Reset Content";
+    case 206: return "Partial Content";
+    case 300: return "Multiple Choices";
+    case 301: return "Moved Permanently";
+    case 302: return "Found";
+    case 303: return "See Other";
+    case 304: return "Not Modified";
+    case 305: return "Use Proxy";
+    case 307: return "Temporary Redirect";
+    case 400: return "Bad Request";
+    case 401: return "Unauthorized";
+    case 402: return "Payment Required";
+    case 403: return "Forbidden";
+    case 404: return "Not Found";
+    case 405: return "Method Not Allowed";
+    case 406: return "Not Acceptable";
+    case 407: return "Proxy Authentication Required";
+    case 408: return "Request Time-out";
+    case 409: return "Conflict";
+    case 410: return "Gone";
+    case 411: return "Length Required";
+    case 412: return "Precondition Failed";
+    case 413: return "Request Entity Too Large";
+    case 414: return "Request-URI Too Large";
+    case 415: return "Unsupported Media Type";
+    case 416: return "Requested range not satistifed";
+    case 417: return "Expectation Failed";
+    default:  return "Unknown reason";
+  }
+  return "Unknown reason";
 }
 
 int
