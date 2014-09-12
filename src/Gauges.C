@@ -3,6 +3,7 @@
 #include "Fields.H"
 #include "Convert.H"
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <cmath>
 
@@ -15,12 +16,15 @@ namespace {
     const char *longitude() {return "longitude";}
     const char *idUSGS() {return "idUSGS";}
     const char *idCBTT() {return "idCBTT";}
+    const char *idUSBR() {return "idUSBR";}
     const char *idUnit() {return "idUnit";}
     const char *location() {return "location";}
     const char *state() {return "state";}
     const char *county() {return "county";}
     const char *elevation() {return "elevation";}
     const char *drainageArea() {return "drainageArea";}
+    const char *bankfullStage() {return "bankfullStage";}
+    const char *floodStage() {return "floodStage";}
     const char *description() {return "description";}
     const char *minFlow() {return "minFlow";}
     const char *maxFlow() {return "maxFlow";}
@@ -44,6 +48,28 @@ namespace {
     }
     return oss.str();
   }
+
+  int maybeInfo(std::ostream& os0, std::ostream& os1, const std::string& name, 
+                const std::string& value) {
+    if (value.empty()) return 0;
+    os0 << "," << name;
+    os1 << ",'" << value << "'";
+    return 1;
+  }
+
+  int maybeInfo(std::ostream& os0, std::ostream& os1, const std::string& name, const time_t t) {
+    if (t <= 0) return 0;
+    os0 << "," << name;
+    os1 << "," << t;
+    return 1;
+  }
+
+  int maybeInfo(std::ostream& os0, std::ostream& os1, const std::string& name, const double x) {
+    if (isnan(x)) return 0;
+    os0 << "," << name;
+    os1 << "," << std::setprecision(12) << x; // up to 12 digits after the decimal point
+    return 1;
+  }
 } // anonymous
 
 Gauges::Gauges()
@@ -51,59 +77,28 @@ Gauges::Gauges()
 {
 }
 
-#ifdef TPW
-void
-Gauges::latLon(const int key,
-               const double lat,
-               const double lon)
+int
+Gauges::idUSGS2gaugeKey(const std::string& id)
 {
-  if ((lat >= -90) && (lat <= 90) && (lon >= -180) && (lon <= 180)) {
-    MyDB::Stmt s(mDB);
-    s << "UPDATE " << fields.table() << " SET " 
-      << fields.latitude() << "=" << lat 
-      << ","
-      << fields.longitude() << "=" << lon
-      << " WHERE " << fields.key() << "=" << key << ";";
-    s.query();
-  }
+  return id2gaugeKey(id, fields.idUSGS());
 }
 
-void Gauges::idUSGS(const int key, const std::string& a) { updateString(key, a, fields.idUSGS()); }
-void Gauges::idCBTT(const int key, const std::string& a) { updateString(key, a, fields.idCBTT()); }
-void Gauges::idUnit(const int key, const std::string& a) { updateString(key, a, fields.idUnit()); }
-void Gauges::location(const int key, const std::string& a) { updateString(key, a, fields.location()); }
-void Gauges::state(const int key, const std::string& a) { updateString(key, a, fields.state()); }
-void Gauges::county(const int key, const std::string& a) { updateString(key, a, fields.county()); }
-void Gauges::description(const int key, const std::string& a) { updateString(key, a, fields.description()); }
-void Gauges::elevation(const int key, const double a) { updateDouble(key, a, fields.elevation()); }
-void Gauges::drainageArea(const int key, const double a) { updateDouble(key, a, fields.drainageArea()); }
-
-void
-Gauges::updateString(const int key,
-                     const std::string& value,
-                     const std::string& field)
+int
+Gauges::idCBTT2gaugeKey(const std::string& id)
 {
-  if (!value.empty()) {
-    MyDB::Stmt s(mDB);
-    s << "UPDATE " << fields.table() << " SET " << field << "='" << value 
-      << "' WHERE " << fields.key() << "=" << key << ";";
-    s.query();
-  }
+  return id2gaugeKey(id, fields.idCBTT());
 }
 
-void
-Gauges::updateDouble(const int key,
-                     const double value,
-                     const std::string& field)
+int
+Gauges::id2gaugeKey(const std::string& id,
+                    const std::string& name)
 {
-  if (!isnan(value)) {
-    MyDB::Stmt s(mDB);
-    s << "UPDATE " << fields.table() << " SET " << field << "=" << value 
-      << " WHERE " << fields.key() << "=" << key << ";";
-    s.query();
-  }
+  MyDB::Stmt s(mDB);
+  s << "SELECT " << fields.key() << " FROM " << fields.table()
+    << " WHERE " << name << "='" << id << "';";
+  const MyDB::Stmt::tInts a(s.queryInts());
+  return a.empty() ? 0 : a[0];
 }
-#endif // TPW
 
 bool
 Gauges::chkLimits(const int key,
@@ -191,6 +186,8 @@ Gauges::Info::Info()
   , longitude(1e9)
   , elevation(NAN)
   , drainageArea(NAN)
+  , bankfullStage(NAN)
+  , floodStage(NAN)
   , minFlow(NAN)
   , maxFlow(NAN)
   , minGauge(NAN)
@@ -210,11 +207,14 @@ Gauges::Info::Info(MyDB::Stmt& s)
   , location(s.getString())
   , idUSGS(s.getString())
   , idCBTT(s.getString())
+  , idUSBR(s.getString())
   , idUnit(s.getString())
   , state(s.getString())
   , county(s.getString())
   , elevation(s.getDouble())
   , drainageArea(s.getDouble())
+  , bankfullStage(s.getDouble())
+  , floodStage(s.getDouble())
   , minFlow(s.getDouble())
   , maxFlow(s.getDouble())
   , minGauge(s.getDouble())
@@ -264,6 +264,56 @@ Gauges::getAll()
     s.errorCheck(rc, std::string(__FILE__) + " line " + Convert::toStr(__LINE__));
   }
   return info;
+}
+
+void
+Gauges::putInfo(const Info& info)
+{
+  if (info.gaugeKey <= 0) return; // Invalid gaugeKey
+
+  MyDB::Stmt s(mDB);
+  std::ostringstream oss;
+
+  s << "INSERT OR REPLACE INTO " << fields.table() << " (" << fields.key();
+  oss << info.gaugeKey;
+
+  int n(0); // Number of fields to set
+
+  n += maybeInfo(s, oss, fields.time(), info.date);
+  n += maybeInfo(s, oss, fields.name(), info.name);
+  n += maybeInfo(s, oss, fields.latitude(), info.latitude);
+  n += maybeInfo(s, oss, fields.longitude(), info.longitude);
+  n += maybeInfo(s, oss, fields.description(), info.description);
+  n += maybeInfo(s, oss, fields.location(), info.location);
+  n += maybeInfo(s, oss, fields.idUSGS(), info.idUSGS);
+  n += maybeInfo(s, oss, fields.idCBTT(), info.idCBTT);
+  n += maybeInfo(s, oss, fields.idUSBR(), info.idUSBR);
+  n += maybeInfo(s, oss, fields.idUnit(), info.idUnit);
+  n += maybeInfo(s, oss, fields.state(), info.state);
+  n += maybeInfo(s, oss, fields.county(), info.county);
+  n += maybeInfo(s, oss, fields.elevation(), info.elevation);
+  n += maybeInfo(s, oss, fields.drainageArea(), info.drainageArea);
+  n += maybeInfo(s, oss, fields.bankfullStage(), info.bankfullStage);
+  n += maybeInfo(s, oss, fields.floodStage(), info.floodStage);
+  n += maybeInfo(s, oss, fields.minFlow(), info.minFlow);
+  n += maybeInfo(s, oss, fields.maxFlow(), info.maxFlow);
+  n += maybeInfo(s, oss, fields.minGauge(), info.minGauge);
+  n += maybeInfo(s, oss, fields.maxGauge(), info.maxGauge);
+
+  if (!n) return; // Nothing to do
+
+  s << ") VALUES(" << oss.str() << ");";
+  s.query();
+}
+
+void
+Gauges::putInfo(const tInfo& info)
+{
+  mDB.beginTransaction();
+  for (tInfo::const_iterator it(info.begin()), et(info.end()); it != et; ++it) {
+    putInfo(*it);
+  }
+  mDB.endTransaction();
 }
 
 Gauges::tLevelInfo

@@ -24,20 +24,14 @@ private:
 
   typedef std::map<int, Limits> tLimits;
   tLimits mLimits;
+
+  int id2gaugeKey(const std::string& id, const std::string& field);
 public:
   Gauges();
-  
-  // void latLon(const int key, const double latitude, const double longitude);
-  // void idUSGS(const int key, const std::string& id);
-  // void idCBTT(const int key, const std::string& id);
-  // void idUnit(const int key, const std::string& id);
-  // void location(const int key, const std::string& loci);
-  // void description(const int key, const std::string& a);
-  // void state(const int key, const std::string& a);
-  // void county(const int key, const std::string& a);
-  // void elevation(const int key, const double a);
-  // void drainageArea(const int key, const double a);
-
+ 
+  int idUSGS2gaugeKey(const std::string& id);
+  int idCBTT2gaugeKey(const std::string& id);
+ 
   bool chkLimits(const int key, const Data::Type type, const double val);
 
   struct PlotInfo {
@@ -52,8 +46,7 @@ public:
 
   PlotInfo plotInfo(const size_t key);
 
-  class Info {
-  public:
+  struct Info {
     size_t gaugeKey;
     time_t date;
     std::string name;
@@ -63,11 +56,14 @@ public:
     std::string location;
     std::string idUSGS;
     std::string idCBTT;
+    std::string idUSBR;
     std::string idUnit;
     std::string state;
     std::string county;
     double elevation; 
     double drainageArea; 
+    double bankfullStage; 
+    double floodStage; 
     double minFlow; 
     double maxFlow; 
     double minGauge; 
@@ -87,6 +83,12 @@ public:
 
   typedef std::set<Info> tInfo;
   tInfo getAll();
+
+  void putInfo(const Info& info); // Write updated info back to database
+  void putInfo(const tInfo& info);
+
+  typedef std::pair<std::string, std::string> tStringPair;
+  tStringPair remapString(const std::string& str); // Return description and location for str
 
   struct LevelInfo {
     size_t gaugeKey;
