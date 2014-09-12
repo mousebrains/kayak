@@ -11,13 +11,15 @@ private:
   long mResponseCode;
   std::string mContentType;
   std::string mText;
+  char mErrorMsg[CURL_ERROR_SIZE + 1024];
 
   void errchk(CURLcode code, const std::string& reason);
   static size_t callback(void *ptr, size_t size, size_t nmemb, void *data);
 public:
-  Curl(const std::string& url);
+  explicit Curl(const std::string& url, const bool qVerbose = false);
 
   operator bool () const {return mOkay;}
+  const char *errmsg() const {return mErrorMsg;}
 
   const std::string& url() const {return mURL;}
   const std::string& str() const {return mText;}
