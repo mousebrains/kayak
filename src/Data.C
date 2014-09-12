@@ -91,10 +91,11 @@ Data::dump()
 
   for (tData::size_type i(0), e(mData.size()); i < e; ++i) {
     const Datum& datum(mData[i]);
+    if (datum.t <= 0) continue;
     const int key(mSource.name2key(datum.name, datum.t));
-    const int url(mURLs.name2key(datum.url, datum.t));
-
     if (gauges.chkLimits(key, datum.tNum, datum.value)) {
+      const int url(mURLs.name2key(datum.url, datum.t, true));
+std::cout << "datum " << datum.name << " " << datum.t << " " << datum.tNum << " " << datum.value << " key " << key << " url " << url << std::endl;
       ++cnt;
       s.bind(key);
       s.bind(datum.tNum);
