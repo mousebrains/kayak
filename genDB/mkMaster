@@ -1,8 +1,0 @@
-#! /bin/bash
-#
-# Create a new database
-#
-ROOT=`dirname $0`
-TGT=$ROOT/../files/a.db
-
-sqlite3 -batch -init /dev/null $TGT <$ROOT/master.txt

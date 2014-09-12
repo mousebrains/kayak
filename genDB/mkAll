@@ -7,6 +7,9 @@ TGT=$ROOT/../files/a.db
 
 mkdir -p `dirname $TGT`
 rm -f $TGT
-$ROOT/mkMaster
-$ROOT/mkData
-$ROOT/mkLevels
+
+$ROOT/mkOne $ROOT/master.txt \
+	$ROOT/data.txt \
+	$ROOT/levels.txt \
+	$ROOT/translate.txt \
+	$ROOT/stateCounty.txt 

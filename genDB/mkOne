@@ -1,0 +1,10 @@
+#! /bin/bash
+#
+# Execute a set of SQLite commands contained in the input files specified
+#
+ROOT=`dirname $0`
+TGT=$ROOT/../files/a.db
+
+for fn in $*; do
+  echo "sqlite3 -batch -init /dev/null $TGT <$fn"
+done
