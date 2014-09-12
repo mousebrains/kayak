@@ -7,18 +7,20 @@ class Fields {
 private:
   const std::string mTable;
   const std::string mKey;
+  const std::string mName;
 public:
   Fields() {}
-  explicit Fields(const Fields& f) 
-    : mTable(f.mTable), mKey(f.mKey) {}
-  explicit Fields(const std::string& tbl) : mTable(tbl), mKey("key") {}
-  Fields(const std::string& tbl, const std::string& key) : mTable(tbl), mKey(key) {}
+  explicit Fields(const Fields& f) : mTable(f.mTable), mKey(f.mKey), mName(f.mName) {}
+  explicit Fields(const std::string& tbl, 
+                  const std::string& key="key", 
+                  const std::string& name="name") 
+    : mTable(tbl), mKey(key), mName(name) {}
 
   virtual ~Fields() {}
 
   virtual const std::string& table() const {return mTable;}
   virtual const std::string& key() const {return mKey;}
-  virtual const char *name() const {return "name";}
+  virtual const std::string& name() const {return mName;}
   virtual const char *time() const {return "date";}
 }; // Fields
 
@@ -26,7 +28,7 @@ class URLsFields : public Fields {
 public:
   URLsFields() {}
   explicit URLsFields(const Fields& f) : Fields(f) {}
-  explicit URLsFields(const std::string& tbl) : Fields(tbl, "urlKey") {}
+  explicit URLsFields(const std::string& tbl) : Fields(tbl + "URLs", "urlKey", "url") {}
   virtual ~URLsFields() {}
   virtual const char *parser() const {return "parser";}
   virtual const char *qRun() const {return "qRun";}
