@@ -1,6 +1,8 @@
 // Fetch a set of URLs and then parse them
 
+#include "ParserNOAA0.H"
 #include "ParserUSGS0.H"
+#include "ParserUSGS1.H"
 #include "Curl.H"
 #include "HTTP.H"
 #include <iostream>
@@ -73,6 +75,10 @@ main (int argc,
 
     if (parser == "USGS0") {
       ParserUSGS0 a(url, curl.str(), qVerbose);
+    } else if (parser == "USGS1") {
+      ParserUSGS1 a(url, curl.str(), qVerbose);
+    } else if (parser == "NOAA0") {
+      ParserNOAA0 a(url, curl.str(), qVerbose);
     } else {
       std::cerr << "Unrecongized parser '" << parser << "'" << std::endl;
       continue;
