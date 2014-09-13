@@ -58,6 +58,9 @@ public:
     tInts queryInts();
     tDoubles queryDoubles();
     tStringInt queryStringInt();
+
+    void quoteString(const std::string& str);
+    static std::string quotedString(const std::string& str);
   }; // Stmt
 
   typedef std::set<size_t> tRows;

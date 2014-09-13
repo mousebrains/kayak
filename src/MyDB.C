@@ -431,6 +431,65 @@ MyDB::Stmt::queryStringInt()
   return a;
 }
 
+void
+MyDB::Stmt::quoteString(const std::string& str)
+{
+  if (str.empty()) {
+    *(this) << "null";
+    return;
+  }
+
+  const char quote('\'');
+  std::string::size_type j(str.find(quote));
+
+  if (j == str.npos) { // no quotes in string
+    *this << quote << str << quote;
+    return;
+  }
+
+  std::string::size_type i(0);
+
+  *this << quote;
+
+  while (j != str.npos) {
+   if (i != j) {
+      *this << str.substr(i,j-i);
+   }
+    *this << quote;
+    i = j;
+    j = str.find(quote, j+1);
+  }
+  *this << str.substr(i) << quote;
+}
+
+std::string
+MyDB::Stmt::quotedString(const std::string& str)
+{
+  if (str.empty()) return "null";
+
+  const std::string quote("'");
+  std::string::size_type j(str.find(quote));
+
+  if (j == str.npos) { // no quotes in string
+    return quote + str + quote;
+  }
+
+  std::string::size_type i(0);
+  std::string a(quote);
+
+  while (j != str.npos) {
+    if (i != j) {
+      a += str.substr(i,j-i) + quote;
+    } else {
+      a += quote;
+    }
+    i = j;
+    j = str.find(quote, j+1);
+  }
+  a += str.substr(i) + quote;
+  return a;
+}
+
 std::ostream&
 operator << (std::ostream& os,
              const MyDB::Stmt::tStrings& a)
