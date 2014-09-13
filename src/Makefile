@@ -63,8 +63,9 @@ LIBSRC += CommonSource.C CommonURLs.C CommonUnknown.C Convert.C Data.C DataGet.C
 LIBSRC += DisplayDatabase.C DisplayInfo.C DisplayLevels.C DisplayMainPage.C DisplayPlot.C
 LIBSRC += DisplayTable.C Env.C File.C Gauges.C GuideBook.C JSON.C Levels.C MakePlot.C Master.C
 LIBSRC += MyDB.C PNGCanvas.C Paths.C PruneData.C Rating.C ReadFile.C Table.C afstream.C
-LIBSRC += DisplayData.C Calc.C TimeIt.C Curl.C XMLParser.C GaugeTranslate.C
-LIBSRC += ParserUSGS0.C
+LIBSRC += DisplayData.C Calc.C TimeIt.C Curl.C XMLParser.C GaugeTranslate.C StateCounty.C
+LIBSRC += ParserUSGS0.C ParserUSGS1.C ParserNOAA0.C 
+LIBSRC += String.C
 
 .PHONY: all distclean clean install install.cgi install.programs
 .PRECIOUS: obj/%.o
