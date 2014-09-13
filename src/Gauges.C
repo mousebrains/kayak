@@ -2,7 +2,6 @@
 #include "MyDB.H"
 #include "Fields.H"
 #include "Convert.H"
-#include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <cmath>
@@ -53,7 +52,7 @@ namespace {
                 const std::string& value) {
     if (value.empty()) return 0;
     os0 << "," << name;
-    os1 << ",'" << value << "'";
+    os1 << "," << MyDB::Stmt::quotedString(value);
     return 1;
   }
 
@@ -95,7 +94,7 @@ Gauges::id2gaugeKey(const std::string& id,
 {
   MyDB::Stmt s(mDB);
   s << "SELECT " << fields.key() << " FROM " << fields.table()
-    << " WHERE " << name << "='" << id << "';";
+    << " WHERE " << name << "='" << id << "' COLLATE NOCASE;";
   const MyDB::Stmt::tInts a(s.queryInts());
   return a.empty() ? 0 : a[0];
 }
