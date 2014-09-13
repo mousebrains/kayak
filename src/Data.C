@@ -95,7 +95,7 @@ Data::dump()
     const int key(mSource.name2key(datum.name, datum.t));
     if (gauges.chkLimits(key, datum.tNum, datum.value)) {
       const int url(mURLs.name2key(datum.url, datum.t, true));
-std::cout << "datum " << datum.name << " " << datum.t << " " << datum.tNum << " " << datum.value << " key " << key << " url " << url << std::endl;
+// std::cout << "datum " << datum.name << " " << datum.t << " " << datum.tNum << " " << datum.value << " key " << key << " url " << url << std::endl;
       ++cnt;
       s.bind(key);
       s.bind(datum.tNum);
@@ -104,6 +104,8 @@ std::cout << "datum " << datum.name << " " << datum.t << " " << datum.tNum << " 
       s.bind(datum.value);
       s.step();
       s.reset();
+//     } else {
+// std::cout << "reject " << datum.name << " " << datum.t << " " << datum.tNum << " " << datum.value << " key " << key << std::endl;
     }
   }
 
