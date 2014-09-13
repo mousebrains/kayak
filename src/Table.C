@@ -38,7 +38,8 @@ Table::name2key(const std::string& name,
   MyDB::Stmt s(mDB);
   s << "SELECT " << mFields.key() << "," << mFields.time() 
     << " FROM " << mFields.table() 
-    << " WHERE " << mFields.name() << "='" << name << "';";
+    << " WHERE " << mFields.name() << "='" << name 
+    << "' COLLATE NOCASE;";
   MyDB::Stmt::tInts info(s.queryInts());
 
   if (info.empty()) { // Not set, so insert
