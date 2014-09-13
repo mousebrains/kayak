@@ -17,7 +17,8 @@ namespace {
         {"mdt", -6}, {"-06:00", -6},
         {"mst", -7}, {"-07:00", -7},
         {"pdt", -7}, {"-07:00", -7},
-        {"pst", -8}, {"-08:00", -8}
+        {"pst", -8}, {"-08:00", -8},
+        {"gmt",  0}, {"z",       0}
       };
     tMap::const_iterator it(tzMap.find(Convert::tolower(tz)));
     if (it != tzMap.end()) return it->second * 3600;
