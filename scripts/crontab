@@ -1,0 +1,40 @@
+#
+# Crontab for getting information and doing maintence tasks on 
+# water level information
+#
+# min hour mday mon dayOfWeek
+#
+EXEROOT=/home/tpw/local/bin
+MAILTO=pat@mousebrains.com
+
+##################################
+# Gauge Levels                   #
+##################################
+
+# USGS gauge information, hourly
+
+12 * * * * $EXE/fetch -p USGS0 | $EXEROOT/mailFilter $MAILTO
+
+# NOAA gauge information, hourly
+
+12 * * * * $EXE/fetch -p NOAA1 | $EXEROOT/mailFilter $MAILTO
+
+##################################
+# Site information               #
+##################################
+
+# USGS site information, weekly
+
+17 3 * * 3 $EXE/fetch -p USGS0 | $EXEROOT/mailFilter $MAILTO
+
+# NOAA site information, weekly
+
+17 4 * * 3 $EXE/fetch -p NOAA1 | $EXEROOT/mailFilter $MAILTO
+
+##################################
+# Maintanence tasks              #
+##################################
+
+# Prune observations back in time
+
+17 2 * * 3 $EXE/pruneDatabase | $EXEROOT/mailFIlter $MAILTO
