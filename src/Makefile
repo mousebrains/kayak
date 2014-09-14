@@ -10,7 +10,7 @@ CGIDIR = $(PATHS_WEB_ROOT)/cgi
 LOCALLIB ?= $(PATHS_LOCAL_ROOT)/lib
 LOCALINC ?= $(PATHS_LOCAL_ROOT)/include
 
-CXXSTD = -std=c++0x
+CXXSTD ?= -std=c++0x
 
 CXXFLAGS += -Wall -pedantic
 CXXFLAGS += $(CXXSTD)
