@@ -382,6 +382,7 @@ namespace {
       s.bind(a.idCBTT);
       s.step();
       s.reset();
+      a.gaugeKey = db.lastInsertRowid();
 
       if (!a.calcExpr.empty()) {
         calcs.insert(it->first);
@@ -391,20 +392,17 @@ namespace {
 
     // Get gaugeKey's from what was just inserted
 
-    MyDB::Stmt::tInts keys(MyDB::Stmt(db, "SELECT gaugeKey FROM gauges;").queryInts());
     tHash2Key hash2gauge;
 
     // insert into dataSource table with gaugeKey 
 
     MyDB::Stmt s1(db, "INSERT INTO dataSource (name,gaugeKey) VALUES(?,?);");
-    size_t cnt(0);
     db.beginTransaction();
     db.query("DELETE FROM dataSource;");
     for (tGaugeInfo::iterator it(info.begin()), et(info.end()); it != et; ++it) {
       GaugeInfo& a(it->second);
-      a.gaugeKey = keys[cnt++]; 
       for (tSet::const_iterator jt(a.hashes.begin()), jet(a.hashes.end()); jt != jet; ++jt) {
-        hash2gauge.insert(std::make_pair(*jt, it->second.gaugeKey));
+        hash2gauge.insert(std::make_pair(*jt, a.gaugeKey));
       }
       const tSet& parsers(a.parsers);
       for (tSet::const_iterator jt(parsers.begin()), jet(parsers.end()); jt != jet; ++jt) {
