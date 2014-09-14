@@ -1,5 +1,6 @@
 #include "XMLParser.H"
 #include <iostream>
+#include <cstring>
 
 XMLParser::XMLParser(const std::string& str)
   : mContent(str.begin(), str.end())

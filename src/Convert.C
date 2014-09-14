@@ -55,20 +55,22 @@ namespace {
   }
 
   size_t getMonth(std::string str, int &mon) {
-    static std::vector<std::vector<std::string> >  a = {
-      {0, {"january", "jan"}},
-      {1, {"febuary", "feb"}},
-      {2, {"march", "mar"}},
-      {3, {"april", "apr"}},
-      {4, {"may"}},
-      {5, {"june", "jun"}},
-      {6, {"july", "jul"}},
-      {7, {"august", "aug"}},
-      {8, {"september", "sep"}},
-      {9, {"october", "oct"}},
-      {10, {"november", "nov"}},
-      {11, {"december", "dec"}},
-      };
+    typedef std::vector<std::string> tStrings;
+    static std::vector<tStrings>  a;
+    if (a.empty()) { // Needed for -std=c++0x, could use nested braces for c++11
+      a.push_back(tStrings({"january", "jan"}));
+      a.push_back(tStrings({"febuary", "feb"}));
+      a.push_back(tStrings({"march", "mar"}));
+      a.push_back(tStrings({"april", "apr"}));
+      a.push_back(tStrings({"may"}));
+      a.push_back(tStrings({"june", "jun"}));
+      a.push_back(tStrings({"july", "jul"}));
+      a.push_back(tStrings({"august", "aug"}));
+      a.push_back(tStrings({"september", "sep"}));
+      a.push_back(tStrings({"october", "oct"}));
+      a.push_back(tStrings({"november", "nov"}));
+      a.push_back(tStrings({"december", "dec"}));
+    }
 
     size_t n(0);
     { // Strip off leading whitespace
