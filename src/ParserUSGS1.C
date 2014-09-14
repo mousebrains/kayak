@@ -9,11 +9,6 @@
 #include <iostream>
 #include <sstream>
 
-namespace {
-  GaugeTranslate translate;
-  StateCounty stateCounty;
-} // anonymous
-
 ParserUSGS1::ParserUSGS1(const std::string& url,
                          const std::string& str,
                          const bool qVerbose)
@@ -75,6 +70,7 @@ ParserUSGS1::collection(const XMLParser::Node& site)
 
   if (info.gaugeKey > 0) { // Found a gauge to put information into
     if (!description.empty()) { // Translate string
+      GaugeTranslate translate;
       const GaugeTranslate::Info a(translate(description));
       info.description = a.description;
       info.location = a.location;
@@ -82,6 +78,7 @@ ParserUSGS1::collection(const XMLParser::Node& site)
 
     if (!state.empty()) {
       const int skey(Convert::strTo<int>(state));
+      StateCounty stateCounty;
       info.state = stateCounty.state(skey);
       if (!county.empty()) {
         const int ckey(Convert::strTo<int>(county));

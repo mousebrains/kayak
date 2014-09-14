@@ -11,8 +11,6 @@
 #include <cstring>
 
 namespace {
-  GaugeTranslate translate;
-
   std::string capitalize(const std::string& str) {
     if (str.empty()) return str; 
     std::string a(Convert::tolower(str));
@@ -70,6 +68,7 @@ ParserNOAA0::collection(const XMLParser::Node& site)
   }
 
   if (info.gaugeKey > 0) { // Found a gauge key
+    GaugeTranslate translate;
     const GaugeTranslate::Info a(translate(description));
     info.description = a.description;
     info.location = a.location;
