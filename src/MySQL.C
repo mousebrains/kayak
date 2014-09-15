@@ -45,7 +45,7 @@ MySQL::nData(const std::string& table)
 time_t
 MySQL::maxDataTime(const std::string& table)
 {
-  mQuery << "select max(unix_timestamp(time)) from " << table << ";";
+  mQuery << "select unix_timestamp(max(time)) from " << table << ";";
   const Result result(mQuery.store());
   return result.size() ? (time_t) result.at(0).at(0) : 0;
 }
