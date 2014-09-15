@@ -128,7 +128,8 @@ function lev(d) {
     row = tbody.insertRow(-1);
 
     cell = row.insertCell(-1)
-    cell.innerHTML = "<a href='?o=i&h=" + hash +"'>" + d.name[i] + "</a>";
+    cell.innerHTML = "<a href='?o=i&h=" + hash +"'>" + d.name[i] + "</a>" +
+                   (d.qCalc[i] ? "<span class='red'>(est)</span>" : "");
     cell.className = "hdr";
 
     cell = row.insertCell(-1);
@@ -137,7 +138,7 @@ function lev(d) {
 
     qFlow && setVal(row.insertCell(-1), d.flow[i], hash, d.level[i], d.flowDelta[i], "f");
     qGauge && setVal(row.insertCell(-1), d.gauge[i], hash, d.level[i], d.gaugeDelta[i], "g");
-    qTemp && setVal(row.insertCell(-1), d.temperature[i], hash, d.level[i], d.temperatureDelta[i], "t");
+    qTemp && setVal(row.insertCell(-1), d.temperature[i], hash, undefined, d.temperatureDelta[i], "t");
     if (qClass) {
       txt = d.class[i];
       cell = row.insertCell(-1);
