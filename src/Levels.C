@@ -219,8 +219,10 @@ Levels::update()
   { // populate data and gauge keys vectors
     std::set<int> gkeys;
     for (tKey2Key::const_iterator it(data2gauge.begin()), et(data2gauge.end()); it != et; ++it) {
-      dataKeys.push_back(it->first); // dataKeys are unique
-      gkeys.insert(it->second); // Make gaugeKeys unique
+      if (it->second > 0) {
+        dataKeys.push_back(it->first); // dataKeys are unique
+        gkeys.insert(it->second); // Make gaugeKeys unique
+      }
     }
     gaugeKeys = MyDB::Stmt::tInts(gkeys.begin(), gkeys.end());
   }
