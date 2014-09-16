@@ -81,7 +81,7 @@ ParserUSGS0::collection(const XMLParser::Node& root)
     obsMember(node.firstChild(), gauge);
   }
 
-  gauge.gaugeKey = mGauges.name2key(gauge.name, false);
+  gauge.gaugeKey = mGauges.name2key(gauge.name);
   if (gauge.gaugeKey <= 0) { // Look up by idUSGS
     gauge.gaugeKey = mGauges.idUSGS2gaugeKey(gauge.name);
   }
