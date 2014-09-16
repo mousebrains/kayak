@@ -5,6 +5,7 @@
 #include "Gauges.H"
 #include "GaugeTranslate.H"
 #include "Convert.H"
+#include "String.H"
 #include <iostream>
 #include <sstream>
 #include <cmath>
@@ -13,7 +14,7 @@
 namespace {
   std::string capitalize(const std::string& str) {
     if (str.empty()) return str; 
-    std::string a(Convert::tolower(str));
+    std::string a(String::tolower(str));
     if ((a[0] >= 'a') && (a[0] <= 'z')) a[0] = a[0] - 'a' + 'A';
     return a;
   }
