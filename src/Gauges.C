@@ -48,25 +48,22 @@ namespace {
     return oss.str();
   }
 
-  int maybeInfo(std::ostream& os0, std::ostream& os1, const std::string& name, 
+  int maybeInfo(std::ostream& os, bool q, const std::string& name, 
                 const std::string& value) {
     if (value.empty()) return 0;
-    os0 << "," << name;
-    os1 << "," << MyDB::Stmt::quotedString(value);
+    os << (q ? "," : "") << name << "=" << MyDB::Stmt::quotedString(value);
     return 1;
   }
 
-  int maybeInfo(std::ostream& os0, std::ostream& os1, const std::string& name, const time_t t) {
+  int maybeInfo(std::ostream& os, bool q, const std::string& name, const time_t t) {
     if (t <= 0) return 0;
-    os0 << "," << name;
-    os1 << "," << t;
+    os << (q ? "," : "") << name << "=" << t;
     return 1;
   }
 
-  int maybeInfo(std::ostream& os0, std::ostream& os1, const std::string& name, const double x) {
+  int maybeInfo(std::ostream& os, bool q, const std::string& name, const double x) {
     if (isnan(x)) return 0;
-    os0 << "," << name;
-    os1 << "," << std::setprecision(12) << x; // up to 12 digits after the decimal point
+    os << (q ? "," : "") << name << "=" << std::setprecision(12) << x;
     return 1;
   }
 } // anonymous
@@ -271,37 +268,35 @@ Gauges::putInfo(const Info& info)
   if (info.gaugeKey <= 0) return; // Invalid gaugeKey
 
   MyDB::Stmt s(mDB);
-  std::ostringstream oss;
 
-  s << "INSERT OR REPLACE INTO " << fields.table() << " (" << fields.key();
-  oss << info.gaugeKey;
+  s << "UPDATE " << fields.table() << " SET ";
 
   int n(0); // Number of fields to set
 
-  n += maybeInfo(s, oss, fields.time(), info.date);
-  n += maybeInfo(s, oss, fields.name(), info.name);
-  n += maybeInfo(s, oss, fields.latitude(), info.latitude);
-  n += maybeInfo(s, oss, fields.longitude(), info.longitude);
-  n += maybeInfo(s, oss, fields.description(), info.description);
-  n += maybeInfo(s, oss, fields.location(), info.location);
-  n += maybeInfo(s, oss, fields.idUSGS(), info.idUSGS);
-  n += maybeInfo(s, oss, fields.idCBTT(), info.idCBTT);
-  n += maybeInfo(s, oss, fields.idUSBR(), info.idUSBR);
-  n += maybeInfo(s, oss, fields.idUnit(), info.idUnit);
-  n += maybeInfo(s, oss, fields.state(), info.state);
-  n += maybeInfo(s, oss, fields.county(), info.county);
-  n += maybeInfo(s, oss, fields.elevation(), info.elevation);
-  n += maybeInfo(s, oss, fields.drainageArea(), info.drainageArea);
-  n += maybeInfo(s, oss, fields.bankfullStage(), info.bankfullStage);
-  n += maybeInfo(s, oss, fields.floodStage(), info.floodStage);
-  n += maybeInfo(s, oss, fields.minFlow(), info.minFlow);
-  n += maybeInfo(s, oss, fields.maxFlow(), info.maxFlow);
-  n += maybeInfo(s, oss, fields.minGauge(), info.minGauge);
-  n += maybeInfo(s, oss, fields.maxGauge(), info.maxGauge);
+  n += maybeInfo(s, n, fields.time(), info.date);
+  n += maybeInfo(s, n, fields.name(), info.name);
+  n += maybeInfo(s, n, fields.latitude(), info.latitude);
+  n += maybeInfo(s, n, fields.longitude(), info.longitude);
+  n += maybeInfo(s, n, fields.description(), info.description);
+  n += maybeInfo(s, n, fields.location(), info.location);
+  n += maybeInfo(s, n, fields.idUSGS(), info.idUSGS);
+  n += maybeInfo(s, n, fields.idCBTT(), info.idCBTT);
+  n += maybeInfo(s, n, fields.idUSBR(), info.idUSBR);
+  n += maybeInfo(s, n, fields.idUnit(), info.idUnit);
+  n += maybeInfo(s, n, fields.state(), info.state);
+  n += maybeInfo(s, n, fields.county(), info.county);
+  n += maybeInfo(s, n, fields.elevation(), info.elevation);
+  n += maybeInfo(s, n, fields.drainageArea(), info.drainageArea);
+  n += maybeInfo(s, n, fields.bankfullStage(), info.bankfullStage);
+  n += maybeInfo(s, n, fields.floodStage(), info.floodStage);
+  n += maybeInfo(s, n, fields.minFlow(), info.minFlow);
+  n += maybeInfo(s, n, fields.maxFlow(), info.maxFlow);
+  n += maybeInfo(s, n, fields.minGauge(), info.minGauge);
+  n += maybeInfo(s, n, fields.maxGauge(), info.maxGauge);
 
   if (!n) return; // Nothing to do
 
-  s << ") VALUES(" << oss.str() << ");";
+  s << " WHERE " << fields.key() << "=" << info.gaugeKey << ";";
   s.query();
 }
 
