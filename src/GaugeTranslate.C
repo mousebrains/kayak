@@ -1,7 +1,8 @@
 #include "GaugeTranslate.H"
 #include "Tokens.H"
-#include "Convert.H"
+#include "String.H"
 #include <iostream>
+#include <cstring>
 
 namespace {
   class MyFields {
@@ -37,7 +38,7 @@ namespace {
       };
    
     MyDB::Stmt::tStrings a;
-    Tokens toks(Convert::tolower(str), ", \t\n\r");
+    Tokens toks(String::tolower(str), ", \t\n\r");
     std::string name;
     std::string location;
     int state(0);
@@ -54,7 +55,7 @@ namespace {
       if (it != xlat.end()) {
         tok = it->second;
       } else {
-        tok[0] = (tok[0] >= 'a' && tok[0] <= 'z') ? (tok[0] - 'a' + 'A') : tok[0]; // Cap 1st char
+        tok[0] = std::toupper(tok[0]); // Capitalize first letter
       }
       if (state == 0) {
         name += (name.empty() ? "" : " ") + tok;
