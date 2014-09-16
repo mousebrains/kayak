@@ -2,6 +2,7 @@
 #include "MyException.H"
 #include "Convert.H"
 #include "ReadFile.H"
+#include "String.H"
 #include <iostream>
 
 Curl::Curl(const std::string& url,
@@ -12,7 +13,7 @@ Curl::Curl(const std::string& url,
 {
   mErrorMsg[0] = '\0'; // Zero terminate the error message stream
 
-  if (Convert::tolower(url.substr(0,9)).find("file:///") == 0) { // local file
+  if (String::tolower(url.substr(0,9)).find("file:///") == 0) { // local file
     mText = ReadFile(url.substr(7));
     mOkay = true;
     mResponseCode = 200;
