@@ -6,8 +6,6 @@ time $ROOT/genDB/mkAll
 
 time $ROOT/src/bin/cloneMySQL
 
-time $ROOT/src/bin/updateCalcs
-
 # USGS site information update
 time $ROOT/src/bin/fetch -u 'USGS1:http://waterdata.usgs.gov/nwis/inventory?state_cd=id&state_cd=or&state_cd=wa&site_tp_cd=ST&group_key=NONE&format=sitefile_output&sitefile_output_format=xml&column_name=agency_cd&column_name=site_no&column_name=station_nm&column_name=dec_lat_va&column_name=dec_long_va&column_name=state_cd&column_name=county_cd&column_name=alt_va&column_name=huc_cd&column_name=basin_cd&column_name=drain_area_va&list_of_search_criteria=state_cd%2Csite_tp_cd'
 
@@ -17,5 +15,7 @@ time $ROOT/src/bin/fetch -u 'USGS0:http://waterservices.usgs.gov/nwis/iv/?format
 time $ROOT/src/bin/fetch -u 'USGS0:http://waterservices.usgs.gov/nwis/iv/?format=waterml,2.0&stateCd=or&parameterCd=00060,00065,00010&siteType=ST'
 # USGS data from Washington
 time $ROOT/src/bin/fetch -u 'USGS0:http://waterservices.usgs.gov/nwis/iv/?format=waterml,2.0&stateCd=wa&parameterCd=00060,00065,00010&siteType=ST'
+
+time $ROOT/src/bin/updateCalcs 48
 
 time $ROOT/src/bin/updateLevels
