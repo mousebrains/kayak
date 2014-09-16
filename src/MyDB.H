@@ -26,11 +26,12 @@ public:
 
     int errorCheck(const int rc, const std::string& str);
 
-    void bind(const int val);
-    void bind(const size_t val) {bind((int) val);}
+    void bind(); // Bind a null
+    void bind(const int val); //bind an integer
+    void bind(const size_t val) {bind((int) val);} 
     void bind(const time_t val) {bind((int) val);}
-    void bind(const double val);
-    void bind(const std::string& val);
+    void bind(const double val); // bind a double
+    void bind(const std::string& val); // bind a string
 
     int step();
     void reset();

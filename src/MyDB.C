@@ -225,6 +225,18 @@ MyDB::Stmt::errorCheck(const int rc,
 }
 
 void
+MyDB::Stmt::bind() // Bind a null
+{
+  if (!mStmt) prepare();
+  const int rc(sqlite3_bind_null(mStmt, ++mIndex));
+  if (rc != SQLITE_OK) {
+    std::ostringstream oss;
+    oss << "bind<null> for column " << mIndex;
+    errorCheck(rc, oss.str());
+  }
+}
+
+void
 MyDB::Stmt::bind(const int val)
 {
   if (!mStmt) prepare();
@@ -239,6 +251,10 @@ MyDB::Stmt::bind(const int val)
 void
 MyDB::Stmt::bind(const double val)
 {
+  if (isnan(val)) {
+    bind(); // Bind a null
+    return;
+  }
   if (!mStmt) prepare();
   const int rc(sqlite3_bind_double(mStmt, ++mIndex, val));
   if (rc != SQLITE_OK) {
@@ -251,6 +267,10 @@ MyDB::Stmt::bind(const double val)
 void
 MyDB::Stmt::bind(const std::string& val)
 {
+  if (val.empty()) {
+    bind(); // bind a null
+    return;
+  }
   if (!mStmt) prepare();
   const int rc(sqlite3_bind_text(mStmt, ++mIndex, val.c_str(), val.size(), 0));
   if (rc != SQLITE_OK) {
