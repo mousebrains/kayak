@@ -51,7 +51,6 @@ private:
   tTimes mTime;
 
   void split(const std::string& expr, const Data::Type type);
-  const std::string& mkName();
   int mkQuery(MyDB::Stmt& s, const std::string& field, 
               const int gaugeKey, const Data::Type type, 
               const time_t stime, const time_t dt) const;
@@ -60,7 +59,11 @@ public:
 
   Calc(const int gaugeKey, const std::string& expr, const Data::Type type);
 
+  void gaugeKey(const int gaugeKey) {mGaugeKey = gaugeKey;}
   void update(Data& data, time_t t0 = 0, time_t delta = 7200);
+
+  const std::string& mkName();
+  Data::Type type() const {return mType;}
 
   typedef tFields::const_iterator const_iterator;
   typedef tFields::iterator iterator;

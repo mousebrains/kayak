@@ -26,7 +26,9 @@ Calc::Calc(const int gaugeKey,
   : mGaugeKey(gaugeKey)
   , mType(type)
 {
-  split(expr, type);
+  if (!expr.empty() && (type != Data::LASTTYPE)) {
+    split(expr, type);
+  }
 }
 
 void
