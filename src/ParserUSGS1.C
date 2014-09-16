@@ -14,6 +14,7 @@ ParserUSGS1::ParserUSGS1(const std::string& url,
                          const bool qVerbose)
 {
   const XMLParser xml(str);
+
   for (XMLParser::Node root(xml.first()); root; ++root) { // usgs_nwis level
     for (XMLParser::Node site(root.firstChild()); site; ++site) { // site 
       collection(site);
@@ -63,7 +64,7 @@ ParserUSGS1::collection(const XMLParser::Node& site)
     }
   }
 
-  info.gaugeKey = mGauges.name2key(info.name, false);
+  info.gaugeKey = mGauges.name2key(info.name);
   if (info.gaugeKey <= 0) { // Look up by idUSGS
     info.gaugeKey = mGauges.idUSGS2gaugeKey(info.name);
   }
