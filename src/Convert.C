@@ -1,5 +1,6 @@
 #include "Convert.H"
 #include "CommonData.H"
+#include "String.H"
 #include <sstream>
 #include <iostream>
 #include <cmath>
@@ -20,7 +21,7 @@ namespace {
         {"pst", -8}, {"-08:00", -8},
         {"gmt",  0}, {"z",       0}
       };
-    tMap::const_iterator it(tzMap.find(Convert::tolower(tz)));
+    tMap::const_iterator it(tzMap.find(String::tolower(tz)));
     if (it != tzMap.end()) return it->second * 3600;
     std::cerr << "Timezone '" << tz << "' not found" << std::endl;
     exit(1);
@@ -80,7 +81,7 @@ namespace {
         str = str.substr(i);
       }
     }
-    str = Convert::tolower(str);
+    str = String::tolower(str);
     for (size_t i(0), e(a.size()); i < e; ++i) { // Walk through months
       const std::vector<std::string>& b(a[i]);
       for (size_t j(0), je(a[i].size()); j < je; ++j) { // Walk through representations
@@ -231,16 +232,6 @@ Convert::toLatLon(double a)
   }
 
   return oss.str();
-}
-
-std::string
-Convert::tolower(std::string str)
-{
-  for (std::string::size_type i(0), e(str.size()); i < e; ++i) {
-    str[i] = std::tolower(str[i]);
-  }
-
-  return str;
 }
 
 std::string 
