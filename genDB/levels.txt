@@ -21,4 +21,4 @@ DROP INDEX IF EXISTS stateLevelsIndex;
 CREATE INDEX stateLevelsIndex ON levels(state);
 
 
-.schema levels
+-- .schema levels

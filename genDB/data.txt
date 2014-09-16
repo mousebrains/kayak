@@ -114,9 +114,9 @@ CREATE INDEX idUSGSGaugesIndex ON gauges(idUSGS);
 CREATE INDEX idCBTTGaugesIndex ON gauges(idCBTT);
 
 
-.headers on
-.indices
-.mode column
+-- .headers on
+-- .indices
+-- .mode column
 
 -- pragma table_info(data);
 -- pragma table_info(dataSource);

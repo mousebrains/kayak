@@ -50,6 +50,7 @@ CREATE INDEX gaugeKeyMasterIndex on Master(gaugeKey);
 DROP TABLE IF EXISTS GuideBooks;
 CREATE TABLE GuideBooks (bookKey INTEGER PRIMARY KEY AUTOINCREMENT, -- key to guide book
                          name TEXT, -- Name of the guide book
+                         author TEXT, -- Author of the guide book
                          edition TEXT, -- which edition of the guide book
                          url TEXT -- URL link to book site
                         );
@@ -63,8 +64,8 @@ CREATE TABLE Guides (key INTEGER DEFAULT 0, -- key into Master
                     );
 CREATE INDEX guidesIndex on Guides(key);
 
-.headers on
-.indices
-.mode column
+-- .headers on
+-- .indices
+-- .mode column
 
-.schema Master
+-- .schema Master
