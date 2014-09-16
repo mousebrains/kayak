@@ -1,5 +1,5 @@
 #include "StateCounty.H"
-#include "Convert.H"
+#include "String.H"
 #include "String.H"
 #include <iostream>
 
@@ -14,7 +14,7 @@ namespace {
 
   std::string pruneCounty(const std::string& county) {
     const std::string key("county");
-    const std::string::size_type i(Convert::tolower(county).find(key));
+    const std::string::size_type i(String::tolower(county).find(key));
     if (i != (county.size() - key.size())) { // not at end of string
       return county;
     }
