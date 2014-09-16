@@ -1,6 +1,6 @@
 #include "CommonData.H"
 #include "Gauges.H"
-#include "Convert.H"
+#include "String.H"
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
@@ -12,7 +12,7 @@ CommonData::~CommonData()
 CommonData::Type 
 CommonData::decodeType(const std::string& str)
 {
-  const std::string s(Convert::tolower(str));
+  const std::string s(String::tolower(str));
 
   if ((s.find("flow") == 0) || (s == "f")) {
     return FLOW;
