@@ -63,7 +63,7 @@ std::string
 HTML::weatherURL(const double lat,
                  const double lon)
 {
-  if (fabs(lat) > 90 || fabs(lon) > 180) return std::string();
+  if (isnan(lat) || isnan(lon) || (fabs(lat) > 90) || (fabs(lon) > 180)) return std::string();
 
   return "http://forecast.weather.gov/MapClick.php?lat=" +
          Convert::toStr(lat) + "&amp;lon=" + Convert::toStr(lon);
