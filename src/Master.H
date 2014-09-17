@@ -103,6 +103,8 @@ public:
   tInfo getLike(const std::string& sql);
   tInfo getLike(const size_t key);
   tInfo getAll();
+
+  int gaugeKey2key(const int gaugeKey);
 };
 
 #endif // INC_Master_H_

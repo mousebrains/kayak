@@ -33,7 +33,7 @@ Master::qModifiedSince(const time_t t)
 {
   MyDB::Stmt s(mDB);
   s << "SELECT max(" << fields.modified() << ") FROM " << fields.table() << ";";
-  MyDB::Stmt::tInts result(s.queryInts());
+  const MyDB::Stmt::tInts result(s.queryInts());
 
   return result.empty() ? true : ((t-60) <= (time_t) result[0]);
 }
@@ -44,7 +44,17 @@ Master::gaugeKey(const size_t key)
   MyDB::Stmt s(mDB);
   s << "SELECT " << fields.gaugeKey() << " FROM " << fields.table()
     << " WHERE " << fields.key() << "=" << key << ";";
-  MyDB::Stmt::tInts result(s.queryInts());
+  const MyDB::Stmt::tInts result(s.queryInts());
+  return (result.empty() || (result[0] < 0)) ? 0 : result[0];
+}
+
+int 
+Master::gaugeKey2key(const int gaugeKey)
+{
+  MyDB::Stmt s(mDB);
+  s << "SELECT " << fields.key() << " FROM " << fields.table() << " WHERE "
+    << fields.gaugeKey() << "=" << gaugeKey << ";";
+  const MyDB::Stmt::tInts result(s.queryInts());
   return (result.empty() || (result[0] < 0)) ? 0 : result[0];
 }
 
