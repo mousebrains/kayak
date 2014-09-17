@@ -184,6 +184,10 @@ Data::observations(const MyDB::Stmt::tInts& keys,
 MyDB::Stmt::tInts
 Data::types(const MyDB::Stmt::tInts& keys) // Which types are know for these source keys
 {
+  if (keys.empty()) {
+    return MyDB::Stmt::tInts();
+  }
+
   MyDB::Stmt s(mDB);
   s << "SELECT DISTINCT " << fields.type() << " FROM "
     << fields.table() 
