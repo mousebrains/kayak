@@ -38,11 +38,11 @@ namespace {
       int rc(s.step());
       Book book(bookKey);
       if (rc == SQLITE_ROW) { // Found an entry
-        // book.bookKey = s.getInt(0); // Already have
-        book.name = s.getString();
-        book.author = s.getString();
-        book.edition = s.getString();
-        book.url = s.getString();
+        // book.bookKey = s.getInt(); // Already have
+        book.name = s.getString(1);
+        book.author = s.getString(2);
+        book.edition = s.getString(3);
+        book.url = s.getString(4);
         it = mBooks.insert(book).first;
         rc = s.step();
       } else if (rc == SQLITE_DONE) { // Did not find an entry 
