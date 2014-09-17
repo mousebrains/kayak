@@ -62,18 +62,20 @@ namespace {
          << Convert::toLatLon(lat) << ", " 
          << Convert::toLatLon(lon) 
          << "</a>"
-         << "<a href='" << wx << "'>Weather Forecast</a></li>\n";
+         << " <a href='" << wx << "'>Weather Forecast</a></li>\n";
     return true;
   }
 
-  bool maybeCalc(HTML& html, const std::string& str, 
+  bool maybeCalc(HTML& html, const std::string& str, Master& master,
                  const std::string& prefix="", const std::string& suffix="") {
     if (str.empty()) return false;
     Calc calc(0, str, Data::FLOW);
     html << "<li>" << prefix << (prefix.empty() ? "" : " ");
     for (Calc::size_type i(0), e(calc.size()); i < e; ++i) {
       if (calc[i].qRef()) {
-        html << "<a href='?o=i&amp;h=" << Master::mkHash(calc[i].key()) << "'>"
+        const int gaugeKey(calc[i].key());
+        const int masterKey(master.gaugeKey2key(gaugeKey));
+        html << "<a href='?o=i&amp;h=" << Master::mkHash(masterKey) << "'>"
              << calc[i].str()
              << "</a>";
       } else {
@@ -214,8 +216,8 @@ Display::info()
     // maybe(html, ginfo.maxGauge, "Gauge Maximum Height: ", " Feet");
     // maybe(html, ginfo.minTemperature, "Gauge Minimum Temperature: ", " F");
     // maybe(html, ginfo.maxTemperature, "Gauge Maximum Temperature: ", " F");
-    maybeCalc(html, ginfo.calcFlow, "Gauge Flow Calculation: ");
-    maybeCalc(html, ginfo.calcGauge, "Gauge Height Calculation: ");
+    maybeCalc(html, ginfo.calcFlow, master, "Gauge Flow Calculation: ");
+    maybeCalc(html, ginfo.calcGauge, master, "Gauge Height Calculation: ");
   }
 
   maybe(html, info.sortKey, "Sort Key: ");
