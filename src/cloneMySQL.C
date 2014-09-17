@@ -163,7 +163,7 @@ public:
   std::string scenery() const {return getString("scenery");}
   std::string season() const {return getString("season");}
   std::string section() const {return getString("section");}
-  std::string sortKey() const {return getString("sortKey");}
+  std::string sortKey() const {return getString("sort_key");}
   std::string state() const {return getString("state");}
   std::string watershedType() const {return getString("watershed_type");}
   std::string usgs_id() const {return getString("usgs_id");}
