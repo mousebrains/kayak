@@ -25,7 +25,7 @@ namespace {
   std::string hiddenInput(const std::string& key, const std::string& defVal) {
     const std::string& value(cgi.get(key));
     return defVal.empty() && value.empty() ? 
-           value : 
+           std::string() : 
            ("<input type='hidden' name='" + key + "' value='" + 
             (value.empty() ? defVal : value) + "' />\n"); 
   }
@@ -87,7 +87,7 @@ Display::dateForm(const DataGet& obs,
       << "<input type='hidden' name='h' value='" << obs.hash() << "'>\n";
 
   if (nTypes == 1) {
-    oss << "<input type='hidden' name='t' value='"; // << obs.type() << "'>\n";
+    oss << "<input type='hidden' name='t' value='" << obs.type() << "'>\n";
   }
 
   oss << hiddenInput("nc", "0")
