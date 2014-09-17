@@ -11,6 +11,7 @@ public:
     int masterKey; // Key into Master table
     int bookKey; // Key into GuideBooks table
     std::string name; // Guide book name
+    std::string author; // Guide book author
     std::string edition; // Guide book edition
     std::string urlGB; // Guide book url
     std::string url; // Run's URL

@@ -19,6 +19,7 @@ namespace {
   struct Book {
     int bookKey; // Key into GuideBooks table
     std::string name; // Guide book name
+    std::string author; // Guide book author
     std::string edition; // Guide book edition
     std::string url; // Guide book url
     Book(const int key) : bookKey(key) {};
@@ -38,9 +39,10 @@ namespace {
       Book book(bookKey);
       if (rc == SQLITE_ROW) { // Found an entry
         // book.bookKey = s.getInt(0); // Already have
-        book.name = s.getString(1);
-        book.edition = s.getString(2);
-        book.url = s.getString(3);
+        book.name = s.getString();
+        book.author = s.getString();
+        book.edition = s.getString();
+        book.url = s.getString();
         it = mBooks.insert(book).first;
         rc = s.step();
       } else if (rc == SQLITE_DONE) { // Did not find an entry 
@@ -89,6 +91,7 @@ GuideBook::loadInfo(const int key)
 
     const Book& book(loadBook(mDB, info.bookKey));
     info.name = book.name;
+    info.author = book.author;
     info.edition = book.edition;
     info.urlGB = book.url;
     mInfo.insert(info);
