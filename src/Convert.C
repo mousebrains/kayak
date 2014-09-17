@@ -28,19 +28,20 @@ namespace {
   }
 
   bool getNumber(const std::string& str,
-                 size_t offset,
+                 size_t& offset,
                  int& value,
-                 int nDigits,
+                 int minDigits,
+                 int maxDigits,
                  const int llim,
                  const int ulim)
     {
       value = 0;
-      for (size_t e(str.size()); offset < e && nDigits; ++offset, --nDigits) {
+      for (size_t e(str.size()); offset < e && maxDigits; ++offset, --maxDigits, --minDigits) {
         const char c(str[offset]);
-        if ((c < '0') || (c > '9')) return false;
+        if ((c < '0') || (c > '9')) break;
         value = (value * 10) + (c - '0');
       }
-      return (nDigits == 0) && (value >= llim) && (value <= ulim);
+      return (minDigits <= 0) && (value >= llim) && (value <= ulim);
     }
 
   size_t getZone(std::string str, std::string& tz) {
@@ -99,7 +100,7 @@ namespace {
     std::string tz;
     struct tm tm({0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
     size_t j(0), je(str.size());;
-     
+    
     for (size_t i(0), e(fmt.size()), state(0); (i < e) && (j < je); ++i) {
       if (state == 0) { // Looking for a % in fmt
         if (fmt[i] == '%') {
@@ -121,30 +122,24 @@ namespace {
           if (str[j++] != '%') return false; // Check for % and then push j forwards
           break;
         case 'Y': 
-          if (!getNumber(str, j, tm.tm_year, 4, 1900, 2100)) return false; // Not a valid year
+          if (!getNumber(str, j, tm.tm_year, 4, 4, 1900, 2100)) return false; // Not a valid year
           tm.tm_year -= 1900;
-          j += 4;
           break;
         case 'm': 
-          if (!getNumber(str, j, tm.tm_mon, 2, 1, 12)) return false; // Not a valid month
+          if (!getNumber(str, j, tm.tm_mon, 1, 2, 1, 12)) return false; // Not a valid month
           --tm.tm_mon; // set to [0,11] instead of [1,12]
-          j += 2;
           break;
         case 'd': 
-          if (!getNumber(str, j, tm.tm_mday, 2, 1, 31)) return false; // Not a valid month day
-          j += 2;
+          if (!getNumber(str, j, tm.tm_mday, 1, 2, 1, 31)) return false; // Not a valid month day
           break;
         case 'H': 
-          if (!getNumber(str, j, tm.tm_hour, 2, 0, 24)) return false; // Not a valid hour
-          j += 2;
+          if (!getNumber(str, j, tm.tm_hour, 1, 2, 0, 24)) return false; // Not a valid hour
           break;
         case 'M': 
-          if (!getNumber(str, j, tm.tm_min, 2, 0, 59)) return false; // Not a valid minute
-          j += 2;
+          if (!getNumber(str, j, tm.tm_min, 1, 2, 0, 59)) return false; // Not a valid minute
           break;
         case 'S': 
-          if (!getNumber(str, j, tm.tm_sec, 2, 0, 59)) return false; // Not a valid second
-          j += 2;
+          if (!getNumber(str, j, tm.tm_sec, 1, 2, 0, 59)) return false; // Not a valid second
           break;
         case 'B':   // full month name
         case 'b': { // abbreviated month name
@@ -192,6 +187,7 @@ Convert::toTime(const std::string& str)
     "%Y-%m-%dT%H:%M:%S%z", // will also swallow %Z
     "%Y-%m-%dT%H:%M:%S",
     "%Y-%m-%d %H:%M:%S",
+    "%Y-%m-%d"
     };
 
   for (size_t i(0), e(formats.size()); i < e; ++i) {
