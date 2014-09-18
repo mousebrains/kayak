@@ -15,10 +15,22 @@ namespace {
 
   MyFields fields;
 
-  MyDB::Stmt::tStrings translate(const std::string& str) {
+  void capitalize(std::string& str) {
+    if (!str.empty()) {
+      str[0] = std::toupper(str[0]);
+      for (std::string::size_type i(0); (i = str.find('.', i)) != str.npos;) {
+        if (++i < str.size()) {
+          str[i] = std::toupper(str[i]);
+        }
+      }
+    }
+  }
+ 
+  MyDB::Stmt::tStrings translate(std::string str) {
     typedef std::set<std::string> tState;
     typedef std::map<std::string, std::string> tLoc;
     static const tState toState = {
+        "id",
         "oreg.",
         "or",
         "wa"
@@ -27,18 +39,40 @@ namespace {
         {"nr", "nr"},
         {"near", "nr"},
         {"at", "at"},
+        {"above", "abv"},
+        {"ab", "abv"},
+        {"abv", "abv"},
+        {"below", "blw"},
+        {"blw", "blw"},
+        {"bl", "blw"},
         {"-", ""}
       };
     static const tLoc xlat = {
         {"mf", "MF"},
         {"nf", "NF"},
         {"sf", "SF"},
+        {"r", "River"},
+        {"ck", "Creek"},
         {"cr", "Creek"},
-        {"o'conner", "O'Conner"}
+        {"tkte", "Toketee"},
+        {"o'conner", "O'Conner"},
+        {"n.umpqua", "N Umpqua"}
+      };
+
+    static const tLoc phrases = {
+      {"middle fork", "MF"}
       };
    
     MyDB::Stmt::tStrings a;
-    Tokens toks(String::tolower(str), ", \t\n\r");
+    str = String::tolower(str);
+
+    for (tLoc::const_iterator it(phrases.begin()), et(phrases.end()); it != et; ++it) { 
+      std::string::size_type i(str.find(it->first));
+      if (i == str.npos) continue;
+      str.replace(i, it->first.size(), it->second);
+    }
+
+    Tokens toks(str, ", \t\n\r()");
     std::string name;
     std::string location;
     int state(0);
@@ -55,7 +89,7 @@ namespace {
       if (it != xlat.end()) {
         tok = it->second;
       } else {
-        tok[0] = std::toupper(tok[0]); // Capitalize first letter
+        capitalize(tok);
       }
       if (state == 0) {
         name += (name.empty() ? "" : " ") + tok;
@@ -67,6 +101,7 @@ namespace {
     a.push_back(name);
     a.push_back(location);
  
+std::cout << "'" << str << "' -> '" << name << "' '" << location << "'" << std::endl;
     return a; 
   }
 } // anonymous
