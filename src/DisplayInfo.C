@@ -29,7 +29,7 @@ namespace {
              const std::string& prefix = "", const std::string& suffix = "") {
     if ((isnan(val0) || val0 == 0) && (isnan(val1) || val1 == 0)) return false;
     html << "<li>" << prefix;
-    if (val0 != 0 && val1 != 0) {
+    if (!isnan(val0) && !isnan(val1) && (val0 != 0) && (val1 != 0)) {
       html << val0 << " to " << val1;
     } else {
       html << (val0 != 0 ? val0 : val1);
@@ -167,7 +167,7 @@ Display::info()
   }
 
   maybe(html, info.length, "Length: ", " miles");
-  gmaybe(html, info.elevation, ginfo.elevation, "Elevation: ", " feet");
+  gmaybe(html, round(info.elevation), round(ginfo.elevation), "Elevation: ", " feet");
   maybe(html, info.elevationLost, "Elevation Lost: ", " feet");
   if (!maybe(html, info.gradient, "Gradient: ", " feet/mile")) {
     if ((info.length > 0) && (info.elevationLost > 0)) {
@@ -208,7 +208,7 @@ Display::info()
     }
     maybe(html, ginfo.idUnit, "Gauge Hydrologic Unit ID: ");
     maybe(html, ginfo.state, "Gauge State: ");
-    maybe(html, ginfo.elevation, "Gauge Elevation: ", " feet");
+    maybe(html, round(ginfo.elevation), "Gauge Elevation: ", " feet");
     maybe(html, ginfo.drainageArea, "Gauge Drainage Area: ", " Square Miles");
     // maybe(html, ginfo.minFlow, "Gauge Minimum Flow: ", " CFS");
     // maybe(html, ginfo.maxFlow, "Gauge Maximum Flow: ", " CFS");
