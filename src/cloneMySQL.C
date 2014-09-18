@@ -515,10 +515,16 @@ public:
       << ",?,?,?,?,?,?,?,?,?,?" // 30
       << ",?,?,?,?,?,?,?,?" // 38
       << ");";
-    db.beginTransaction();
+
     int cnt(1);
+    const Gauges::Info dummy;
+
+    db.beginTransaction();
+
     for (tRows::iterator it(mRows.begin()), et(mRows.end()); it != et; ++it, ++cnt) {
       MasterRow& row(it->second);
+      tGauges::const_iterator jt(mGauges.find(row.gaugeName()));
+      const Gauges::Info& gauge(jt == mGauges.end() ? dummy : jt->second);
       s.bind(cnt);
       s.bind(row.qNoShow());
       s.bind(row.date());
@@ -528,16 +534,16 @@ public:
       s.bind(row.difficulties());
       s.bind(row.displayName());
       s.bind(row.drainage());
-      s.bind(row.drainageArea());
-      s.bind(row.elevation());
+      s.bind(row.drainageArea() == gauge.drainageArea ? NAN : row.drainageArea());
+      s.bind(row.elevation() == gauge.elevation ? NAN : row.elevation());
       s.bind(row.elevationLost());
       s.bind(row.features());
       s.bind(row.gradient());
-      s.bind(row.latitude());
-      s.bind(row.longitude());
-      s.bind(NAN); // latitude
-      s.bind(NAN); // longitude
-      s.bind(row.location());
+      s.bind(row.latitude() == gauge.latitude ? NAN : row.latitude());
+      s.bind(row.longitude() == gauge.longitude ? NAN : row.longitude());
+      s.bind(); // latitude takeout
+      s.bind(); // longitude takeout
+      s.bind(row.location() == gauge.location ? std::string() : row.location());
       s.bind(row.length());
       s.bind(row.lowFlow());
       s.bind(row.highFlow());
