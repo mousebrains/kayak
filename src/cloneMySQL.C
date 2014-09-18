@@ -229,65 +229,81 @@ MasterRow::addParsers()
 void
 MasterRow::fixIds()
 {
-    std::string usgs(usgs_id());
-    std::string cbtt(cbtt_id());
-    std::string sNumber(stationNumber());
-    std::string nws(nwsID());
-    std::string nwsli(nwsliID());
+  typedef std::map<std::string, std::string> tMap;
+  static const tMap cbttMap = {
+    {"BULO", "BULO3"},
+    {"BUSO", "BUSO3"},
+    {"DONO", "DONO3"},
+    {"NSJO", "NSGO3"},
+    {"OWYO", "OWYO3"},
+    {"PAIO", "PAIO3"},
+    {"PHLO", "PHLO3"},
+    {"PWDO", "PWDO3"},
+    {"THFO", "THFO3"},
+    {"UNYO", "UNYO3"},
+    {"VALO", "VALO3"},
+    };
 
-    if (!sNumber.empty() && (sNumber != usgs)) {
-      cbtt = sNumber;
-      sNumber.clear();
-    }
+  std::string usgs(usgs_id());
+  std::string cbtt(cbtt_id());
+  std::string sNumber(stationNumber());
+  std::string nws(nwsID());
+  std::string nwsli(nwsliID());
 
-    if (usgs.find(nws) == 0) { // nws is usgs
-      nws.clear();
-    }
+  if (!sNumber.empty() && (sNumber != usgs)) {
+    cbtt = sNumber;
+    sNumber.clear();
+  }
 
-    if (usgs.empty() && (nws.size() == 8) && (nws.find_first_not_of("0123456789") == nws.npos)) {
-      usgs = nws;
-      nws.clear();
-    }
+  if (usgs.find(nws) == 0) { // nws is usgs
+    nws.clear();
+  }
 
-    if (!nwsli.empty()) {
-      if (cbtt.empty() ||
-          (nwsli.find(cbtt) == 0) ||
-          ((cbtt[cbtt.size()-1] == 'X') && (nwsli.find(cbtt.substr(0,cbtt.size()-1)) == 0)) ||
-          ((cbtt[0] == 'U') && (nwsli.find(cbtt.substr(1)) == 0)) ||
-          ((nwsli == "FRNO3") && (cbtt == "NOTO")) ||
-          ((nwsli == "MKLO3") && (cbtt == "MZLO")) ||
-          ((nwsli == "OCUO3") && (cbtt == "ORC")) ||
-          ((nwsli == "VENO3") && (cbtt == "NRVO")) ||
-          ((nwsli == "BTYO3") && (cbtt == "SPBO")) ||
-          ((nwsli == "CWMO3") && (cbtt == "GLNO"))) {
-        cbtt = nwsli;
-        nwsli.clear();
-      }
-    }
+  if (usgs.empty() && (nws.size() == 8) && (nws.find_first_not_of("0123456789") == nws.npos)) {
+    usgs = nws;
+    nws.clear();
+  }
 
-    if (usgs.empty() && cbtt.empty()) { // Look at the parsers
-      for (tSet::const_iterator it(mParsers.begin()), et(mParsers.end()); it != et; ++it) {
-         const std::string& name(*it);
-         if ((name.size() >= 8) && (name.find_first_not_of("0123456789") == name.npos)) {
-           usgs = name;
-         } else if ((name.size() == 5) && (String::tolower(name.substr(3)) == "o3")) {
-           cbtt = name;
-         } else if ((cbtt.size() < 4) && (name.size() == 4) && 
-                    ((name[3] == 'O') || (name[3] == 'o'))) {
-           cbtt = name;
-         } else if (cbtt.empty() && (name.size() == 3) && 
-                    (name.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVXYZabcdefgnamefghijklmnopqrstuvwxyz") == name.npos)) {
-           cbtt = name;
-         }
-      }
+  if (!nwsli.empty()) {
+    if (cbtt.empty() ||
+        (nwsli.find(cbtt) == 0) ||
+        ((cbtt[cbtt.size()-1] == 'X') && (nwsli.find(cbtt.substr(0,cbtt.size()-1)) == 0)) ||
+        ((cbtt[0] == 'U') && (nwsli.find(cbtt.substr(1)) == 0)) ||
+        ((nwsli == "FRNO3") && (cbtt == "NOTO")) ||
+        ((nwsli == "MKLO3") && (cbtt == "MZLO")) ||
+        ((nwsli == "OCUO3") && (cbtt == "ORC")) ||
+        ((nwsli == "VENO3") && (cbtt == "NRVO")) ||
+        ((nwsli == "BTYO3") && (cbtt == "SPBO")) ||
+        ((nwsli == "CWMO3") && (cbtt == "GLNO"))) {
+      cbtt = nwsli;
+      nwsli.clear();
     }
+  }
 
-    if (!usgs.empty()) {
-      set("idUSGS", usgs);
+  if (usgs.empty() && cbtt.empty()) { // Look at the parsers
+    for (tSet::const_iterator it(mParsers.begin()), et(mParsers.end()); it != et; ++it) {
+       const std::string& name(*it);
+       if ((name.size() >= 8) && (name.find_first_not_of("0123456789") == name.npos)) {
+         usgs = name;
+       } else if ((name.size() == 5) && (String::tolower(name.substr(3)) == "o3")) {
+         cbtt = name;
+       } else if ((cbtt.size() < 4) && (name.size() == 4) && 
+                  ((name[3] == 'O') || (name[3] == 'o'))) {
+         cbtt = name;
+       } else if (cbtt.empty() && (name.size() == 3) && 
+                  (name.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVXYZabcdefgnamefghijklmnopqrstuvwxyz") == name.npos)) {
+         cbtt = name;
+       }
     }
-    if (!cbtt.empty()) {
-      set("idCBTT", cbtt);
-    }
+  }
+
+  if (!usgs.empty()) {
+    set("idUSGS", usgs);
+  }
+  if (!cbtt.empty()) {
+    tMap::const_iterator it(cbttMap.find(cbtt));
+    set("idCBTT", it == cbttMap.end() ? cbtt : it->second);
+  }
 } // MasterRow::fixIds
 
 void
