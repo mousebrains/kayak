@@ -82,6 +82,7 @@ private:
   Calc mCalc;
   tSet mParsers;
   size_t mGaugeKey;
+  bool mqSave;
 
   std::string getString(const std::string& key, const std::string defVal=std::string()) const {
     tRow::const_iterator it(mRow.find(key));
@@ -106,14 +107,20 @@ public:
     : mRow(row)
     , mCalc(0, getString("calc_expr"), Data::decodeType(getString("calc_type")))
     , mGaugeKey(0)
+    , mqSave(true)
   {
     addParsers();
     fixIds();
     fixCalc();
     fixClass();
+    chkSave();
   }
 
+  bool qSave() const {return mqSave;}
+  void qSave(bool q) {mqSave = q;}
+
   void pruneParsers(const DataTables& tbls);
+  void chkSave();
 
   const Calc& calc() const {return mCalc;}
   Calc& calc() {return mCalc;}
@@ -181,6 +188,7 @@ std::ostream&
 operator << (std::ostream& os,
              const MasterRow& row)
 {
+  os << "qSave: " << row.qSave() << std::endl;
   for (MasterRow::const_iterator it(row.begin()), et(row.end()); it != et; ++it) {
     os << it->first << "='" << it->second << "'" << std::endl;
   }
@@ -325,6 +333,30 @@ MasterRow::fixClass()
   if (!b.empty()) set("class", b);
 }
 
+void
+MasterRow::chkSave()
+{
+  static const std::vector<std::string> names = {
+    "Nature", "PageNumber", "RunNumber", "bank_full", "calc_expr", "calc_notes",
+    "calc_time", "calc_type", "cfs_to_gauge_converter", "cfs_to_gauge_data",
+    "class", "class_flow", 
+    "db_rating", "db_source", "description", "difficulties", "drainage", "drainage_area",
+    "elevation_lost", "email", "features", "flood_stage",
+    "geos_id", "gradient", "guide_book", "high_flow", "length",
+    "low_flow", "map_name", "name", "notes", "optimal_flow", 
+    "region", "remoteness", "scenery", "season", "section", 
+    "watershed_type" 
+    };
+
+  bool q(false);
+  tRow::const_iterator et(mRow.end());
+
+  for (size_t i(0), e(names.size()); !q && (i < e); ++i) {
+    q |= mRow.find(names[i]) != et; 
+  }
+  mqSave = q;
+}
+
 class Master {
 private:
   typedef std::map<std::string, MasterRow> tRows;
@@ -335,31 +367,48 @@ private:
 
   std::string addGauge(const MasterRow& row);
 public:
-  Master(MySQL& sql) {
+  Master(MySQL& sql, const DataTables& tbls) {
     const TimeIt stime;
     const MySQL::tRows master(sql.master("Master")); // Get mysql master tbl
-    std::cout << "load master " << stime << std::endl;
-    tSet names;
+    std::cout << "load master " << master.size() << " " << stime << " seconds" << std::endl;
+
+    // Save MySQL rows into MasterRow objects
     for (MySQL::tRows::const_iterator it(master.begin()), et(master.end()); it != et; ++it) {
       MasterRow row(*it);
-      tRows::iterator jt(mRows.insert(std::make_pair(row.hash(), row)).first);
-      const std::string gaugeName(addGauge(jt->second));
-      if (!gaugeName.empty()) jt->second.gaugeName(gaugeName);
-      for (MasterRow::const_iterator kt(row.begin()), ket(row.end()); kt != ket; ++kt) {
-        names.insert(kt->first);
+      mRows.insert(std::make_pair(row.hash(), row));
+    }
+
+      // Walk through the MasterRow objects and make sure all calculations are to be saved 
+    for (tRows::iterator it(mRows.begin()), et(mRows.end()); it != et; ++it) {
+      MasterRow& row(it->second);
+      const Calc& calc(row.calc());
+      if (calc.empty()) continue;
+      for (Calc::size_type i(0), e(calc.size()); i < e; ++i) {
+        if (!calc[i].qRef()) continue; // not a reference
+        const std::string hash(calc[i].keyString());
+        tRows::iterator jt(mRows.find(hash));
+        if (jt == et) {
+          std::cout << "Calc hash(" << hash << ") not found" << std::endl;
+          std::cout << calc << std::endl;
+        } else {
+          jt->second.qSave(true);
+        }
       }
     }
-    std::cout << "prepared " << mRows.size() << " master rows in " 
-              << stime << " seconds" << std::endl;
-    // for (tSet::const_iterator it(names.begin()), et(names.end()); it != et; ++it) {
-      // std::cout << *it << std::endl;
-    // }
-  }
 
-  void pruneParsers(const DataTables& tbls) {
+      // Add gauges 
+    for (tRows::iterator it(mRows.begin()), et(mRows.end()); it != et; ++it) {
+      const std::string gaugeName(addGauge(it->second));
+      if (!gaugeName.empty()) it->second.gaugeName(gaugeName);
+    }
+
+      // prune inactive parsers
     for (tRows::iterator it(mRows.begin()), et(mRows.end()); it != et; ++it) {
       it->second.pruneParsers(tbls);
     }
+
+    std::cout << "prepared " << mRows.size() << " master rows in " 
+              << stime << " seconds" << std::endl;
   }
 
   struct GuideBook {
@@ -487,13 +536,11 @@ public:
       Calc& calc(row.calc());
       if (calc.empty()) continue;
       if (row.gaugeKey() <= 0) {
-        std::cout << "Gaugekey(" << row.gaugeKey() << ") for a calculation is invalide,\n"
+        std::cout << "Gaugekey(" << row.gaugeKey() << ") for a calculation is invalid,\n"
                   << row << std::endl;
         continue;
       }
       calc.gaugeKey(row.gaugeKey());
-      const std::string name(calc.mkName());
-      row.gaugeName(name);
       for (Calc::size_type i(0), e(calc.size()); i < e; ++i) {
         if (!calc[i].qRef()) continue; // not a reference
         const std::string hash(calc[i].keyString());
@@ -512,8 +559,10 @@ public:
         const Data::Type type(calc[i].type());
         calc[i].encode((int) jt->second.gaugeKey(), body, type);
       }
+      // const std::string name(calc.mkName());
+      // row.gaugeName(name);
       MyDB::Stmt s(db);
-      s << "UPDATE gauges SET name='" << name << "',"
+      s << "UPDATE gauges SET "
         << (calc.type() == Data::FLOW ? "calcFlow" : "calcGauge")
         << "='" << calc << "' WHERE gaugeKey=" << row.gaugeKey() << ";";
       s.query();
@@ -532,16 +581,17 @@ public:
       << ",?,?,?,?,?,?,?,?" // 38
       << ");";
 
-    int cnt(1);
+    int cnt(0);
     const Gauges::Info dummy;
 
     db.beginTransaction();
 
-    for (tRows::iterator it(mRows.begin()), et(mRows.end()); it != et; ++it, ++cnt) {
+    for (tRows::iterator it(mRows.begin()), et(mRows.end()); it != et; ++it) {
       MasterRow& row(it->second);
+      if (!row.qSave()) continue;
       tGauges::const_iterator jt(mGauges.find(row.gaugeName()));
       const Gauges::Info& gauge(jt == mGauges.end() ? dummy : jt->second);
-      s.bind(cnt);
+      s.bind(++cnt);
       s.bind(row.qNoShow());
       s.bind(row.date());
       s.bind(row.date());
@@ -583,7 +633,8 @@ public:
       s.reset();
     }
     db.endTransaction();
-    std::cout << stime << " seconds to save " << mRows.size() << " master records" << std::endl;
+    std::cout << stime << " seconds to save " << cnt << "/" << mRows.size() 
+              << " master records" << std::endl;
   }
 
   typedef std::map<std::string, int> tSources;
@@ -620,6 +671,7 @@ public:
 std::string
 Master::addGauge(const MasterRow& row)
 {
+  if (!row.qSave()) return std::string();
   Gauges::Info info;
   info.latitude = row.latitude();
   info.longitude = row.longitude();
@@ -715,11 +767,10 @@ main (int argc,
     char **argv)
 {
   int maxCount(argc > 1 ? atoi(argv[1]) : 1000000000);
-  MySQL msql("levels_information");
-  Master master(msql);
   MySQL dsql("levels_data");
   DataTables dTables(dsql, maxCount);
-  master.pruneParsers(dTables);
+  MySQL msql("levels_information");
+  Master master(msql, dTables);
   MyDB db;
   master.saveGauges(db);
   master.saveCalcs(db);
