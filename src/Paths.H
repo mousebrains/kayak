@@ -5,11 +5,12 @@
 
 namespace Paths {
   std::string dbname();
-  std::string mainPage();
   std::string mainPageHead();
   std::string mainPageTail();
 
-  std::string fontPath();
+  std::string font();
+
+  std::string webBase();
 }
 
 #endif // INC_Paths_H_

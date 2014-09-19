@@ -11,7 +11,7 @@ main (int argc,
 
   HTML html;
 
-  html << html.HTML5Header()
+  html << html.header()
        << "<title>Print Environment</title>"
        << "</head>\n<body>\n";
 

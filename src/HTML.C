@@ -1,6 +1,8 @@
 #include "HTML.H"
 #include "Convert.H"
+#include "Paths.H"
 #include <fstream>
+#include <sstream>
 #include <iostream>
 #include <cmath>
 
@@ -12,33 +14,31 @@ HTML::~HTML()
 {
 }
 
-const char * 
-HTML::HTML5Header() 
+std::string
+HTML::header() 
 {
-    return "\
-<!DOCTYPE html >\n\
-<html lang='en'>\n\
-<head>\n\
-<meta charset='utf-8'>\n\
-";
-}
+  std::ostringstream oss;
 
-const char *
-HTML::header()
-{
-  return HTML5Header();
+  oss << "<!DOCTYPE html >\n"
+      << "<html lang='en'>\n"
+      << "<head>\n"
+      << "<meta charset='utf-8'>\n"
+      << "<base href='" << Paths::webBase() << "'>\n"
+      ;
+
+  return oss.str();
 }
 
 std::string 
 HTML::myStyle()
 {
-  return "<link rel='stylesheet' type='text/css' href='/kayaking2/css/kayak.css'>\n";
+  return "<link rel='stylesheet' type='text/css' href='css/kayak.css'>\n";
 }
 
 std::string 
 HTML::myScript()
 {
-  return "<script src='/kayaking2/scripts/kayak.js'></script>\n";
+  return "<script src='scripts/kayak.js'></script>\n";
 }
 
 std::string

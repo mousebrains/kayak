@@ -15,7 +15,7 @@ int main (int argc,
 
   if (!obs) {
     HTML html;
-    html << html.HTML5Header()
+    html << html.header()
          << "<title>Data get Error</title>\n"
          << "</head>\n<body>\n<h2>"
          << obs.errmsg()

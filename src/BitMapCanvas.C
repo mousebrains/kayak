@@ -95,8 +95,7 @@ BitMapCanvas::fillText(const std::string& str,
   static tFaces faces;
   tFaces::const_iterator it(faces.find(mFont));
   if (it == faces.end()) { // Does not exist, so build it
-    // const std::string font(Paths::fontPath() + "/" + mFont.face() + ".ttf");
-    const std::string font("/home/tpw/local/share/fonts/truetype/roboto/Roboto-Thin.ttf");
+    const std::string font(Paths::font());
     const size_t xDPI(96), yDPI(xDPI); // web default 96 dpi
     const size_t xSize(mFont.size() * 64), ySize(xSize); // in 26.6 units i.e. *65
     ftErrChk(FT_New_Face(library, font.c_str(), 0, &face), "New font face, " + font);

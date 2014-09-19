@@ -9,8 +9,7 @@ public:
   HTML();
   ~HTML();
 
-  static const char *HTML5Header();
-  static const char *header();
+  static std::string header();
 
   static std::string baseURL();
   static std::string myStyle();

@@ -4,26 +4,33 @@
 #define PATHS_USER_ROOT "/home/tpw"
 #endif // PATHS_USER_ROOT
 
-#ifndef PATHS_PREFIX
-#define PATHS_PREFIX PATHS_USER_ROOT "/kayaking2"
-#endif // PATHS_PREFIX
+#ifndef PATHS_FILES_ROOT
+#define PATHS_FILES_ROOT PATHS_USER_ROOT "/kayaking2"
+#endif // PATHS_FILES_ROOT
+
+#ifndef PATHS_WEB_BASE
+#define PATHS_WEB_BASE "/kayaking2"
+#endif // PATHS_WEB_ROOT
+
+#ifndef PATHS_FONTFACE
+#define PATHS_FONTFACE "/robot/Roboto-Thin.ttf"
+#endif // PATHS_WEB_ROOT
+
 
 namespace {
-  std::string userRoot() {return std::string(PATHS_USER_ROOT);}
-  std::string root() {return std::string(PATHS_PREFIX);}
-  std::string files() {return root() + "/files";}
-
-  std::string templates() {return root() + "/templates";}
-  std::string pages() {return userRoot() + "/public_html/kayaking2";}
+  std::string filesRoot() {return std::string(PATHS_FILES_ROOT);}
+  std::string files() {return filesRoot() + "/files";}
+  std::string templates() {return filesRoot() + "/templates";}
 
   std::string mainPageName() {return "/index.html";}
 } // Anonymous
 
 namespace Paths {
   std::string dbname() {return files() + "/a.db";}
-  std::string mainPage() {return pages() + mainPageName();}
   std::string mainPageHead() {return templates() + mainPageName() + ".head";}
   std::string mainPageTail() {return templates() + mainPageName() + ".tail";}
 
-  std::string fontPath() {return userRoot() + "/local/share/fonts/truetype/ttf-bitstream-vera";}
+  std::string font() {return filesRoot() + "/fonts/truetype" + PATHS_FONTFACE;}
+
+  std::string webBase () {return std::string(PATHS_WEB_BASE);}
 } // Paths
