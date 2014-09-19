@@ -204,6 +204,7 @@ function mkTbl() {
       header = [],
       cols = [],
       contents = [],
+      qHREF = [],
       var1, var2, var3,
       row, i, e, j, je, cell, val;
 
@@ -213,6 +214,7 @@ function mkTbl() {
       var2 = var1 + "label";
       var3 = var1 + "units";
       cols.push(var1);
+      qHREF.push((var2 in pInfo) && (pInfo[var2] == "URL"));
       header.push((var2 in pInfo ? pInfo[var2] : "") + 
                   (var3 in pInfo ? ("<br>" + pInfo[var3]) : ""));
       sortDir.push(1);
@@ -280,7 +282,11 @@ function mkTbl() {
       if (j == 0) { // time
         cell.innerHTML = t2str(val, true);
       } else { // not time
-        cell.innerHTML = val.toLocaleString(); // Comma deliminated
+        if (qHREF[j]) {
+          cell.innerHTML = "<a href='" + val + "'>" + val + "</a>";
+        } else {
+          cell.innerHTML = val.toLocaleString(); // Comma deliminated
+        }
       }
       if (j == 1) { // Check high/low
         if (qHigh && pInfo.high < val) {
@@ -1052,7 +1058,11 @@ function addData(d) {
       i, 
       e;
 
-  "error" in d && errmsg(d.error);
+  if ("error" in d) {
+    console.log(d.error);
+    alert(d.error);
+    throw(d.error);
+  }
 
   for (i = 0, e = names.length; i < e; ++i) {
     names[i] in d && (pInfo[names[i]] = d[names[i]]);
