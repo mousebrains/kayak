@@ -1,31 +1,5 @@
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-# Minimized javascript
-*.min.js
-
-# Ignore vm swp files
+# Ignore vi swp files
 .*.swp
 
-# Ignore my locally generated directories
-bin
-files
+# Ignore local overrides ot Makefile
+Makefile.local
