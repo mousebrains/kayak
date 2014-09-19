@@ -1,12 +1,6 @@
--include Makefile.local # Local variable overrides
+-include ../Makefile.local # Local variable overrides
+-include ../Makefile.config # base paths
 
-PATHS_USER_ROOT = /home/tpw
-PATHS_PREFIX ?= $(PATHS_USER_ROOT)/kayaking2
-PATHS_WEB_ROOT = $(PATHS_USER_ROOT)/public_html/kayaking2
-PATHS_LOCAL_ROOT = $(PATHS_USER_ROOT)/local
-
-BINDIR = $(PATHS_USER_ROOT)/bin
-CGIDIR = $(PATHS_WEB_ROOT)/cgi
 LOCALLIB ?= $(PATHS_LOCAL_ROOT)/lib
 LOCALINC ?= $(PATHS_LOCAL_ROOT)/include
 
@@ -105,7 +99,7 @@ obj/MyDB.o: MyDB.C
 
 obj/Paths.o: Paths.C
 	@ mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(SQLITEFLAGS) -D PATHS_USER_ROOT='"$(PATHS_USER_ROOT)"' -D PATHS_PREFIX='"$(PATHS_PREFIX)"' -MD -MT $@ -c -o $@ $<
+	$(CXX) $(CXXFLAGS) $(SQLITEFLAGS) -D PATHS_USER_ROOT='"$(PATHS_USER_ROOT)"' -D PATHS_FILES_ROOT='"$(PATHS_FILES_ROOT)"' -D PATHS_WEB_BASE='"$(PATHS_WEB_BASE)"' -MD -MT $@ -c -o $@ $<
 
 obj/%.o: %.C
 	@ mkdir -p $(dir $@)
@@ -118,12 +112,11 @@ install: $(CGIDIR)/.htaccess install.cgi install.programs
 
 install.programs: $(BINEXE)
 	install -d $(BINDIR)
-	install -b --compare --target-directory=$(BINDIR) $+
+	install $(INSTALLFLAGS) $+ $(BINDIR)
 
 install.cgi: $(CGIEXE)
-	strip --preserve-dates $+
 	install -d $(CGIDIR)
-	install -b --compare --target-directory=$(CGIDIR) $+
+	install $(INSTALLFLAGS) -s $+ $(CGIDIR)
 
 $(CGIDIR)/.htaccess: Makefile
 	echo "# Auto generated `date` by make" >$@
