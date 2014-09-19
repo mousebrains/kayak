@@ -1,18 +1,18 @@
-USRROOT = /home/tpw
+-include ../Makefile.local # Local overrides
+-include ../Makefile.config # Base configuration
 
-WEBROOT = $(USRROOT)/public_html/kayaking2
-SCRIPTDIR = $(WEBROOT)/scripts
+SCRIPTDIR = $(PATHS_WEB_ROOT)/scripts
 
 .PHONEY: all distclean clean install
 
-all: plot.min.js kayak.min.js
+all: kayak.min.js
 
 %.min.js: %.js
 	uglifyjs --output $@ $<
 
-install: plot.min.js plot.js
+install: kayak.min.js kayak.js
 	install -d $(SCRIPTDIR)
-	install -b --compare --target-directory=$(SCRIPTDIR) $+
+	install $(INSTALLFLAGS) $+ $(SCRIPTDIR)
 
-distclean clean:
+clean:
 	$(RM) *.min.js
