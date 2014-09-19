@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<base href='PATHS_WEB_BASE'>
+<link rel="shortcut icon" href="/zen_favicon.ico" type="image/x-icon" />
+<title>Water Level Selection</title>
+<style>
+  th {text-align: left;}
+</style>
+</head>
+<body>
+<div>
+<h1><a href='http://www.wkcc.org'>WKCC</a> <a href='http://levels.wkcc.org'>Water Levels</a></h1>
+<hr>
+<br />
+The water level information displayed here is collected from various sources.
+For some of the flows I have estimated the actual flow by using other flow
+information.  
+<br />
+<b>
+This information may not be correct, so please check the estimates!  
+</b>
+<br />
+If you have additional rivers, data sources, and/or inferred
+levels, please <a href="mailto:pat.kayak@gmail.com">e-mail</a> with your 
+suggestions.
+<br />
+<hr>
+<br />
+<a href="/?d">Brief Description of Runs</a>
+<br />
+<hr>
+<table>
