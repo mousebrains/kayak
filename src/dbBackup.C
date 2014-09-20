@@ -1,5 +1,12 @@
+#include "Paths.H"
+#include "Convert.H"
+#include "File.H"
 #include <sqlite3.h>
 #include <iostream>
+#include <getopt.h>
+#include <dirent.h>
+#include <cerrno>
+#include <set>
 
 namespace {
   void errchk(int rc, sqlite3 *db, const std::string& msg) {
@@ -17,13 +24,24 @@ int
 main (int argc,
       char **argv)
 {
-  if (argc != 3) {
-    std::cerr << "Usage: " << argv[0] << " sourceDatabase destDatabase" << std::endl;
-    return 1;
+  const char *options("p:?");
+
+  int nBackups(0);
+
+  for (int c; (c = getopt(argc, argv, options)) != EOF;) {
+    switch (c) {
+      case 'p': nBackups = atoi(optarg); break;
+      default: std::cerr << "Unrecognized options(" << ((char) c) << ")" << std::endl;
+      case '?':
+        std::cerr << "Usage: " << argv[0] << " -{" << options << "}\n"
+                  << "-p # Number of backups to retain\n"
+                  << "-?   Display this message" << std::endl;
+        exit (1);
+    }
   }
 
-  const std::string src(argv[1]);
-  const std::string tgt(argv[2]);
+  const std::string src(Paths::dbname());
+  const std::string tgt(src + Convert::toStr(time(0), ".%Y%m%d.%H%M%S"));
   sqlite3 *srcDB, *tgtDB;
 
   errchk(sqlite3_open(src.c_str(), &srcDB), srcDB, "Opening '" + src + "'");
@@ -47,4 +65,36 @@ main (int argc,
 
   errchk(sqlite3_close(srcDB), srcDB, "Closing '" + src + "'");
   errchk(sqlite3_close(tgtDB), tgtDB, "Closing '" + tgt + "'");
+
+  if (nBackups > 0) { // check that we don't have too many backup copies
+    const std::string dirname(File::dirname(src));
+    DIR *ptr(opendir(dirname.c_str()));
+    if (!ptr) {
+      std::cerr << "Error opening '" << dirname << "', " << strerror(errno) << std::endl;
+      exit(1);
+    }
+
+    typedef std::set<std::string> tFiles;
+    tFiles files;
+    const std::string prefix(File::tail(src) + ".");
+
+    for (struct dirent *dp; (dp = readdir(ptr));) {
+      const std::string fn(dp->d_name);
+      if (fn.find(prefix) == 0) files.insert(fn);
+    }
+    closedir(ptr);
+
+    if (files.size() > nBackups) {
+      int n(files.size() - nBackups);
+      for (tFiles::const_iterator it(files.begin()), et(files.end()); 
+           n && (it != et); ++it, --n) {
+        const std::string fn(dirname + *it);
+        if (unlink(fn.c_str())) {
+          std::cerr << "Error deleting '" << fn << "', " << strerror(errno) << std::endl;
+        }
+      }
+    }
+  }
+
+  return 0;
 }
