@@ -6,6 +6,7 @@
 #include <getopt.h>
 #include <dirent.h>
 #include <cerrno>
+#include <cstring>
 #include <set>
 
 namespace {
@@ -84,7 +85,7 @@ main (int argc,
     }
     closedir(ptr);
 
-    if (files.size() > nBackups) {
+    if ((int) files.size() > nBackups) {
       int n(files.size() - nBackups);
       for (tFiles::const_iterator it(files.begin()), et(files.end()); 
            n && (it != et); ++it, --n) {
