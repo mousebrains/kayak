@@ -112,18 +112,3 @@ CREATE TABLE gauges (gaugeKey INTEGER PRIMARY KEY AUTOINCREMENT, -- key used in 
                      );
 CREATE INDEX idUSGSGaugesIndex ON gauges(idUSGS);
 CREATE INDEX idCBTTGaugesIndex ON gauges(idCBTT);
-
-
--- .headers on
--- .indices
--- .mode column
-
--- pragma table_info(data);
--- pragma table_info(dataSource);
--- pragma table_info(dataURLs);
--- pragma table_info(dataUnknown);
--- pragma table_info(rating);
--- pragma table_info(ratingSource);
--- pragma table_info(ratingURLs);
--- pragma table_info(ratingUnknown);
--- pragma table_info(gauges);
