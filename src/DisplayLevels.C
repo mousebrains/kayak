@@ -76,7 +76,7 @@ namespace {
            << "<th><a href='?o=i&h=" << hash << "'>" 
            << it->name;
 
-      if (!it->location.empty()) html << "@" << it->location;
+      if (!it->location.empty()) html << " " << it->location;
       html << "</a>";
       if (it->qCalc) html << "<span class='red'>(est)</span>";
       html << "</th>";
