@@ -20,6 +20,7 @@ public:
 
   static std::string usgsIdURL(const std::string& id);
   static std::string cbttIdURL(const std::string& id);
+  static std::string awIdURL(const std::string& id);
 
   static std::string weatherURL(const double lat, const double lon);
   static std::string weatherForm(const double lat, const double lon);

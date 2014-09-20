@@ -85,6 +85,14 @@ namespace {
     html << (suffix.empty() ? "" : " ") << suffix << "</li>\n";
     return true;
   } // maybeCalc
+
+  bool maybeHREF(HTML& html, const std::string& str, const std::string& url, 
+                 const std::string& prefix="", const std::string& suffix="") {
+    if (url.empty() || str.empty()) return maybe(html, str, prefix, suffix);
+    html << "<li>" << prefix << "<a href='" << url << "'>" << str << "</a>" 
+         << suffix << "</li>\n";
+    return true;
+  }
 } // anonymouse
 
 int
@@ -104,7 +112,7 @@ Display::info()
   const Master::Info info(master.getInfo(key));
   const Gauges::Info ginfo(info.gaugeKey > 0 ? gauges.getInfo(info.gaugeKey) : Gauges::Info());
   const std::string location(info.location.empty() ? ginfo.location : info.location);
-  const std::string title(info.displayName + (location.empty() ? "" : ("@" + location)));
+  const std::string title(info.displayName + (location.empty() ? "" : (" " + location)));
   const double lat(fabs(info.latitudePutin) <= 90 ? info.latitudePutin : ginfo.latitude);
   const double lon(fabs(info.longitudePutin) <= 180 ? info.longitudePutin : ginfo.longitude);
   const GuideBook guides(key);
@@ -165,6 +173,7 @@ Display::info()
   for (GuideBook::const_iterator it(guides.begin()), et(guides.end()); it != et; ++it) {
     html << "<li>Guide: " << it->mkHTML() << "</li>\n";
   }
+  maybeHREF(html, info.idAW, html.awIdURL(info.idAW), "American Whitewater: ");
 
   maybe(html, info.length, "Length: ", " miles");
   gmaybe(html, round(info.elevation), round(ginfo.elevation), "Elevation: ", " feet");
@@ -198,14 +207,8 @@ Display::info()
     maybe(html, ginfo.date, "Gauge last updated: ");
     maybe(html, ginfo.description, "Gauge Description: ");
     maybe(html, ginfo.location, "Gauge Location: ");
-    if (!ginfo.idUSGS.empty()) {
-      html << "<li>Gauge USGS ID: <a href='" << html.usgsIdURL(ginfo.idUSGS)
-           << "'>" << ginfo.idUSGS << "</a></li>\n";
-    }
-    if (!ginfo.idCBTT.empty()) {
-      html << "<li>Gauge CBTT ID: <a href='" << html.cbttIdURL(ginfo.idCBTT)
-           << "'>" << ginfo.idCBTT << "</a></li>\n";
-    }
+    maybeHREF(html, ginfo.idUSGS, html.usgsIdURL(ginfo.idUSGS), "Gauge USGS ID: ");
+    maybeHREF(html, ginfo.idCBTT, html.cbttIdURL(ginfo.idCBTT), "Gauge NOAA ID: ");
     maybe(html, ginfo.idUnit, "Gauge Hydrologic Unit ID: ");
     maybe(html, ginfo.state, "Gauge State: ");
     maybe(html, round(ginfo.elevation), "Gauge Elevation: ", " feet");

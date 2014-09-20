@@ -122,6 +122,13 @@ HTML::cbttIdURL(const std::string& id)
          "http://www.nwrfc.noaa.gov/river/station/flowplot/flowplot.cgi?lid=" + id;
 }
 
+std::string 
+HTML::awIdURL(const std::string& id)
+{
+  return id.empty() ? std::string() :
+         "https://www.americanwhitewater.org/content/River/detail/id/" + id;
+}
+
 std::ostream& 
 operator << (std::ostream& os, 
              const HTML& h)
