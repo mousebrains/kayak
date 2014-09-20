@@ -2,7 +2,7 @@
 
 ROOT=/home/tpw/kayaking2
 
-time $ROOT/genDB/mkAll
+time make -C $ROOT/genDB install
 
 time $ROOT/src/bin/cloneMySQL
 
@@ -19,3 +19,5 @@ time $ROOT/src/bin/fetch -u 'USGS0:http://waterservices.usgs.gov/nwis/iv/?format
 time $ROOT/src/bin/updateCalcs 48
 
 time $ROOT/src/bin/updateLevels
+
+time make -C $ROOT/genDB extra # AW Ids
