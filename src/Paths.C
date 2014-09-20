@@ -21,14 +21,12 @@ namespace {
   std::string filesRoot() {return std::string(PATHS_FILES_ROOT);}
   std::string files() {return filesRoot() + "/files";}
   std::string templates() {return filesRoot() + "/templates";}
-
-  std::string mainPageName() {return "/index.html";}
 } // Anonymous
 
 namespace Paths {
   std::string dbname() {return files() + "/a.db";}
-  std::string mainPageHead() {return templates() + mainPageName() + ".head";}
-  std::string mainPageTail() {return templates() + mainPageName() + ".tail";}
+  std::string mainPageHead() {return templates() + "/index.head";}
+  std::string mainPageTail() {return templates() + "/index.tail";}
 
   std::string font() {return filesRoot() + "/fonts/truetype" + PATHS_FONTFACE;}
 
