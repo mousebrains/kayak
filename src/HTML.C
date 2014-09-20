@@ -23,7 +23,6 @@ HTML::header()
       << "<html lang='en'>\n"
       << "<head>\n"
       << "<meta charset='utf-8'>\n"
-      << "<base href='" << Paths::webBase() << "'>\n"
       ;
 
   return oss.str();
