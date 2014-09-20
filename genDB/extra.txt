@@ -1,0 +1,1 @@
+UPDATE master SET idAW=1483,latitudePutin=44.3844,longitudePutin=-123.621,latitudeTakeout=44.4043,longitudeTakeout=-123.896 WHERE sortKey='Alsea c aa';
