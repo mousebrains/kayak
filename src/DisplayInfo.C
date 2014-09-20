@@ -113,8 +113,6 @@ Display::info()
   const Gauges::Info ginfo(info.gaugeKey > 0 ? gauges.getInfo(info.gaugeKey) : Gauges::Info());
   const std::string location(info.location.empty() ? ginfo.location : info.location);
   const std::string title(info.displayName + (location.empty() ? "" : (" " + location)));
-  const double lat(fabs(info.latitudePutin) <= 90 ? info.latitudePutin : ginfo.latitude);
-  const double lon(fabs(info.longitudePutin) <= 180 ? info.longitudePutin : ginfo.longitude);
   const GuideBook guides(key);
   const MyDB::Stmt::tInts types(data.types(data.source().gaugeKey2Keys(info.gaugeKey)));
 
@@ -165,8 +163,28 @@ Display::info()
   maybe(html, location, "Location: ");
   maybe(html, info.riverName, "River Name: ");
 
-  maybeLatLon(html, lat, lon);
-  maybeLatLon(html, info.latitudeTakeout, info.longitudeTakeout);
+  { // lat/lon putin/takeout
+    const double pilat(fabs(info.latitudePutin) <= 90 ? info.latitudePutin : ginfo.latitude);
+    const double pilon(fabs(info.longitudePutin) <= 180 ? info.longitudePutin : ginfo.longitude);
+    const double tolat(info.latitudeTakeout);
+    const double tolon(info.longitudeTakeout);
+    const bool qTakeout(fabs(tolat) <= 90 && fabs(tolon) <= 180);
+    if (qTakeout) {
+      const std::string wx(html.weatherURL((pilat + tolat)/2, (pilon + tolon)/2));
+      const std::string map(html.mapURL(pilat, pilon, tolat, tolon));
+      html << "<li>" << "Lat/Lon: "  
+         << "<a href='" << map << "'>"
+         << Convert::toLatLon(pilat) << ", " 
+         << Convert::toLatLon(pilon) 
+         << " to "
+         << Convert::toLatLon(tolat) << ", " 
+         << Convert::toLatLon(tolon) 
+         << "</a>"
+         << " <a href='" << wx << "'>Weather Forecast</a></li>\n";
+    } else {
+      maybeLatLon(html, pilat, pilon);
+    }
+  } // lat/lon putin/takeout
 
   maybe(html, info.classString, "Class: ");
 

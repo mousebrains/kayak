@@ -26,6 +26,8 @@ public:
   static std::string weatherForm(const double lat, const double lon);
 
   static std::string mapURL(const double lat, const double lon);
+  static std::string mapURL(const double slat, const double slon,
+                            const double elat, const double elon);
   static std::string mapForm(const double lat, const double lon);
 };
 

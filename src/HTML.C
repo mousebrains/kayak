@@ -1,5 +1,4 @@
 #include "HTML.H"
-#include "Convert.H"
 #include "Paths.H"
 #include <fstream>
 #include <sstream>
@@ -63,9 +62,13 @@ HTML::weatherURL(const double lat,
                  const double lon)
 {
   if (isnan(lat) || isnan(lon) || (fabs(lat) > 90) || (fabs(lon) > 180)) return std::string();
+ 
+  std::ostringstream oss;
 
-  return "http://forecast.weather.gov/MapClick.php?lat=" +
-         Convert::toStr(lat) + "&amp;lon=" + Convert::toStr(lon);
+  oss << "http://forecast.weather.gov/MapClick.php?lat=" 
+      << lat << "&amp;lon=" << lon;
+
+  return oss.str();
 }
 
 std::string
@@ -73,14 +76,17 @@ HTML::weatherForm(const double lat,
                   const double lon)
 {
   if (fabs(lat) > 90 || fabs(lon) > 180) return std::string();
-  std::string str("<form action='http://forecast.weather.gov/MapClick.php'>\n");
 
-  str += "<input type='submit' value='Weather'>\n";
-  str += "<input type='hidden' name='lat' value='" + Convert::toStr(lat) + "'>\n";
-  str += "<input type='hidden' name='lon' value='" + Convert::toStr(lon) + "'>\n";
-  str += "</form>\n";
+  std::ostringstream oss;
 
-  return str;
+  oss << "<form action='http://forecast.weather.gov/MapClick.php'>\n"
+      << "<input type='submit' value='Weather'>\n"
+      << "<input type='hidden' name='lat' value='" << lat << "'>\n"
+      << "<input type='hidden' name='lon' value='" << lon << "'>\n"
+      << "</form>\n" 
+      ;
+
+  return oss.str();
 }
 
 
@@ -90,7 +96,29 @@ HTML::mapURL(const double lat,
 {
   if (fabs(lat) > 90 || fabs(lon) > 180) return std::string();
 
-  return "http://maps.google.com/?q=" + Convert::toStr(lat) + "," + Convert::toStr(lon);
+  std::ostringstream oss;
+  oss << "http://maps.google.com/?q=" 
+      << lat << "," << lon
+      ;
+  return oss.str();
+}
+
+std::string
+HTML::mapURL(const double slat,
+             const double slon,
+             const double elat,
+             const double elon)
+{
+  if (fabs(slat) > 90 || fabs(slon) > 180) return mapURL(elat, elon);
+  if (fabs(elat) > 90 || fabs(elon) > 180) return mapURL(slat, slon);
+
+  std::ostringstream oss;
+  oss << "http://maps.google.com/?saddr=" 
+      << slat << "," << slon
+      << "&amp;daddr="
+      << elat << "," << elon
+      ;
+  return oss.str();
 }
 
 std::string
@@ -98,14 +126,15 @@ HTML::mapForm(const double lat,
               const double lon)
 {
   if (fabs(lat) > 90 || fabs(lon) > 180) return std::string();
-  std::string str("<form action='http://maps.google.com'>\n");
+  std::ostringstream oss;
+  oss << "<form action='http://maps.google.com'>\n"
+      << "<input type='submit' value='Map'>\n"
+      << "<input type='hidden' name='q' value='"
+      << lat << "," << lon << "'>\n"
+      << "</form>\n"
+      ;
 
-  str += "<input type='submit' value='Map'>\n";
-  str += "<input type='hidden' name='q' value='";
-  str += Convert::toStr(lat) + "," + Convert::toStr(lon) + "'>\n";
-  str += "</form>\n";
-
-  return str;
+  return oss.str();
 }
 
 std::string
