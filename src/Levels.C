@@ -490,7 +490,7 @@ Levels::json(std::ostream& os) const
       if (times[i] > 0) {
         os << delim << mInfo[i].name;
         if (!mInfo[i].location.empty()) {
-          os << "@" << mInfo[i].location;
+          os << " " << mInfo[i].location;
         }
         delim = "','";
       }
