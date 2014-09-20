@@ -132,7 +132,7 @@ DataGet::fetch(time_t stime,
     }
   }
 
-  mTitle = pi.name + (pi.location.empty() ? std::string() : ("@" + pi.location));
+  mTitle = pi.name + (pi.location.empty() ? std::string() : (" " + pi.location));
   mYLabel = mkLabel(mType);
   mUnits = mkUnits(mType);
   mLow = pi.low;
