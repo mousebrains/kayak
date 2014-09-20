@@ -20,6 +20,12 @@ public:
 
   time_t mtime() const;
   static time_t mtime(const std::string& fn) {return File(fn).mtime();}
+
+  static std::string dirname(const std::string& fn);
+  std::string dirname() const {return dirname(mFilename);}
+
+  static std::string tail(const std::string& fn);
+  std::string tail() const {return dirname(mFilename);}
 }; // File
 
 #endif // INC_File_H_
