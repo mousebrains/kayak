@@ -39,7 +39,8 @@ CREATE TABLE Master (key INTEGER PRIMARY KEY AUTOINCREMENT, -- HASH
                      state TEXT, -- State(s) this segment is located in
                      watershedType TEXT, -- Type of watershed
                      gaugeKey INTEGER DEFAULT 0, -- which gauge this entry uses
-                     gaugeName TEXT -- which gauge this entry uses
+                     gaugeName TEXT, -- which gauge this entry uses
+                     idAW TEXT -- American Whitewater id
                      );
 CREATE TRIGGER MasterModified AFTER UPDATE ON Master BEGIN
   UPDATE Master SET modified=strftime('%s', 'now') WHERE key=new.key;
