@@ -28,7 +28,7 @@ MAILTO=pat@mousebrains.com
 17 3 * * 3 $EXE/fetch -p USGS0 | $EXEROOT/mailFilter $MAILTO
 
 # NOAA site information, weekly
-
+# http://www.nwrfc.noaa.gov/xml/xml.cgi?id=MYPO3
 17 4 * * 3 $EXE/fetch -p NOAA1 | $EXEROOT/mailFilter $MAILTO
 
 ##################################
@@ -38,3 +38,7 @@ MAILTO=pat@mousebrains.com
 # Prune observations back in time
 
 17 2 * * 3 $EXE/pruneDatabase | $EXEROOT/mailFIlter $MAILTO
+
+# backup the database, retaining 4 copies
+
+17 1 * * 3 $EXE/dbBackup -p4 | $EXEROOT/mailFIlter $MAILTO
