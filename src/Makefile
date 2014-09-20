@@ -108,7 +108,7 @@ obj/%.o: %.C
 distclean clean:
 	$(RM) -rf bin obj
 
-install: $(CGIDIR)/.htaccess install.cgi install.programs
+install: $(CGIDIR)/.htaccess $(PATHS_WEB_ROOT)/.htaccess install.cgi install.programs
 
 install.programs: $(BINEXE)
 	install -d $(BINDIR)
@@ -123,6 +123,10 @@ $(CGIDIR)/.htaccess: Makefile
 	echo Options ExecCGI >>$@
 	echo Options +FollowSymLinks >>$@
 	echo SetHandler cgi-script >>$@
-	chmod 744 $@
+	chmod 644 $@
+
+$(PATHS_WEB_ROOT)/.htaccess: Makefile
+	echo DirectoryIndex cgi/disp >$@
+	chmod 644 $@
 
 -include obj/*.d
