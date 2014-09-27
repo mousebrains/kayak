@@ -1,7 +1,7 @@
 #include "GaugeTranslate.H"
 #include "Tokens.H"
 #include "String.H"
-#include <iostream>
+// #include <iostream>
 #include <cstring>
 
 namespace {
@@ -101,7 +101,7 @@ namespace {
     a.push_back(name);
     a.push_back(location);
  
-std::cout << "'" << str << "' -> '" << name << "' '" << location << "'" << std::endl;
+// std::cout << "'" << str << "' -> '" << name << "' '" << location << "'" << std::endl;
     return a; 
   }
 } // anonymous
