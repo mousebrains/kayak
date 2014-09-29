@@ -250,12 +250,14 @@ Display::maybeCalc(std::ostream& os,
   return true;
 } // maybeCalc
 
+namespace Display {
+
 template<>
 bool
-Display::maybe(std::ostream& os,
-               const int& val,
-               const std::string& prefix,
-               const std::string& suffix)
+maybe(std::ostream& os,
+      const int& val,
+      const std::string& prefix,
+      const std::string& suffix)
 {
   if (val == 0) return false;
 
@@ -270,10 +272,10 @@ Display::maybe(std::ostream& os,
 
 template<>
 bool
-Display::maybe(std::ostream& os,
-               const size_t& val,
-               const std::string& prefix,
-               const std::string& suffix)
+maybe(std::ostream& os,
+      const size_t& val,
+      const std::string& prefix,
+      const std::string& suffix)
 {
   if (val == 0) return false;
 
@@ -288,10 +290,10 @@ Display::maybe(std::ostream& os,
 
 template<>
 bool
-Display::maybe(std::ostream& os,
-               const double& val,
-               const std::string& prefix,
-               const std::string& suffix)
+maybe(std::ostream& os,
+      const double& val,
+      const std::string& prefix,
+      const std::string& suffix)
 {
   if (isnan(val)) return false;
 
@@ -306,10 +308,10 @@ Display::maybe(std::ostream& os,
 
 template<>
 bool
-Display::maybe(std::ostream& os,
-               const std::string& str,
-               const std::string& prefix,
-               const std::string& suffix)
+maybe(std::ostream& os,
+      const std::string& str,
+      const std::string& prefix,
+      const std::string& suffix)
 {
   if (str.empty()) return false;
 
@@ -324,10 +326,10 @@ Display::maybe(std::ostream& os,
 
 template<>
 bool
-Display::maybe(std::ostream& os,
-               const time_t& t,
-               const std::string& prefix,
-               const std::string& suffix)
+maybe(std::ostream& os,
+      const time_t& t,
+      const std::string& prefix,
+      const std::string& suffix)
 {
   if (t <= 0) return false;
 
@@ -339,6 +341,7 @@ Display::maybe(std::ostream& os,
 
   return true;
 }
+} // namespace Display
 
 bool
 Display::maybeHRef(std::ostream& os,
