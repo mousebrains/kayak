@@ -11,6 +11,8 @@
 #include <algorithm>
 
 namespace {
+  const time_t tOld(time(0) - 2 * 86400);
+
   struct MyFields {
     const char *table() const {return "levels";}
     const char *state() const {return "state";}
@@ -325,8 +327,21 @@ Levels::update()
     std::sort(linfo.begin(), linfo.end());
     for (tLInfo::size_type i(0), e(linfo.size()); i < e; ++i) {
       const LInfo& a(linfo[i]);
+      const double flow(a.flow.lastObs());
+      const time_t flowTime(a.flow.lastTime());
+      const bool qFlow((flowTime > 0) && !isnan(flow));
+      const double gauge(a.gauge.lastObs());
+      const time_t gaugeTime(a.gauge.lastTime());
+      const bool qGauge((gaugeTime > 0) && !isnan(gauge));
+      const double temperature(a.temperature.lastObs());
+      const time_t temperatureTime(a.temperature.lastTime());
+      const bool qTemperature((temperatureTime > 0) && !isnan(temperature));
+
+      if (!qFlow && !qGauge && !qTemperature) continue;
+
       Info b;
       b.key = a.key;
+      b.gaugeKey = a.gaugeKey;
       b.sortKey = mInfo.size();
       b.state = a.state;
       b.name = a.name;
@@ -334,14 +349,14 @@ Levels::update()
       b.grade = mkClass(a);
       b.qCalc = a.qCalc;
       b.level = mkLevel(a);
-      b.flow = a.flow.lastObs();
-      b.flowTime = a.flow.lastTime();
+      b.flow = flow;
+      b.flowTime = flowTime;
       b.flowDelta = a.flow.delta();
-      b.gauge = a.gauge.lastObs();
-      b.gaugeTime = a.gauge.lastTime();
+      b.gauge = gauge;
+      b.gaugeTime = gaugeTime;
       b.gaugeDelta = a.gauge.delta();
-      b.temperature = a.temperature.lastObs();
-      b.temperatureTime = a.temperature.lastTime();
+      b.temperature = temperature;
+      b.temperatureTime = temperatureTime;
       b.temperatureDelta = a.temperature.delta();
       mInfo.push_back(b);
     }
@@ -350,12 +365,13 @@ Levels::update()
   { // Update levels table
     MyDB::Stmt s(mDB);
     s << "INSERT OR REPLACE INTO " << fields.table() 
-      << " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+      << " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
     mDB.beginTransaction();
     mDB.query(std::string("DELETE FROM ") + fields.table()); // Clear out table
     for (size_type i(0), e(mInfo.size()); i < e; ++i) {
       const Info& info(mInfo[i]);
       s.bind(info.key);
+      s.bind(info.gaugeKey);
       s.bind(info.sortKey);
       s.bind(info.state);
       s.bind(info.name);
@@ -626,7 +642,9 @@ Levels::json(std::ostream& os) const
 }
 
 Levels::Info::Info()
-  : sortKey(-1)
+  : key(0)
+  , gaugeKey(0)
+  , sortKey(-1)
   , qCalc(false)
   , level(Levels::UNKNOWN)
   , flow(NAN)
@@ -643,6 +661,7 @@ Levels::Info::Info()
 
 Levels::Info::Info(MyDB::Stmt& s)
   : key(s.getInt())
+  , gaugeKey(s.getInt())
   , sortKey(s.getInt())
   , state(s.getString())
   , name(s.getString())
@@ -667,4 +686,140 @@ Levels::Info::operator < (const Info& rhs) const
 {
   return (sortKey < rhs.sortKey) ||
          ((sortKey == rhs.sortKey) && (key < rhs.key));
+}
+
+void
+Levels::Info::table(std::ostream& os) const
+{
+  const bool qFlow(!isnan(flow) && (flowTime > 0));
+  const bool qGauge(!isnan(gauge) && (gaugeTime > 0));
+  const bool qTemperature(!isnan(temperature) && (temperatureTime > 0));
+
+  if (!qFlow && !qGauge && !qTemperature) return;
+
+  os << "<table>\n<tbody>\n";
+
+  if (qFlow) tableRow(os, "Flow (CFS)", Data::FLOW);
+  if (qGauge) tableRow(os, "Gauge (Feet)", Data::GAUGE);
+  if (qTemperature) tableRow(os, "Temperature (CFS)", Data::TEMPERATURE);
+
+  os << "</tbody>\n</table>\n";
+}
+
+void
+Levels::Info::tableRow(std::ostream& os,
+                       const std::string& label,
+                       const Data::Type type) const
+{
+  bool qOld(false);
+
+  switch (type) {
+    case Data::INFLOW:
+    case Data::FLOW: qOld = flowTime < tOld; break;
+    case Data::GAUGE: qOld = gaugeTime < tOld; break;
+    case Data::TEMPERATURE: qOld = temperatureTime < tOld; break;
+    case Data::LASTTYPE: return;
+  }
+
+  os << "<tr><th>" << label << "</th>";
+  value(os, type, qOld ? "old" : std::string());
+  time(os, type, "%Y-%m-%d %H:%M");
+}
+
+bool
+Levels::Info::value(std::ostream& os,
+                    const Data::Type type,
+                    const std::string& className) const
+{
+  double value;
+  double delta;
+
+  switch (type) {
+    case Data::INFLOW:
+    case Data::FLOW: 
+      value = round(flow); 
+      delta = flowDelta; 
+      break;
+    case Data::GAUGE:
+      value = round(gauge * 10) / 10; 
+      delta = gaugeDelta; 
+      break;
+    case Data::TEMPERATURE:
+      value = round(temperature); 
+      delta = temperatureDelta; 
+      break;
+    case Data::LASTTYPE: return false;
+  }
+
+  if (isnan(value)) {
+    os << "<td></td>";
+    return false;
+  }
+
+  os << "<td";
+  if (!className.empty()) os << " class='" << className << "'";
+  os << ">";
+  if (key > 0) 
+    os << "<a href='?o=p&amp;h=" << Master::mkHash(key) << "&amp;t=" << type << "'>";
+
+  { // Arrow
+    const int cnt(fmin(11, round(fabs(delta))));
+    if (cnt) {
+      os << "<span class='lev" << cnt << "'>&" << (delta < 0 ? "d" : "u") << "arr;</span> ";
+    }
+  }
+
+  os << Convert::toComma(value);
+
+  if (key > 0) os << "</a>";
+  os << "</td>"; 
+
+  return true;
+}
+
+bool 
+Levels::Info::time(std::ostream& os, 
+                   const Data::Type type, 
+                   const std::string& format) const
+{
+  time_t t;
+  switch (type) {
+    case Data::INFLOW:
+    case Data::FLOW: t = flowTime; break;
+    case Data::GAUGE: t = gaugeTime; break;
+    case Data::TEMPERATURE: t = temperatureTime; break;
+    case Data::LASTTYPE: return false;
+  }
+
+  if (t <= 0) {
+    os << "<td></td>";
+    return false;
+  }
+
+  os << "<td";
+
+  if (t < tOld) os << " class='old'";
+
+  os << ">" << Convert::toStr(t, format) << "</td>";
+
+  return true;
+}
+
+bool 
+Levels::Info::time(std::ostream& os, 
+                   const std::string& format) const
+{
+  const time_t t((flowTime >= gaugeTime) && (flowTime >= temperatureTime) ? flowTime :
+               (gaugeTime > temperatureTime ? gaugeTime : temperatureTime));
+
+  if (t <= 0) {
+    os << "<td></td>";
+    return false;
+  }
+
+  os << "<td";
+  if (t < tOld) os << " class='old'";
+  os << ">" << Convert::toStr(t, format) << "</td>";
+
+  return true;
 }

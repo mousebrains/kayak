@@ -11,45 +11,11 @@
 
 namespace {
   const CGI cgi;
-  const time_t tOld(time(0) - 2 * 86400);
 
-  void formatVal(std::ostream& os, const bool q, const double val, const std::string& hash, 
-                 const Levels::Level level, const double delta, 
-                 const std::string& type, const double roundTo) {
-    if (!q) {
-      os << "<td></td>";
-      return;
-    }
-
-    const std::string color(level == Levels::LOW  ? " class='lo'" :
-                           (level == Levels::OKAY ? " class='ok'" :
-                           (level == Levels::HIGH ? " class='hi'" : "")));
-    const bool qLink(!hash.empty() && !type.empty());
-
-    os << "<td" << color << ">";
-
-    if (qLink) os << "<a href='?o=p&amp;h=" << hash << "&amp;t=" << type << "'>";
-    { // Arrow
-      const int cnt(fmin(11,round(fabs(delta))));
-      if (cnt) {
-        os << "<span class='lev" << cnt << "'>&"
-           << (delta < 0 ? "d" : "u") << "arr;</span>";
-      }
-    } // Arrow
-    os << Convert::toComma(round(val * roundTo) / roundTo);
-    if (qLink) os << "</a>";
-    os << "</td>";
-  }
-
-  void formatTime(std::ostream& os, const time_t t0, const time_t t1, const time_t t2) {
-    const time_t t((t0 > t1) && (t0 > t2) ? t0 : (t1 > t2) ? t1 : t2);
-    if (t == 0) {
-      os << "<td></td>";
-      return;
-    }
-    os << "<td";
-    if (t < tOld) os << " class=old";
-    os << ">" << Convert::toStr(t, "%m/%d %H:%M") << "</td>";
+  void formatVal(const Levels::Info& info, const Data::Type type, std::ostream& os) {
+    info.value(os, type, (info.level == Levels::LOW  ? "lo" :
+                         (info.level == Levels::OKAY ? "ok" :
+                         (info.level == Levels::HIGH ? "hi" : ""))));
   }
 
   void mkTable(const Levels& levels, HTML& html) {
@@ -67,28 +33,19 @@ namespace {
     html << hdr << "<tbody>\n";
  
     for (Levels::const_iterator it(levels.begin()), et(levels.end()); it != et; ++it) {
-      const bool qf(levels.qFlow() && !isnan(it->flow));
-      const bool qg(levels.qGauge() && !isnan(it->gauge));
-      const bool qt(levels.qTemperature() && !isnan(it->temperature));
-      const std::string& hash(Master::mkHash(it->key));
- 
       html << "<tr>"
-           << "<th><a href='?o=i&h=" << hash << "'>" 
+           << "<th><a href='?o=i&h=" << Master::mkHash(it->key) << "'>" 
            << it->name;
 
       if (!it->location.empty()) html << " " << it->location;
       html << "</a>";
       if (it->qCalc) html << "<span class='red'>(est)</span>";
       html << "</th>";
-     
-      formatTime(html, 
-                 qf ? it->flowTime : 0, 
-                 qg ? it->gaugeTime : 0, 
-                 qt ? it->temperatureTime: 0); 
- 
-      formatVal(html, qf, it->flow, hash, it->level, it->flowDelta, "f", 1); 
-      formatVal(html, qg, it->gauge, hash, it->level, it->gaugeDelta, "g", 10); 
-      formatVal(html, qt, it->temperature, hash, Levels::UNKNOWN, it->temperatureDelta, "t", 1); 
+    
+      it->time(html); 
+      formatVal(*it, Data::FLOW, html);
+      formatVal(*it, Data::GAUGE, html);
+      formatVal(*it, Data::TEMPERATURE, html);
 
       if (levels.qClass()) html << "<th>" << it->grade << "</th>";
 
@@ -163,10 +120,12 @@ Display::levels()
     const Levels levels(state);
     return process(Levels(state));
   }
-  const Tokens tokens(cgi.get("h", std::string()));
   MyDB::Stmt::tInts keys;
-  for (Tokens::const_iterator it(tokens.begin()), et(tokens.end()); it != et; ++it) {
-    keys.push_back(Convert::strTo<int>(*it));
+  {
+    const Tokens tokens(cgi.get("h", std::string()), " ,\n\t");
+    for (Tokens::const_iterator it(tokens.begin()), et(tokens.end()); it != et; ++it) {
+      keys.push_back(Convert::strTo<int>(*it));
+    }
   }
   return process(Levels(keys));
 }

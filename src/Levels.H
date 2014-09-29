@@ -2,6 +2,7 @@
 #define INC_Levels_H_
 
 #include "MyDB.H"
+#include "Data.H"
 #include <vector>
 #include <set>
 
@@ -16,6 +17,7 @@ public:
 
   struct Info {
     int key; // master key
+    int gaugeKey; // gauge key
     int sortKey; // index in mInfo
     std::string state; 
     std::string name; // displayName
@@ -36,6 +38,16 @@ public:
     explicit Info(MyDB::Stmt& s);
 
     bool operator < (const Info& rhs) const;
+
+    void table(std::ostream& os) const;
+
+    void tableRow(std::ostream& os, const std::string& label, const Data::Type type) const;
+
+    bool value(std::ostream& os, const Data::Type type, const std::string& className) const;
+    bool time(std::ostream& os, const Data::Type type, 
+              const std::string& format="%m/%d %H:%M") const;
+    bool time(std::ostream& os,
+              const std::string& format="%m/%d %H:%M") const;
   };
 private:
   MyDB mDB;
@@ -65,6 +77,8 @@ public:
   const_iterator end() const {return mInfo.end();}
   size_type size() const {return mInfo.size();}
   bool empty() const {return mInfo.empty();}
+
+  const Info& operator [] (const tInfo::size_type index) const {return mInfo[index];}
 
   const std::string& state() const {return mState;}
 

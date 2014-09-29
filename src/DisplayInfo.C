@@ -1,256 +1,181 @@
 #include "Display.H"
 #include "Master.H"
 #include "Gauges.H"
+#include "Levels.H"
 #include "Calc.H"
 #include "CGI.H"
 #include "HTML.H"
 #include "HTTP.H"
 #include "Convert.H"
 #include "GuideBook.H"
+#include "Tokens.H"
 #include <iostream>
 #include <cmath>
 
 namespace {
-  bool maybe(HTML& html, const std::string& str, 
-             const std::string& prefix = "", const std::string& suffix = "") {
-    if (str.empty()) return false;
-    html << "<li>" << prefix << str << suffix << "</li>\n";
-    return true;
-  }
-
-  bool maybe(HTML& html, const double value, 
-             const std::string& prefix = "", const std::string& suffix = "") {
-    if (isnan(value) || value == 0) return false;
-    html << "<li>" << prefix << value << suffix << "</li>\n";
-    return true;
-  }
-
-  bool maybe(HTML& html, const double val0, const double val1,
-             const std::string& prefix = "", const std::string& suffix = "") {
-    if ((isnan(val0) || val0 == 0) && (isnan(val1) || val1 == 0)) return false;
-    html << "<li>" << prefix;
-    if (!isnan(val0) && !isnan(val1) && (val0 != 0) && (val1 != 0)) {
-      html << val0 << " to " << val1;
-    } else {
-      html << (val0 != 0 ? val0 : val1);
-    }
-    html << suffix << "</li>";
-    return true;
-  }
-
-  bool maybe(HTML& html, const time_t& t, 
-             const std::string& prefix = "", const std::string& suffix = "") {
-    if (t == 0) return false;
-    html << "<li>" << prefix 
-         << Convert::toStr(t, "%Y-%m-%d")
-         << suffix << "</li>\n";
-    return true;
-  }
-
   bool gmaybe(HTML& html, const double v0, const double v1,
               const std::string& prefix = "", const std::string& suffix = "") {
-    return maybe(html, isnan(v0) || (v0 == 0) ? v1 : v0, prefix, suffix);
+    return Display::maybe(html, isnan(v0) || (v0 == 0) ? v1 : v0, prefix, suffix);
   }
-   
-  bool maybeLatLon(HTML& html, const double lat, const double lon, 
-                   const std::string& prefix = "") { 
-    const std::string wx(html.weatherURL(lat, lon));
-    if (wx.empty()) return false;
-    const std::string map(html.mapURL(lat, lon));
-    html << "<li>" << prefix << "Lat/Lon: "  
-         << "<a href='" << map << "'>"
-         << Convert::toLatLon(lat) << ", " 
-         << Convert::toLatLon(lon) 
-         << "</a>"
-         << " <a href='" << wx << "'>Weather Forecast</a></li>\n";
-    return true;
-  }
-
-  bool maybeCalc(HTML& html, const std::string& str, Master& master,
-                 const std::string& prefix="", const std::string& suffix="") {
-    if (str.empty()) return false;
-    Calc calc(0, str, Data::FLOW);
-    html << "<li>" << prefix << (prefix.empty() ? "" : " ");
-    for (Calc::size_type i(0), e(calc.size()); i < e; ++i) {
-      if (calc[i].qRef()) {
-        const int gaugeKey(calc[i].key());
-        const int masterKey(master.gaugeKey2key(gaugeKey));
-        html << "<a href='?o=i&amp;h=" << Master::mkHash(masterKey) << "'>"
-             << calc[i].str()
-             << "</a>";
-      } else {
-        html << calc[i].str();
-      }
-    }
-    html << (suffix.empty() ? "" : " ") << suffix << "</li>\n";
-    return true;
-  } // maybeCalc
-
-  bool maybeHREF(HTML& html, const std::string& str, const std::string& url, 
-                 const std::string& prefix="", const std::string& suffix="") {
-    if (url.empty() || str.empty()) return maybe(html, str, prefix, suffix);
-    html << "<li>" << prefix << "<a href='" << url << "'>" << str << "</a>" 
-         << suffix << "</li>\n";
-    return true;
-  }
-} // anonymouse
+} // anonymous
 
 int
 Display::info()
 {
-  const CGI cgi;
-  const std::string hash(cgi.get("h", std::string()));
-  
-  if (hash.empty()) { // No hash
-    return HTTP(std::cout).errorPage("Hash not set");
+  MyDB::Stmt::tInts keys;
+  {
+    const CGI cgi;
+    const Tokens tokens(cgi.get("h", std::string()), " ,\n\t");
+    for (Tokens::const_iterator it(tokens.begin()), et(tokens.end()); it != et; ++it) {
+      keys.push_back(Master::deHash(*it));
+    }
   }
 
-  const size_t key(Master::deHash(hash));  
   Master master;
+  const Master::tInfo info(master.getInfo(keys));
   Gauges gauges;
   Data data;
-  const Master::Info info(master.getInfo(key));
-  const Gauges::Info ginfo(info.gaugeKey > 0 ? gauges.getInfo(info.gaugeKey) : Gauges::Info());
-  const std::string location(info.location.empty() ? ginfo.location : info.location);
-  const std::string title(info.displayName + (location.empty() ? "" : (" " + location)));
-  const GuideBook guides(key);
-  const MyDB::Stmt::tInts types(data.types(data.source().gaugeKey2Keys(info.gaugeKey)));
+  Levels levels(keys); // current level information
+
+  typedef std::map<int, Levels::size_type> tKey2Level; // Master key to level index
+  tKey2Level key2level;
+
+  for (Levels::size_type i(0), e(levels.size()); i < e; ++i) {
+    key2level.insert(std::make_pair(levels[i].key, i));
+  }
 
   HTML html;
   html << html.header()
        << html.myStyle()
-       << "<title>" << title << "</title>\n"
-       << "</head>\n<body>\n"
-       << "<h1>" << title << "</h1>\n";
+       << "<title>Run Information</title>\n"
+       << "</head>\n<body>\n";
 
-  if (!types.empty()) {
-    html << "<form>\n";
-    if (types.size() == 1) {
-       html << "<input type='hidden' name='t' value='" 
-            << ((Data::Type) *(types.begin())) << "'>\n";
-    } else {
-      bool qFirst(true);
-      html << "<select name='t'>\n";
+  bool qHR(false);
+
+  for (Master::tInfo::const_iterator it(info.begin()), et(info.end()); it != et; ++it) {
+    const Master::Info a(*it);
+    const Gauges::Info ginfo(a.gaugeKey > 0 ? gauges.getInfo(a.gaugeKey) : Gauges::Info());
+    const std::string location(a.location.empty() ? ginfo.location : a.location);
+    const std::string title(a.displayName + (location.empty() ? "" : (" " + location)));
+    const GuideBook guides(a.key);
+    const MyDB::Stmt::tInts types(data.types(data.source().gaugeKey2Keys(a.gaugeKey)));
+
+    if (qHR) html << "<hr>\n";
+    qHR = true;
+
+    html << "<h1>" << title << "</h1>\n";
+    
+    if (!types.empty()) {
+      html << "<form>\n";
+      if (types.size() == 1) {
+         html << "<input type='hidden' name='t' value='" 
+              << ((Data::Type) *(types.begin())) << "'>\n";
+      } else {
+        bool qFirst(true);
+        html << "<select name='t'>\n";
       
-      for (MyDB::Stmt::tInts::const_iterator it(types.begin()), et(types.end()); it != et; ++it) {
-        html << "<option";
-        if (qFirst) {
-          html << " selected";
-          qFirst = false;
-        }
-        html << " value='";
+        for (MyDB::Stmt::tInts::const_iterator jt(types.begin()), jet(types.end()); 
+             jt != jet; ++jt) {
+          html << "<option";
+          if (qFirst) {
+            html << " selected";
+            qFirst = false;
+          }
+          html << " value='";
 
-        switch ((Data::Type) *it) {
-          case Data::INFLOW:
-          case Data::FLOW: html << "flow'>Flow</option>\n"; break;
-          case Data::GAUGE: html << "gauge'>Gauge</option>\n"; break;
-          case Data::TEMPERATURE: html << "temp'>Temp</option>\n"; break;
-          case Data::LASTTYPE: html << "GotMe'>GotMe</option>\n"; break;
-        }
+          switch ((Data::Type) *jt) {
+            case Data::INFLOW:
+            case Data::FLOW: html << "flow'>Flow</option>\n"; break;
+            case Data::GAUGE: html << "gauge'>Gauge</option>\n"; break;
+            case Data::TEMPERATURE: html << "temp'>Temp</option>\n"; break;
+            case Data::LASTTYPE: html << "GotMe'>GotMe</option>\n"; break;
+          }
+        } 
+        html << "</select>\n";
+      }
+      html << "<input type='submit' name='o' value='Plot'>\n"
+           << "<input type='submit' name='o' value='Table'>\n"
+           << "<input type='submit' name='o' value='Database'>\n"
+           << "<input type='hidden' name='h' value='" << master.mkHash(a.key) << "'>\n"
+           << "<noscript><input type='hidden' name='js' value='0'></noscript>\n"
+           << "</form>\n";
+
+      { // Display current information
+        tKey2Level::const_iterator jt(key2level.find(a.key));
+        if (jt != key2level.end()) levels[jt->second].table(html);
+      }
+
+    }
+
+    html << "<ul>\n";
+
+    maybe(html, location, "Location: ");
+    maybe(html, a.riverName, "River Name: ");
+
+    maybeLatLon(html, 
+                a.latitudePutin, a.longitudePutin,
+                a.latitudeTakeout, a.longitudeTakeout,
+                "Lat/Lon: ");
+
+    maybe(html, a.classString, "Class: ");
+
+    for (GuideBook::const_iterator jt(guides.begin()), jet(guides.end()); jt != jet; ++jt) {
+      html << "<li>Guide: " << jt->mkHTML() << "</li>\n";
+    }
+    maybeHRef(html, "American Whitewater", html.awIdURL(a.idAW));
+
+    maybe(html, a.length, "Length: ", " miles");
+    gmaybe(html, round(a.elevation), round(ginfo.elevation), "Elevation: ", " feet");
+    maybe(html, a.elevationLost, "Elevation Lost: ", " feet");
+    if (!maybe(html, a.gradient, "Gradient: ", " feet/mile")) {
+      if ((a.length > 0) && (a.elevationLost > 0)) {
+        maybe(html, round(a.elevationLost / a.length), "Gradient: ", " feet/mile");
       } 
-      html << "</select>\n";
     }
-    html << "<input type='submit' name='o' value='Plot'>\n"
-         << "<input type='submit' name='o' value='Table'>\n"
-         << "<input type='submit' name='o' value='Database'>\n"
-         << "<input type='hidden' name='h' value='" << hash << "'>\n"
-         << "<noscript><input type='hidden' name='js' value='0'></noscript>\n"
-         << "</form>\n";
-  }
 
-  html << "<ul>\n";
+    maybe(html, a.lowFlow, "Low flow: ", " CFS");
+    maybe(html, a.optimalLowFlow, a.optimalHighFlow, "Optimal flow: ", " CFS");
+    maybe(html, a.highFlow, "High flow: ", " CFS");
+    maybe(html, a.state, "State: ");
+    maybe(html, a.section, "Section: ");
+    maybe(html, a.features, "Features: ");
+    maybe(html, a.region, "Region: ");
+    maybe(html, a.remoteness, "Remoteness: ");
+    maybe(html, a.scenery, "Scenery: ");
+    maybe(html, a.nature, "Nature: ");
+    maybe(html, a.difficulties, "Difficulties: ");
+    maybe(html, a.watershedType, "Type of watershed: ");
+    maybe(html, a.notes, "Notes: ");
+    maybe(html, a.drainage, "Drainage: ");
+    maybe(html, a.drainageArea, "Drainage Area: ", " Square Miles");
 
-  maybe(html, location, "Location: ");
-  maybe(html, info.riverName, "River Name: ");
-
-  { // lat/lon putin/takeout
-    const double pilat(fabs(info.latitudePutin) <= 90 ? info.latitudePutin : ginfo.latitude);
-    const double pilon(fabs(info.longitudePutin) <= 180 ? info.longitudePutin : ginfo.longitude);
-    const double tolat(info.latitudeTakeout);
-    const double tolon(info.longitudeTakeout);
-    const bool qTakeout(fabs(tolat) <= 90 && fabs(tolon) <= 180);
-    if (qTakeout) {
-      const std::string wx(html.weatherURL((pilat + tolat)/2, (pilon + tolon)/2));
-      const std::string map(html.mapURL(pilat, pilon, tolat, tolon));
-      html << "<li>" << "Lat/Lon: "  
-         << "<a href='" << map << "'>"
-         << Convert::toLatLon(pilat) << ", " 
-         << Convert::toLatLon(pilon) 
-         << " to "
-         << Convert::toLatLon(tolat) << ", " 
-         << Convert::toLatLon(tolon) 
-         << "</a>"
-         << " <a href='" << wx << "'>Weather Forecast</a></li>\n";
-    } else {
-      maybeLatLon(html, pilat, pilon);
+    if (a.gaugeKey > 0) {
+      maybeLatLon(html, ginfo.latitude, ginfo.longitude, "Gauge Lat/Lon: ");
+      maybe(html, ginfo.date, "Gauge last updated: ");
+      maybe(html, ginfo.description, "Gauge Description: ");
+      maybe(html, ginfo.location, "Gauge Location: ");
+      maybeHRef(html, ginfo.idUSGS, html.usgsIdURL(ginfo.idUSGS), "Gauge USGS ID: ");
+      maybeHRef(html, ginfo.idCBTT, html.cbttIdURL(ginfo.idCBTT), "Gauge CBTT ID: ");
+      maybe(html, ginfo.idUnit, "Gauge Hydrologic Unit ID: ");
+      maybe(html, ginfo.state, "Gauge State: ");
+      maybe(html, round(ginfo.elevation), "Gauge Elevation: ", " feet");
+      maybe(html, ginfo.drainageArea, "Gauge Drainage Area: ", " Square Miles");
+      maybeCalc(html, ginfo.calcFlow, master, "Gauge Flow Calculation: ");
+      maybeCalc(html, ginfo.calcGauge, master, "Gauge Height Calculation: ");
     }
-  } // lat/lon putin/takeout
 
-  maybe(html, info.classString, "Class: ");
-
-  for (GuideBook::const_iterator it(guides.begin()), et(guides.end()); it != et; ++it) {
-    html << "<li>Guide: " << it->mkHTML() << "</li>\n";
-  }
-  maybeHREF(html, "American Whitewater", html.awIdURL(info.idAW));
-
-  maybe(html, info.length, "Length: ", " miles");
-  gmaybe(html, round(info.elevation), round(ginfo.elevation), "Elevation: ", " feet");
-  maybe(html, info.elevationLost, "Elevation Lost: ", " feet");
-  if (!maybe(html, info.gradient, "Gradient: ", " feet/mile")) {
-    if ((info.length > 0) && (info.elevationLost > 0)) {
-      maybe(html, round(info.elevationLost / info.length), "Gradient: ", " feet/mile");
-    } 
-  }
-
-  maybe(html, info.lowFlow, "Low flow: ", " CFS");
-  maybe(html, info.optimalLowFlow, info.optimalHighFlow, "Optimal flow: ", " CFS");
-  maybe(html, info.highFlow, "High flow: ", " CFS");
-  maybe(html, info.state, "State: ");
-  maybe(html, info.section, "Section: ");
-  maybe(html, info.features, "Features: ");
-  maybe(html, info.region, "Region: ");
-  maybe(html, info.remoteness, "Remoteness: ");
-  maybe(html, info.scenery, "Scenery: ");
-  maybe(html, info.nature, "Nature: ");
-  maybe(html, info.difficulties, "Difficulties: ");
-  maybe(html, info.watershedType, "Type of watershed: ");
-  maybe(html, info.notes, "Notes: ");
-  maybe(html, info.drainage, "Drainage: ");
-  maybe(html, info.drainageArea, "Drainage Area: ", " Square Miles");
-
-  if (info.gaugeKey > 0) {
-    // maybe(html, info.gaugeKey, "Gauge Key: ");
-    // maybe(html, ginfo.name, "Gauge Name: ");
-    maybeLatLon(html, ginfo.latitude, ginfo.longitude, "Gauge ");
-    maybe(html, ginfo.date, "Gauge last updated: ");
-    maybe(html, ginfo.description, "Gauge Description: ");
-    maybe(html, ginfo.location, "Gauge Location: ");
-    maybeHREF(html, ginfo.idUSGS, html.usgsIdURL(ginfo.idUSGS), "Gauge USGS ID: ");
-    maybeHREF(html, ginfo.idCBTT, html.cbttIdURL(ginfo.idCBTT), "Gauge NOAA ID: ");
-    maybe(html, ginfo.idUnit, "Gauge Hydrologic Unit ID: ");
-    maybe(html, ginfo.state, "Gauge State: ");
-    maybe(html, round(ginfo.elevation), "Gauge Elevation: ", " feet");
-    maybe(html, ginfo.drainageArea, "Gauge Drainage Area: ", " Square Miles");
-    // maybe(html, ginfo.minFlow, "Gauge Minimum Flow: ", " CFS");
-    // maybe(html, ginfo.maxFlow, "Gauge Maximum Flow: ", " CFS");
-    // maybe(html, ginfo.minGauge, "Gauge Minimum Height: ", " Feet");
-    // maybe(html, ginfo.maxGauge, "Gauge Maximum Height: ", " Feet");
-    // maybe(html, ginfo.minTemperature, "Gauge Minimum Temperature: ", " F");
-    // maybe(html, ginfo.maxTemperature, "Gauge Maximum Temperature: ", " F");
-    maybeCalc(html, ginfo.calcFlow, master, "Gauge Flow Calculation: ");
-    maybeCalc(html, ginfo.calcGauge, master, "Gauge Height Calculation: ");
-  }
-
-  maybe(html, info.sortKey, "Sort Key: ");
+    maybe(html, a.sortKey, "Sort Key: ");
  
 
-  if (info.qNoShow) html << "<li>Do not display</li>\n";
+    if (a.qNoShow) html << "<li>Do not display</li>\n";
 
-  maybe(html, info.created, "Entry created on ");
-  maybe(html, info.modified, "Entry modified on ");
+    maybe(html, a.created, "Entry created on ");
+    maybe(html, a.modified, "Entry modified on ");
   
-  html << "</ul>\n"
-       <<"</body>\n</html>\n";
+    html << "</ul>\n</div>\n";
+  }
+  
+  html <<"</body>\n</html>\n";
 
   return HTTP(std::cout).htmlPage(86400, html);
 }
