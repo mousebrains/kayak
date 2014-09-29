@@ -5,6 +5,7 @@
 #include "Data.H"
 #include <string>
 #include <set>
+#include <map>
 
 
 class Master {
@@ -23,7 +24,7 @@ public:
 
   bool qModifiedSince(const time_t t);
 
-  size_t gaugeKey(const size_t key);
+  int gaugeKey(const int key);
 
   struct PlotInfo {
     size_t gaugeKey;
@@ -101,11 +102,21 @@ public:
   Info getInfo(const size_t key);
 
   typedef std::vector<Info> tInfo;
+  tInfo getInfo(const MyDB::Stmt::tInts& keys);
   tInfo getLike(const std::string& sql);
   tInfo getLike(const size_t key);
   tInfo getAll();
 
   int gaugeKey2key(const int gaugeKey);
+
+  struct KeyNameLocation { 
+    int key;
+    std::string name;
+    std::string location;
+  };
+
+  typedef std::multimap<int, KeyNameLocation> tKey2KeyNameLocation;
+  tKey2KeyNameLocation gaugeKey2KeyNameLocation(const MyDB::Stmt::tInts& gaugeKeys);
 };
 
 #endif // INC_Master_H_

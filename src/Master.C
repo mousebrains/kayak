@@ -38,8 +38,8 @@ Master::qModifiedSince(const time_t t)
   return result.empty() ? true : ((t-60) <= (time_t) result[0]);
 }
 
-size_t
-Master::gaugeKey(const size_t key)
+int
+Master::gaugeKey(const int key)
 {
   MyDB::Stmt s(mDB);
   s << "SELECT " << fields.gaugeKey() << " FROM " << fields.table()
@@ -52,10 +52,52 @@ int
 Master::gaugeKey2key(const int gaugeKey)
 {
   MyDB::Stmt s(mDB);
+
   s << "SELECT " << fields.key() << " FROM " << fields.table() << " WHERE "
     << fields.gaugeKey() << "=" << gaugeKey << ";";
+
   const MyDB::Stmt::tInts result(s.queryInts());
+
   return (result.empty() || (result[0] < 0)) ? 0 : result[0];
+}
+
+#include <iostream>
+
+Master::tKey2KeyNameLocation 
+Master::gaugeKey2KeyNameLocation(const MyDB::Stmt::tInts& gaugeKeys)
+{
+  MyDB::Stmt s(mDB);
+
+  s << "SELECT " << fields.gaugeKey()
+    << "," << fields.key() 
+    << "," << fields.displayName() 
+    << "," << fields.location() 
+    << " FROM " << fields.table() << " WHERE "
+    << fields.gaugeKey();
+
+  if (gaugeKeys.empty()) { // Get all keys
+    s << ">0;";
+  } else {
+    s << " IN (" << gaugeKeys << ");";
+  }
+
+  tKey2KeyNameLocation a;
+
+  int rc;
+  while ((rc = s.step()) == SQLITE_ROW) {
+    KeyNameLocation b;
+    const int gkey(s.getInt());
+    b.key = s.getInt();
+    b.name = s.getString();
+    b.location = s.getString();
+    a.insert(std::make_pair(gkey, b));
+  }
+
+  if (rc != SQLITE_DONE) {
+    s.errorCheck(rc, std::string(__FILE__) + " line " + Convert::toStr(__LINE__));
+  }
+
+  return a;
 }
 
 Master::PlotInfo
@@ -235,6 +277,19 @@ Master::getInfo(const size_t key)
 }
 
 Master::tInfo
+Master::getInfo(const MyDB::Stmt::tInts& keys)
+{
+  if (keys.empty()) return getAll();
+
+  std::ostringstream oss;
+
+  oss << "SELECT * FROM " << fields.table()
+      << " WHERE " << fields.key() << " IN (" << keys << ");";
+
+  return getLike(oss.str());
+}
+
+Master::tInfo
 Master::getLike(const size_t key)
 {
   const Info ref(getInfo(key));
@@ -257,7 +312,6 @@ Master::getLike(const std::string& sql)
  
   while ((rc = s.step()) == SQLITE_ROW) {
     info.push_back(Info(s));
-    return info;
   }
 
   if (rc == SQLITE_DONE) {
