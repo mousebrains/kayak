@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS levels;
 CREATE TABLE levels (key INTEGER PRIMARY KEY, -- key in master
+                     gaugeKey INTEGER, -- gaugeKey in gauges
                      sortKey INTEGER, -- sorting key
                      state TEXT, -- state in master
                      displayName TEXT, -- displayName in master
@@ -18,6 +19,7 @@ CREATE TABLE levels (key INTEGER PRIMARY KEY, -- key in master
                      temperatureDelta double DEFAULT 0 -- 24 hour % change 
                     );
 DROP INDEX IF EXISTS stateLevelsIndex;
+CREATE INDEX gaugeKeyLevelsIndex ON levels(gaugeKey);
 CREATE INDEX stateLevelsIndex ON levels(state);
 
 
