@@ -25,6 +25,9 @@ main (int argc,
   if (page == "l") { // levels page
     return Display::levels();
   }
+  if (page == "g") { // gauges page
+    return Display::gauges();
+  }
   if (page == "d") { // data json
     return Display::data();
   }
