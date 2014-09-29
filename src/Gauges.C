@@ -242,6 +242,28 @@ Gauges::getInfo(const size_t key)
 }
 
 Gauges::tInfo
+Gauges::getInfo(const MyDB::Stmt::tInts& keys) {
+  if (keys.empty()) return getAll();
+
+  MyDB::Stmt s(mDB);
+  s << "SELECT * FROM " << fields.table()
+    << " WHERE " << fields.key() << " IN (" << keys << ");";
+
+  int rc;
+  tInfo info;
+  while ((rc = s.step()) == SQLITE_ROW) {
+    info.insert(Info(s));
+  }
+
+  if (rc == SQLITE_DONE) {
+    return info;
+  }
+
+  s.errorCheck(rc, std::string(__FILE__) + " line " + Convert::toStr(__LINE__));
+  return tInfo();
+}
+
+Gauges::tInfo
 Gauges::getAll()
 {
   MyDB::Stmt s(mDB);
@@ -253,7 +275,6 @@ Gauges::getAll()
  
   while ((rc = s.step()) == SQLITE_ROW) {
     info.insert(Info(s));
-    return info;
   }
 
   if (rc != SQLITE_DONE) {

@@ -80,8 +80,11 @@ public:
   };
 
   Info getInfo(const size_t key);
+  Info getLike(const size_t key);
 
   typedef std::set<Info> tInfo;
+  tInfo getInfo(const MyDB::Stmt::tInts& keys);
+  tInfo getLike(const MyDB::Stmt::tInts& keys);
   tInfo getAll();
 
   void putInfo(const Info& info); // Write updated info back to database
