@@ -731,8 +731,8 @@ Levels::Info::value(std::ostream& os,
                     const Data::Type type,
                     const std::string& className) const
 {
-  double value;
-  double delta;
+  double value(NAN);
+  double delta(NAN);
 
   switch (type) {
     case Data::INFLOW:
@@ -782,7 +782,8 @@ Levels::Info::time(std::ostream& os,
                    const Data::Type type, 
                    const std::string& format) const
 {
-  time_t t;
+  time_t t(0);
+
   switch (type) {
     case Data::INFLOW:
     case Data::FLOW: t = flowTime; break;
