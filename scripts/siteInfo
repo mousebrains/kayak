@@ -1,0 +1,39 @@
+# /bin/bash -x
+# 
+# Fetch site information from various providers
+#
+ROOT=`dirname $0` # Where am I located at
+MAILTO='pat@mousebrains.com'
+
+BINDIR=/Users/Pat/tpw/kayak/src/bin
+FETCH=$BINDIR/fetch
+MAILER='2>&1 | $EXEROOT/mailFilter $MAILTO'
+MAILER=
+
+# Get site information from the USGS
+#
+# state_cd=id Idaho
+# state_cd=or Oregon
+# state_cd=wa Washington
+# site_tp_cd=ST Stream
+# site_tp_cd=ST-TS Tidal Stream
+# site_md=1 ?? Most recent ??
+# site_md_minutes=86400 Updated within the previous 86,400 minutes, or 60 days
+# group_key=NONE
+# format=site_file_output
+# sitefile_output_format=xml
+# column_name=agency_cd  agency code
+# column_name=site_no  station number
+# column_name=station_nm  station name
+# column_name=dec_lat_va decimal latitude value
+# column_name=dec_long_va decimal longitude value
+# column_name=district_cd district code
+# column_name=state_cd state code
+# column_name=county_cd county code
+# column_name=alt_va altitude
+# column_name=huc_cd hydrologic unit code
+# column_name=basin_cd basin code
+# column_name=drainage_area_va drainage area
+# list_of_search_criteria=state_cd+site_tp_cd+site_md state/type/md
+#  
+$FETCH -v -u 'USGS1:http://waterdata.usgs.gov/nwis/inventory?state_cd=id&state_cd=or&state_cd=wa&site_tp_cd=ST&site_tp_cd=ST-TS&data_type=rt&site_md=1&site_md_minutes=86400&group_key=NONE&format=sitefile_output&sitefile_output_format=xml&column_name=agency_cd&column_name=site_no&column_name=station_nm&column_name=dec_lat_va&column_name=dec_long_va&column_name=district_cd&column_name=state_cd&column_name=county_cd&column_name=alt_va&column_name=huc_cd&column_name=basin_cd&column_name=drain_area_va&list_of_search_criteria=state_cd%2Csite_tp_cd%2Cdata_type%2Csite_md'
