@@ -39,8 +39,7 @@ CREATE TABLE Master (key INTEGER PRIMARY KEY AUTOINCREMENT, -- HASH
                      state TEXT, -- State(s) this segment is located in
                      watershedType TEXT, -- Type of watershed
                      gaugeKey INTEGER DEFAULT 0, -- which gauge this entry uses
-                     gaugeName TEXT, -- which gauge this entry uses
-                     idAW TEXT -- American Whitewater id
+                     gaugeName TEXT -- which gauge this entry uses
                      );
 CREATE TRIGGER MasterModified AFTER UPDATE ON Master BEGIN
   UPDATE Master SET modified=strftime('%s', 'now') WHERE key=new.key;
@@ -49,24 +48,23 @@ CREATE INDEX stateMasterIndex on Master(state);
 CREATE INDEX gaugeKeyMasterIndex on Master(gaugeKey);
 
 DROP TABLE IF EXISTS GuideBooks;
-CREATE TABLE GuideBooks (bookKey INTEGER PRIMARY KEY AUTOINCREMENT, -- key to guide book
+CREATE TABLE GuideBooks (bookKey INTEGER UNIQUE AUTOINCREMENT, -- key to guide book
                          name TEXT, -- Name of the guide book
                          author TEXT, -- Author of the guide book
                          edition TEXT, -- which edition of the guide book
-                         url TEXT -- URL link to book site
+                         url TEXT UNIQUE, -- URL link to book site
+                         urlBase TEXT, -- URL base used for guide entries
+                         PRIMARY KEY (name,edition)
                         );
+CREATE INDEX bookKeyGuideBooks on GuideBooks(bookKey);
 
 DROP TABLE IF EXISTS Guides;
 CREATE TABLE Guides (key INTEGER DEFAULT 0, -- key into Master
                      bookKey INTEGER DEFAULT 0, -- key into GuideBooks table
                      pageNumber TEXT, -- Page number 
                      runNumber TEXT, -- Run number 
-                     url TEXT -- URL link
+                     url TEXT, -- URL link, may use urlBase from GuideBooks
+                     PRIMARY KEY (key, bookKey, pageNumber, runNumber, url) 
                     );
-CREATE INDEX guidesIndex on Guides(key);
-
--- .headers on
--- .indices
--- .mode column
-
--- .schema Master
+CREATE INDEX keyGuidesIndex on Guides(key);
+CREATE INDEX bookKeyGuidesIndex on Guides(bookKey);
