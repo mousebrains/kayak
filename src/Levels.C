@@ -12,6 +12,7 @@
 
 namespace {
   const time_t tOld(time(0) - 2 * 86400);
+  const time_t tAncient(tOld - 24 * 86400);
 
   struct MyFields {
     const char *table() const {return "levels";}
@@ -295,9 +296,7 @@ Levels::update()
   }
 
   { // Update latest observations
-    const int nDays(3); // Number of days to look back in time for data
-    const time_t tMin(time(0) - nDays * 86400); // Only look at data for the previous nDays
-    const Data::tRawObs obs(data.rawObservations(dataKeys, tMin)); // recent data
+    const Data::tRawObs obs(data.rawObservations(dataKeys, tAncient)); // recent data
     for (Data::tRawObs::const_iterator it(obs.begin()), et(obs.end()); it != et; ++it) {
       tKey2Key::const_iterator kt(data2gauge.find(it->key)); // Look up data key to get gauge key
       if (kt == data2gauge.end()) continue; // Not found
