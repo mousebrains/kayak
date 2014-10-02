@@ -1,1 +1,74 @@
-UPDATE master SET idAW=1483,latitudePutin=44.3844,longitudePutin=-123.621,latitudeTakeout=44.4043,longitudeTakeout=-123.896 WHERE sortKey='Alsea c aa';
+-- American Whitewater info
+
+INSERT OR REPLACE INTO GuideBooks (name,url) VALUES
+  ('American Whitewater', 'http://www.americanwhitewater.org');
+
+-- Alsea@Tidewater
+
+UPDATE master SET latitudePutin=44.3844,longitudePutin=-123.621,latitudeTakeout=44.4043,longitudeTakeout=-123.896 WHERE sortKey='Alsea c aa'; -- Alsea@Tidewater
+
+INSERT OR REPLACE INTO Guides (key, bookKey, run, url) VALUES 
+  ((SELECT key FROM master WHERE sortKey='Alsea c aa'),
+   (SELECT bookKey FROM GuideBooks WHERE name='American Whitewater'),
+   'Alsea at Tidewater',
+   'https://www.americanwhitewater.org/content/River/detail/id/1483');
+
+-- Breitenbush
+
+UPDATE master SET latitudePutin=44.7776,longitudePutin=-121.998,latitudeTakeout=44.7528,longitudeTakeout=-122.128 WHERE sortKey='Breitenbush aa'; -- Breitenbush
+
+INSERT OR REPLACE INTO Guides (key, bookKey, url) VALUES 
+  ((SELECT key FROM master WHERE sortKey='Breitenbush aa'),
+   (SELECT bookKey FROM GuideBooks WHERE name='American Whitewater'),
+   'Breitenbush',
+   'https://www.americanwhitewater.org/content/River/detail/id/1487');
+
+-- Nate's Wheels and Water
+
+INSERT OR REPLACE INTO GuideBooks (name,author,url) VALUES 
+  ('Wheels and Water', 'Nate Pfiefer', 'http://wheelsandwater.blogspot.com');
+
+INSERT OR REPLACE INTO Guides (key,bookKey,run,url) VALUES
+  ((SELECT key FROM master WHERE sortKey='Breitenbush aa'),
+   (SELECT bookKey FROM GuideBooks WHERE name='Wheels and Water'),
+   'http://wheelsandwater.blogspot.com/2013/04/the-breitenbush-river-or-33013.html');
+
+-- Jason's Oregon Kayaking
+
+INSERT OR REPLACE INTO GuideBooks (name,author,url)
+  VALUES ('Oregon Kayaking', 'Jason Rackley', 'http://oregonkayaking.net');
+
+INSERT OR REPLACE INTO Guides (key,bookKey,url) VALUES
+  ((SELECT key FROM master WHERE sortKey='Breitenbush aa'),
+   (SELECT bookKey FROM GuideBooks WHERE name='Oregon Kayaking'),
+   'http://www.oregonkayaking.net/rivers/breitenbush/breitenbush.html');
+
+-- Fix USGS IDs
+
+UPDATE gauges SET idUSGS='14326510' WHERE idCBTT='MYPO3'; -- SF Coquille@Myrtle Point
+UPDATE gauges SET idUSGS='14327055' WHERE idCBTT='COQO3'; -- Coquille@Coquille
+
+UPDATE gauges SET idUSGS='14079800' WHERE idCBTT='CRPO3'; -- Crooked above Prineville Resv
+UPDATE dataSource SET name='CRPO3' WHERE name='CRPO'; -- Crooked above Prineville Resv
+
+UPDATE gauges SET idUSGS='14070500' WHERE idCBTT='DEBO3'; -- Deschutes below bend
+
+-- Fix CBTT IDs
+
+UPDATE gauges SET idCBTT='CREO3' WHERE idCBTT='CREO'; -- Crescent Creek at Crescent Lake
+UPDATE dataSource SET name='CREO3' WHERE name='CREO'; -- Crescent Creek at Crescent Lake
+
+UPDATE gauges SET idCBTT='PRVO3' WHERE idCBTT='PRVO'; -- Crooked river near Prineville
+UPDATE dataSource SET name='PRVO3' WHERE name='PRVO'; -- Crooked river near Prineville
+
+UPDATE gauges SET idCBTT='CRSO3' WHERE idCBTT='CRSO'; -- Crooked river at Smith Rock
+UPDATE dataSource SET name='CRSO3' WHERE name='CRSO'; -- Crooked river at Smith Rock
+
+UPDATE dataSource SET name='LAPO3' WHERE name='LAPO'; -- Little Deschutes near La Pine
+UPDATE dataSource SET name='WICO3' WHERE name='WICO'; -- Deschutes near Wickiup
+UPDATE dataSource SET name='BENO3' WHERE name='BENO'; -- Deschutes near Bend
+UPDATE dataSource SET name='DEBO3' WHERE name='DEBO'; -- Deschutes below Bend
+UPDATE dataSource SET name='OCHO3' WHERE name='OCHO'; -- Ochoco Creek below Ochoco Resv
+
+-- Rogue below Prospect
+INSERT OR REPLACE INTO dataSource (name,gaugeKey) VALUES('RPRO3',(SELECT gaugekey FROM gauges WHERE idCBTT='RPRO3'));
