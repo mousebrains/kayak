@@ -11,13 +11,9 @@ MAILTO=pat@mousebrains.com
 # Gauge Levels                   #
 ##################################
 
-# USGS gauge information, hourly
+# USGS and NOAA
 
-12 * * * * $EXE/fetch -p USGS0 | $EXEROOT/mailFilter $MAILTO
-
-# NOAA gauge information, hourly
-
-12 * * * * $EXE/fetch -p NOAA1 | $EXEROOT/mailFilter $MAILTO
+12,27,42,57 * * * * $EXE/fetch $MAILTO 
 
 ##################################
 # Site information               #
