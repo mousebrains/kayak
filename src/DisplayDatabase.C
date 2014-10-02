@@ -40,21 +40,21 @@ namespace {
       html << "<tr><td>" << Convert::toStr(it->time, "%m/%d/%Y %H:%M") << "</td>";
       if (qFlow) {
         html << "<td>";
-        if (~isnan(it->flow)) {
+        if (!isnan(it->flow)) {
           html << Convert::toComma(DataGet::roundY(it->flow, Data::FLOW));
         }
         html << "</td>";
       }
       if (qGauge) {
         html << "<td>";
-        if (~isnan(it->gauge)) {
+        if (!isnan(it->gauge)) {
           html << Convert::toComma(DataGet::roundY(it->gauge, Data::GAUGE));
         }
         html << "</td>";
       }
       if (qTemp) {
         html << "<td>";
-        if (~isnan(it->temperature)) {
+        if (!isnan(it->temperature)) {
           html << Convert::toComma(DataGet::roundY(it->temperature, Data::TEMPERATURE));
         }
         html << "</td>";

@@ -7,11 +7,37 @@
 #include "StateCounty.H"
 #include "Convert.H"
 #include <iostream>
-#include <sstream>
+#include <cmath>
+
+namespace {
+  void maybe(const std::string& str, const char *label, std::ostream& os) {
+    if (!str.empty()) os << " " << label << ": '" << str << "'" << std::endl;
+  }
+
+  void maybe(const double val, const char *label, std::ostream& os) {
+    if (!isnan(val)) os << " " << label << ": '" << val << "'" << std::endl;
+  }
+
+  void dumpInfo(const std::string& label, const Gauges::Info& info, std::ostream& os) {
+    os << label << " gaugeKey " << info.gaugeKey << std::endl;
+    maybe(info.name, "name", os);
+    maybe(info.idUSGS, "USGS", os);
+    maybe(info.idUnit, "HUC", os);
+    maybe(info.description, "description", os);
+    maybe(info.location, "location", os);
+    maybe(info.state, "state", os);
+    maybe(info.county, "county", os);
+    maybe(info.latitude, "Latitude", os);
+    maybe(info.longitude, "Longitude", os);
+    maybe(info.elevation, "Elevation", os);
+    maybe(info.drainageArea, "Drainage Area", os);
+  } // dumpInfo
+} // Anonymous
 
 ParserUSGS1::ParserUSGS1(const std::string& url,
                          const std::string& str,
                          const bool qVerbose)
+  : mqVerbose(qVerbose)
 {
   const XMLParser xml(str);
 
@@ -45,9 +71,14 @@ ParserUSGS1::collection(const XMLParser::Node& site)
   std::string state, county, description;
 
   for (XMLParser::Node node(site.firstChild()); node; ++node) { // Walk through site information
-    const std::string name(node.name());
-    if (toIgnore.find(name) != toIgnore.end()) continue;
-    const std::string val(node.value());
+    const char *n(node.name());
+    if (!n) continue;
+    const std::string name(n);
+    if (name.empty() || (toIgnore.find(name) != toIgnore.end())) continue;
+    const char *v(node.value());
+    if (!v) continue;
+    const std::string val(v);
+    if (val.empty()) continue;
     if (name == "site_no") { 
       info.name = val;
       info.idUSGS = val;
@@ -86,6 +117,14 @@ ParserUSGS1::collection(const XMLParser::Node& site)
         info.county = stateCounty.county(skey, ckey);
       }
     }
+
+    if (mqVerbose) dumpInfo("Updating ", info, std::cout);
+
     mGauges.putInfo(info);
+  } else if (mqVerbose) {
+    if (mqVerbose) {
+      info.description = description;
+      dumpInfo("Rejected ", info, std::cout);
+    }
   }
 }

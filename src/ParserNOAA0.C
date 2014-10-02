@@ -23,7 +23,8 @@ namespace {
 ParserNOAA0::ParserNOAA0(const std::string& url,
                          const std::string& str,
                          const bool qVerbose)
-  : mURL(url)
+  : mData(qVerbose)
+  , mURL(url)
 {
   const XMLParser xml(str);
   for (XMLParser::Node root(xml.first()); root; ++root) { // HydroMetData
@@ -108,7 +109,7 @@ ParserNOAA0::observedValue(const XMLParser::Node& root,
   }
 
   if (t > 0) {
-    if (~isnan(flow)) mData.add(name, t, flow, Data::FLOW, mURL);
-    if (~isnan(gauge)) mData.add(name, t, gauge, Data::GAUGE, mURL);
+    if (!isnan(flow)) mData.add(name, t, flow, Data::FLOW, mURL);
+    if (!isnan(gauge)) mData.add(name, t, gauge, Data::GAUGE, mURL);
   }
 }

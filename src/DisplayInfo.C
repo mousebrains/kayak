@@ -122,7 +122,6 @@ Display::info()
     for (GuideBook::const_iterator jt(guides.begin()), jet(guides.end()); jt != jet; ++jt) {
       html << "<li>Guide: " << jt->mkHTML() << "</li>\n";
     }
-    maybeHRef(html, "American Whitewater", html.awIdURL(a.idAW));
 
     maybe(html, a.length, "Length: ", " miles");
     gmaybe(html, round(a.elevation), round(ginfo.elevation), "Elevation: ", " feet");

@@ -41,6 +41,7 @@ ParserUSGS0::ParserUSGS0(const std::string& url,
                          const bool qVerbose)
   : mqVerbose(qVerbose)
   , mURL(url)
+  , mData(qVerbose)
 {
   const XMLParser xml(str);
   const char *colName("wml2:Collection");
@@ -131,7 +132,6 @@ ParserUSGS0::featureOfInterest(const XMLParser::Node& root,
 
   if (mqVerbose) {
     std::cout << "title(" << gauge.description << ")" << std::endl;
-    std::cout << "Lat " << gauge.latitude << " lon " << gauge.longitude << std::endl;
     printf("Lat %.15g Lon %.15g\n", gauge.latitude, gauge.longitude);
   }
 }

@@ -6,6 +6,8 @@
 #include "Curl.H"
 #include "HTTP.H"
 #include <iostream>
+#include <fstream>
+#include <cerrno>
 #include <getopt.h>
 
 namespace {
@@ -13,6 +15,7 @@ namespace {
     std::cerr << "Usage: " << argv0 << " -{" << options << "}\n"
               << "\n"
               << "-h            show this message\n"
+              << "-s filename   save information retrieved from URL to filename\n"
               << "-u parser:URL fetch URL and parse with parser\n"
               << "-v            verbose mode" << std::endl;
     return 1;
@@ -23,14 +26,16 @@ int
 main (int argc,
       char **argv)
 {
-  const char *options("hu:v");
+  const char *options("hs:u:v");
   bool qVerbose(false);
+  std::string saveFilename;
 
   typedef std::vector<std::string> tStrings;
   tStrings urls;
 
   for (int c; (c = getopt(argc, argv, options)) != EOF;) {
     switch (c) {
+      case 's': saveFilename = optarg; break;
       case 'u': urls.push_back(optarg); break;
       case 'v': qVerbose = !qVerbose; break;
       default:
@@ -50,6 +55,8 @@ main (int argc,
   }
 
   if (urls.empty()) { // Build from database
+    std::cerr << "urls from database not currently implemented!" << std::endl;
+    return 1;
   }
 
   for (tStrings::const_iterator it(urls.begin()), et(urls.end()); it != et; ++it) {
@@ -71,6 +78,15 @@ main (int argc,
                 << ", " << HTTP::statusMsg(curl.responseCode())
                 << std::endl;
       continue;
+    }
+
+    if (!saveFilename.empty()) {
+      std::ofstream os(saveFilename);
+      if (!os) {
+         std::cerr << "Error opening '" << saveFilename << "', " << strerror(errno) << std::endl;
+         return 1;
+      }
+      os << curl.str();
     }
 
     if (parser == "USGS0") {

@@ -8,6 +8,7 @@
 
 class ParserUSGS1 {
 private:
+  bool mqVerbose;
   Gauges mGauges;
 
   void collection(const XMLParser::Node& root);
