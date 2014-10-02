@@ -54,11 +54,6 @@ namespace {
     }
     return *it;
   } // loadBook
-
-  std::string maybe(const std::string& url, const std::string body) {
-    if (url.empty()) return body;
-    return "<a href='" + url + "'>" + body + "</a>";
-  } 
 } // anonymous
 
 GuideBook::GuideBook(const int key)
@@ -105,13 +100,38 @@ GuideBook::loadInfo(const int key)
 std::string
 GuideBook::Info::mkHTML() const
 {
-  std::string str(maybe(urlGB, name + (edition.empty() ? "" : (" " + edition))));
+  std::ostringstream oss;
 
-  if (!page.empty())
-    str += " Page: " + maybe(url, page);
+  { // Guide Book
+    const bool qURL(!urlGB.empty());
+    const bool qName(!name.empty());
 
-  if (!run.empty())
-    str += " Run: " + maybe(url, run);
+    if (qURL || qName) { // There is guide book information
+      const bool qURL(!urlGB.empty());
+      const bool qName(!name.empty());
+      if (qURL) oss << "<a href='" << urlGB << "'>";
+      if (qName) {
+        oss << name;
+        if (!edition.empty()) oss << " " << edition;
+      } else if (qURL) {
+        oss << "Website";
+      }
+      if (qURL) oss << "</a>";
+      oss << " ";
+    }
+  } // Guide Book
 
-  return str;
+  { // run information
+    const bool qURL(!url.empty());
+    const bool qPage(!page.empty());
+    const bool qRun(!run.empty());
+    if (qURL || qPage || qRun) {
+      if (qURL) oss << "<a href='" << url << "'>";
+      oss << (qRun ? run : "Description");
+      if (qPage) oss << " Page: " << page;
+      if (qURL) oss << "</a>";
+    }
+  } // run information
+
+  return oss.str();
 }
