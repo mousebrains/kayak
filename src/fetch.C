@@ -8,6 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <cerrno>
+#include <cstring>
 #include <getopt.h>
 
 namespace {
