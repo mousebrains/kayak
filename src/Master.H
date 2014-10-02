@@ -93,7 +93,6 @@ public:
     std::string watershedType;
     size_t gaugeKey;
     std::string gaugeName;
-    std::string idAW; // American Whitewater ID
 
     Info();
     explicit Info(MyDB::Stmt& s);

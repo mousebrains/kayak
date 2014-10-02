@@ -253,7 +253,6 @@ Master::Info::Info(MyDB::Stmt& s)
   , watershedType(s.getString())
   , gaugeKey(s.getInt())
   , gaugeName(s.getString())
-  , idAW(s.getString())
 {
 }
 
