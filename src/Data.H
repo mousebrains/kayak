@@ -10,6 +10,8 @@
 
 class Data : public CommonData {
 private:
+  bool mqVerbose;
+
   struct Datum {
     const std::string name;
     const time_t t;
@@ -20,6 +22,8 @@ private:
           const std::string& u)
       : name(n), t(tt), value(v), tNum(tn), url(u) {}
     Datum operator = (const Datum& rhs) {return Datum(rhs.name,rhs.t,rhs.value,rhs.tNum,rhs.url);}
+
+    void dump(std::ostream& os, const std::string& prefix, const int key, const int url) const;
   };
 
   typedef std::vector<Datum> tData;
@@ -27,7 +31,7 @@ private:
 
   void dump();
 public:
-  Data();
+  explicit Data(const bool qVerbose = false);
   ~Data();
 
   void add(const std::string& name, const time_t t, const double v, 

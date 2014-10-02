@@ -44,8 +44,9 @@ namespace {
   } // whereKeysTime
 }
 
-Data::Data()
+Data::Data(const bool qVerbose)
   : CommonData(fields)
+  , mqVerbose(qVerbose)
 {
 }
 
@@ -95,7 +96,9 @@ Data::dump()
     const int key(mSource.name2key(datum.name, datum.t));
     if (gauges.chkLimits(key, datum.tNum, datum.value)) {
       const int url(mURLs.name2key(datum.url, datum.t, true));
-// std::cout << "datum " << datum.name << " " << datum.t << " " << datum.tNum << " " << datum.value << " key " << key << " url " << url << std::endl;
+      if (mqVerbose) {
+        datum.dump(std::cout, "Datum  ", key, url);
+      }
       ++cnt;
       s.bind(key);
       s.bind(datum.tNum);
@@ -104,14 +107,16 @@ Data::dump()
       s.bind(datum.value);
       s.step();
       s.reset();
-//     } else {
-// std::cout << "reject " << datum.name << " " << datum.t << " " << datum.tNum << " " << datum.value << " key " << key << std::endl;
+    } else if (mqVerbose) {
+      datum.dump(std::cout, "Reject ", key, -1);
     }
   }
 
   mDB.endTransaction();
 
-  std::cout << "Dumped " << cnt << " out of " << mData.size() << std::endl;
+  if (mqVerbose) {
+    std::cout << "Dumped " << cnt << " out of " << mData.size() << std::endl;
+  }
 
   // Clear out existing information
   mData.clear();
@@ -302,4 +307,19 @@ Data::rawObservations(const MyDB::Stmt::tInts& keys,
   }
   
   return obs;
+}
+
+void 
+Data::Datum::dump(std::ostream& os, 
+                  const std::string& prefix,
+                  const int key,
+                  const int url) const
+{
+  os << prefix << name
+     << " " << Convert::toStr(t, "%Y-%m-%d %H:%M") 
+     << " " << tNum 
+     << " " << value 
+     << " key " << key
+     << " url " << url 
+     << std::endl; 
 }
