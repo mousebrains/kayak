@@ -120,6 +120,7 @@ install.cgi: $(CGIEXE)
 	install $(INSTALLFLAGS) -s $+ $(CGIDIR)
 
 $(CGIDIR)/.htaccess: Makefile
+	install -d $(CGIDIR)
 	echo "# Auto generated `date` by make" >$@
 	echo Options ExecCGI >>$@
 	echo Options +FollowSymLinks >>$@
