@@ -44,6 +44,15 @@ Display::info()
     key2level.insert(std::make_pair(levels[i].key, i));
   }
 
+  typedef std::multimap<std::string, size_t> tSortKey2Key; // Sortkey to master key
+  tSortKey2Key sortedKeys;
+  { // Build sortkey to index
+    int cnt(0);
+    for (Master::tInfo::const_iterator it(info.begin()), et(info.end()); it != et; ++it, ++cnt) {
+      sortedKeys.insert(std::make_pair(it->sortKey, cnt));
+    }
+  }
+
   HTML html;
   html << html.header()
        << html.myStyle()
@@ -52,59 +61,21 @@ Display::info()
 
   bool qHR(false);
 
-  for (Master::tInfo::const_iterator it(info.begin()), et(info.end()); it != et; ++it) {
-    const Master::Info a(*it);
+  for (tSortKey2Key::const_iterator it(sortedKeys.begin()), et(sortedKeys.end()); it != et; ++it) {
+    const Master::Info& a(info[it->second]);
     const Gauges::Info ginfo(a.gaugeKey > 0 ? gauges.getInfo(a.gaugeKey) : Gauges::Info());
     const std::string location(a.location.empty() ? ginfo.location : a.location);
     const std::string title(a.displayName + (location.empty() ? "" : (" " + location)));
     const GuideBook guides(a.key);
-    const MyDB::Stmt::tInts types(data.types(data.source().gaugeKey2Keys(a.gaugeKey)));
 
     if (qHR) html << "<hr>\n";
     qHR = true;
 
     html << "<h1>" << title << "</h1>\n";
     
-    if (!types.empty()) {
-      html << "<form>\n";
-      if (types.size() == 1) {
-         html << "<input type='hidden' name='t' value='" 
-              << ((Data::Type) *(types.begin())) << "'>\n";
-      } else {
-        bool qFirst(true);
-        html << "<select name='t'>\n";
-      
-        for (MyDB::Stmt::tInts::const_iterator jt(types.begin()), jet(types.end()); 
-             jt != jet; ++jt) {
-          html << "<option";
-          if (qFirst) {
-            html << " selected";
-            qFirst = false;
-          }
-          html << " value='";
-
-          switch ((Data::Type) *jt) {
-            case Data::INFLOW:
-            case Data::FLOW: html << "flow'>Flow</option>\n"; break;
-            case Data::GAUGE: html << "gauge'>Gauge</option>\n"; break;
-            case Data::TEMPERATURE: html << "temp'>Temp</option>\n"; break;
-            case Data::LASTTYPE: html << "GotMe'>GotMe</option>\n"; break;
-          }
-        } 
-        html << "</select>\n";
-      }
-      html << "<input type='submit' name='o' value='Plot'>\n"
-           << "<input type='submit' name='o' value='Table'>\n"
-           << "<input type='submit' name='o' value='Database'>\n"
-           << "<input type='hidden' name='h' value='" << master.mkHash(a.key) << "'>\n"
-           << "<noscript><input type='hidden' name='js' value='0'></noscript>\n"
-           << "</form>\n";
-
-      { // Display current information
-        tKey2Level::const_iterator jt(key2level.find(a.key));
-        if (jt != key2level.end()) levels[jt->second].table(html);
-      }
-
+    { // Display current information
+      tKey2Level::const_iterator jt(key2level.find(a.key));
+      if (jt != key2level.end()) levels[jt->second].table(html);
     }
 
     html << "<ul>\n";
