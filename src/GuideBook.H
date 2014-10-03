@@ -13,10 +13,11 @@ public:
     std::string name; // Guide book name
     std::string author; // Guide book author
     std::string edition; // Guide book edition
-    std::string urlGB; // Guide book url
+    std::string urlGB; // Guide book URL
+    std::string urlBase; // URL base to use for guide URL
     std::string url; // Run's URL
     std::string page; // Run's page number
-    std::string run; // Run's run number
+    std::string run; // Run's name
 
     Info(const int key) : masterKey(key), bookKey(0) {};
 

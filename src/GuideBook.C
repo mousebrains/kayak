@@ -22,6 +22,7 @@ namespace {
     std::string author; // Guide book author
     std::string edition; // Guide book edition
     std::string url; // Guide book url
+    std::string urlBase; // Guide book url
     Book(const int key) : bookKey(key) {};
     bool operator < (const Book& rhs) const {return bookKey < rhs.bookKey;}
   };
@@ -43,6 +44,7 @@ namespace {
         book.author = s.getString(2);
         book.edition = s.getString(3);
         book.url = s.getString(4);
+        book.urlBase = s.getString(5);
         it = mBooks.insert(book).first;
         rc = s.step();
       } else if (rc == SQLITE_DONE) { // Did not find an entry 
@@ -80,8 +82,8 @@ GuideBook::loadInfo(const int key)
     Info info(key);
     // info.key = s.getInt(0); // Already have, so skip
     info.bookKey = s.getInt(1);
-    info.page = s.getString(2);
-    info.run = s.getString(3);
+    info.run = s.getString(2);
+    info.page = s.getString(3);
     info.url = s.getString(4);
 
     const Book& book(loadBook(mDB, info.bookKey));
@@ -89,6 +91,7 @@ GuideBook::loadInfo(const int key)
     info.author = book.author;
     info.edition = book.edition;
     info.urlGB = book.url;
+    info.urlBase = book.urlBase;
     mInfo.insert(info);
   } // while
 
@@ -126,7 +129,7 @@ GuideBook::Info::mkHTML() const
     const bool qPage(!page.empty());
     const bool qRun(!run.empty());
     if (qURL || qPage || qRun) {
-      if (qURL) oss << "<a href='" << url << "'>";
+      if (qURL) oss << "<a href='" << urlBase << url << "'>";
       oss << (qRun ? run : "Description");
       if (qPage) oss << " Page: " << page;
       if (qURL) oss << "</a>";
