@@ -172,12 +172,12 @@ Array<double>::dump(std::ostream& os) const
   double max(mValues[0]);
   for (size_t i(1), e(mValues.size()); i < e; ++i) {
     const double val(mValues[i]);
-    min = min > val ? val : min;
-    max = max < val ? val : max;
+    min = isnan(min) || (min > val) ? val : min;
+    max = isnan(max) || (max < val) ? val : max;
   }
 
-  os << mName << "Min:" << min << "," 
-     << mName << "Max:" << max << "," 
+  os << mName << "Min:" << (isnan(min) ? 0 : min) << "," 
+     << mName << "Max:" << (isnan(max) ? 0 : max) << "," 
      << mName << "Enc:'Min'" << ","
      << mName << ":[";
 
