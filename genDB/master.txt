@@ -63,7 +63,7 @@ CREATE TABLE Guides (key INTEGER DEFAULT 0, -- key into Master
                      name TEXT, -- Run name 
                      pageNumber TEXT, -- Page number 
                      url TEXT, -- URL link, may use urlBase from GuideBooks
-                     PRIMARY KEY (key, bookKey, pageNumber, runNumber, url) 
+                     PRIMARY KEY (key, bookKey, name, pageNumber, url) 
                     );
 CREATE INDEX keyGuidesIndex on Guides(key);
 CREATE INDEX bookKeyGuidesIndex on Guides(bookKey);
