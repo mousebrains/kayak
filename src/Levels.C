@@ -720,15 +720,22 @@ Levels::Info::tableRow(std::ostream& os,
     case Data::LASTTYPE: return;
   }
 
+  const std::string hash(Master::mkHash(key));
+
   os << "<tr><th>" << label << "</th>";
-  value(os, type, qOld ? "old" : std::string());
+  value(os, type, qOld ? "old" : std::string(), hash);
   time(os, type, "%Y-%m-%d %H:%M");
+  os << "<td><a href='?o=t&amp;t=" << type 
+     << "&amp;h=" << hash << "'>Table</a></td>"
+     << "<td><a href='?o=db&amp;h=" << hash << "'>Database</a></td>"
+     << "</tr>";
 }
 
 bool
 Levels::Info::value(std::ostream& os,
                     const Data::Type type,
-                    const std::string& className) const
+                    const std::string& className,
+                    const std::string& hash) const
 {
   double value(NAN);
   double delta(NAN);
@@ -759,7 +766,9 @@ Levels::Info::value(std::ostream& os,
   if (!className.empty()) os << " class='" << className << "'";
   os << ">";
   if (key > 0) 
-    os << "<a href='?o=p&amp;h=" << Master::mkHash(key) << "&amp;t=" << type << "'>";
+    os << "<a href='?o=p&amp;h=" 
+       << (hash.empty() ? Master::mkHash(key) : hash) 
+       << "&amp;t=" << type << "'>";
 
   { // Arrow
     const int cnt(fmin(11, round(fabs(delta))));

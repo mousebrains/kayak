@@ -43,7 +43,8 @@ public:
 
     void tableRow(std::ostream& os, const std::string& label, const Data::Type type) const;
 
-    bool value(std::ostream& os, const Data::Type type, const std::string& className) const;
+    bool value(std::ostream& os, const Data::Type type, const std::string& className,
+               const std::string& hash = std::string()) const;
     bool time(std::ostream& os, const Data::Type type, 
               const std::string& format="%m/%d %H:%M") const;
     bool time(std::ostream& os,
