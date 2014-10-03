@@ -89,7 +89,6 @@ MySQL::master(const std::string& table)
            << " state IS NULL OR"
            << " state LIKE '%Washington%' OR" 
            << " state LIKE '%Idaho%' OR" 
-           << " state LIKE '%California%' OR" 
            << " state LIKE '%Oregon%'" 
            ;
   }
