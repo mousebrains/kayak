@@ -1,7 +1,3 @@
-# Ignore generated directories
-bin
-files
-
 # Ignore vi swp files
 .*.swp
 
