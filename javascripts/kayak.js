@@ -293,7 +293,7 @@ function mkTbl() {
       } else { // not time
         if (qHREF[j]) {
           cell.innerHTML = "<a href='" + val + "'>" + val + "</a>";
-        } else {
+        } else if (!isNaN(val)){
           cell.innerHTML = val.toLocaleString(); // Comma deliminated
         }
       }
