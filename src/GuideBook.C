@@ -120,7 +120,7 @@ GuideBook::Info::mkHTML() const
         oss << "Website";
       }
       if (qURL) oss << "</a>";
-      oss << " ";
+      oss << ", ";
     }
   } // Guide Book
 
