@@ -430,7 +430,7 @@ public:
       ++cnt;
       const std::string book(row.guideBook());
       const std::string page(row.pageNumber());
-      const std::string run(row.runNumber());
+      std::string run(row.runNumber());
       if (book.empty()) continue;
       if (page.empty() && run.empty()) continue;
       GuideBook bk;
