@@ -64,11 +64,15 @@ function lev(d) {
     }
   }
 
+  var setSorter = function(cell, index) {
+    cell.onclick = function() {sorter(index);}
+  }
+
   var setHdr = function(cell, index, title) {
     header.push(title);
     cell.innerHTML = title + (index == 0 ? " &darr;" : "");
     cell.className = "hdr";
-    cell.onclick = function() {sorter(index);}
+    setSorter(cell, index);
     return cell;
   }
    
@@ -157,6 +161,11 @@ function lev(d) {
   }
  
   tfoot.appendChild(thead.rows[0].cloneNode(true));
+
+  for (i = 0; i < tfoot.rows[0].cells.length; ++i) {
+    setSorter(tfoot.rows[0].cells[i], i);
+  }
+
   i = 2 + qFlow + qGauge + qTemp + qClass;
   tfoot.insertRow(-1).innerHTML = "<th class='lo' colspan='" + i + "'>Low</th>";
   tfoot.insertRow(-1).innerHTML = "<th class='ok' colspan='" + i + "'>Okay</th>";
