@@ -1,47 +1,60 @@
 -- American Whitewater info
 
-INSERT OR REPLACE INTO GuideBooks (name,url) VALUES
-  ('American Whitewater', 'http://www.americanwhitewater.org');
+INSERT OR REPLACE INTO GuideBooks (name,url,urlBase) VALUES
+  ('American Whitewater', 
+   'http://www.americanwhitewater.org',
+   'https://www.americanwhitewater.org/content/River/detail/id/'
+  );
 
 -- Alsea@Tidewater
 
 UPDATE master SET latitudePutin=44.3844,longitudePutin=-123.621,latitudeTakeout=44.4043,longitudeTakeout=-123.896 WHERE sortKey='Alsea c aa'; -- Alsea@Tidewater
 
-INSERT OR REPLACE INTO Guides (key, bookKey, run, url) VALUES 
+INSERT OR REPLACE INTO Guides (key,bookKey,name,url) VALUES 
   ((SELECT key FROM master WHERE sortKey='Alsea c aa'),
    (SELECT bookKey FROM GuideBooks WHERE name='American Whitewater'),
    'Alsea at Tidewater',
-   'https://www.americanwhitewater.org/content/River/detail/id/1483');
+   '1483');
 
 -- Breitenbush
 
 UPDATE master SET latitudePutin=44.7776,longitudePutin=-121.998,latitudeTakeout=44.7528,longitudeTakeout=-122.128 WHERE sortKey='Breitenbush aa'; -- Breitenbush
 
-INSERT OR REPLACE INTO Guides (key, bookKey, url) VALUES 
+INSERT OR REPLACE INTO Guides (key, bookKey,url) VALUES 
   ((SELECT key FROM master WHERE sortKey='Breitenbush aa'),
    (SELECT bookKey FROM GuideBooks WHERE name='American Whitewater'),
    'Breitenbush',
-   'https://www.americanwhitewater.org/content/River/detail/id/1487');
+   '1487');
 
 -- Nate's Wheels and Water
 
-INSERT OR REPLACE INTO GuideBooks (name,author,url) VALUES 
-  ('Wheels and Water', 'Nate Pfiefer', 'http://wheelsandwater.blogspot.com');
+INSERT OR REPLACE INTO GuideBooks (name,author,url,urlBase) VALUES 
+  ('Wheels and Water', 
+   'Nate Pfiefer', 
+   'http://wheelsandwater.blogspot.com',
+   'http://wheelsandwater.blogspot.com/'
+  );
 
-INSERT OR REPLACE INTO Guides (key,bookKey,run,url) VALUES
+INSERT OR REPLACE INTO Guides (key,bookKey,name,url) VALUES
   ((SELECT key FROM master WHERE sortKey='Breitenbush aa'),
    (SELECT bookKey FROM GuideBooks WHERE name='Wheels and Water'),
-   'http://wheelsandwater.blogspot.com/2013/04/the-breitenbush-river-or-33013.html');
+   'Breitenbush',
+   '2013/04/the-breitenbush-river-or-33013.html');
 
 -- Jason's Oregon Kayaking
 
-INSERT OR REPLACE INTO GuideBooks (name,author,url)
-  VALUES ('Oregon Kayaking', 'Jason Rackley', 'http://oregonkayaking.net');
+INSERT OR REPLACE INTO GuideBooks (name,author,url,urlBase) VALUES 
+  ('Oregon Kayaking', 
+   'Jason Rackley', 
+   'http://www.oregonkayaking.net',
+   'http://www.oregonkayaking.net/rivers/'
+  );
 
-INSERT OR REPLACE INTO Guides (key,bookKey,url) VALUES
+INSERT OR REPLACE INTO Guides (key,bookKey,name,url) VALUES
   ((SELECT key FROM master WHERE sortKey='Breitenbush aa'),
    (SELECT bookKey FROM GuideBooks WHERE name='Oregon Kayaking'),
-   'http://www.oregonkayaking.net/rivers/breitenbush/breitenbush.html');
+   'Breitenbush',
+   'breitenbush/breitenbush.html');
 
 -- Fix USGS IDs
 
