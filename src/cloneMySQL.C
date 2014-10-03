@@ -423,9 +423,11 @@ public:
     typedef std::map<std::string, GuideBook> tBooks;
     tBooks mBooks;
 
-    int cnt(1);
-    for (tRows::const_iterator it(mRows.begin()), et(mRows.end()); it != et; ++it, ++cnt) {
+    int cnt(0);
+    for (tRows::const_iterator it(mRows.begin()), et(mRows.end()); it != et; ++it) {
       const MasterRow& row(it->second); 
+      if (!row.qSave()) continue;
+      ++cnt;
       const std::string book(row.guideBook());
       const std::string page(row.pageNumber());
       const std::string run(row.runNumber());
