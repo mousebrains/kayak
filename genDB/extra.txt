@@ -20,7 +20,7 @@ INSERT OR REPLACE INTO Guides (key,bookKey,name,url) VALUES
 
 UPDATE master SET latitudePutin=44.7776,longitudePutin=-121.998,latitudeTakeout=44.7528,longitudeTakeout=-122.128 WHERE sortKey='Breitenbush aa'; -- Breitenbush
 
-INSERT OR REPLACE INTO Guides (key, bookKey,url) VALUES 
+INSERT OR REPLACE INTO Guides (key,bookKey,name,url) VALUES 
   ((SELECT key FROM master WHERE sortKey='Breitenbush aa'),
    (SELECT bookKey FROM GuideBooks WHERE name='American Whitewater'),
    'Breitenbush',
