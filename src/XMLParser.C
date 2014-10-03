@@ -5,6 +5,7 @@
 XMLParser::XMLParser(const std::string& str)
   : mContent(str.begin(), str.end())
 {
+  mContent.push_back(0); // Zero terminate
   mDoc.parse<0>(&mContent[0]); 
 }
 

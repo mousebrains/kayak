@@ -115,7 +115,7 @@ GuideBook::Info::mkHTML() const
       if (qURL) oss << "<a href='" << urlGB << "'>";
       if (qName) {
         oss << name;
-        if (!edition.empty()) oss << " " << edition;
+        if (!edition.empty()) oss << ", " << edition << " Edition";
       } else if (qURL) {
         oss << "Website";
       }
