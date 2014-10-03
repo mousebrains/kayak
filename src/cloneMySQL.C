@@ -461,11 +461,11 @@ public:
 
       MyDB::Stmt s(db);
       s << "INSERT INTO Guides (key,bookKey";
+      if (!run.empty()) s << ",name";
       if (!page.empty()) s << ",pageNumber";
-      if (!run.empty()) s << ",runNumber";
       s << ") VALUES (" << cnt << "," << bk.bookKey;
-      if (!page.empty()) s << "," << s.quotedString(page);
       if (!run.empty()) s << "," << s.quotedString(run);
+      if (!page.empty()) s << "," << s.quotedString(page);
       s << ");";
       s.query();
     }
