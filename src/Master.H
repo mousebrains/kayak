@@ -80,11 +80,9 @@ public:
     double optimalLowFlow;
     double optimalHighFlow;
     std::string notes;
-    std::string pageNumber;
     std::string region;
     std::string remoteness;
     std::string riverName;
-    std::string runNumber;
     std::string scenery;
     std::string season;
     std::string section;
