@@ -46,24 +46,3 @@ CREATE TRIGGER MasterModified AFTER UPDATE ON Master BEGIN
 END;
 CREATE INDEX stateMasterIndex on Master(state);
 CREATE INDEX gaugeKeyMasterIndex on Master(gaugeKey);
-
-DROP TABLE IF EXISTS GuideBooks;
-CREATE TABLE GuideBooks (bookKey INTEGER PRIMARY KEY AUTOINCREMENT, -- key to guide book
-                         name TEXT, -- Name of the guide book
-                         author TEXT, -- Author of the guide book
-                         edition TEXT, -- which edition of the guide book
-                         url TEXT UNIQUE, -- URL link to book site
-                         urlBase TEXT -- URL base used for guide entries
-                        );
-CREATE INDEX bookKeyGuideBooks on GuideBooks(bookKey);
-
-DROP TABLE IF EXISTS Guides;
-CREATE TABLE Guides (key INTEGER DEFAULT 0, -- key into Master
-                     bookKey INTEGER DEFAULT 0, -- key into GuideBooks table
-                     name TEXT, -- Run name 
-                     pageNumber TEXT, -- Page number 
-                     url TEXT, -- URL link, may use urlBase from GuideBooks
-                     PRIMARY KEY (key, bookKey, name, pageNumber, url) 
-                    );
-CREATE INDEX keyGuidesIndex on Guides(key);
-CREATE INDEX bookKeyGuidesIndex on Guides(bookKey);

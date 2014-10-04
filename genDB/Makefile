@@ -9,7 +9,7 @@ SQLITE ?= sqlite3 -batch -init
 all: # Do nothing
 
 install: clean 
-	$(MAKE) master data levels translate stateCounty
+	$(MAKE) master gauges guides rating data levels translate stateCounty
 
 clean:
 	$(RM) $(DB)
@@ -17,9 +17,4 @@ clean:
 $(dir $(DB)):
 	mkdir $@
 
-master: master.txt $(dir $(DB)) ; $(SQLITE) $< $(DB) </dev/null
-data: data.txt $(dir $(DB)) ; $(SQLITE) $< $(DB) </dev/null
-levels: levels.txt $(dir $(DB)) ; $(SQLITE) $< $(DB) </dev/null
-translate: translate.txt $(dir $(DB)) ; $(SQLITE) $< $(DB) </dev/null
-stateCounty: stateCounty.txt $(dir $(DB)) ; $(SQLITE) $< $(DB) </dev/null
-extra: extra.txt $(dir $(DB)) ; $(SQLITE) $< $(DB) </dev/null
+%: %.txt $(dir $(DB)) ; $(SQLITE) $< $(DB) </dev/null
