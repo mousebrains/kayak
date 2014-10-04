@@ -72,6 +72,8 @@ public:
     double maxTemperature; 
     std::string calcFlow; 
     std::string calcGauge; 
+    std::string sortKey; 
+    bool qNoShow;
 
     Info();
     Info(MyDB::Stmt& s);

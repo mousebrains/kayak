@@ -191,6 +191,7 @@ Gauges::Info::Info()
   , maxGauge(NAN)
   , minTemperature(NAN)
   , maxTemperature(NAN)
+  , qNoShow(false)
 {
 }
 
@@ -220,6 +221,8 @@ Gauges::Info::Info(MyDB::Stmt& s)
   , maxTemperature(s.getDouble())
   , calcFlow(s.getString())
   , calcGauge(s.getString())
+  , sortKey(s.getString())
+  , qNoShow(s.getInt())
 {
 }
 

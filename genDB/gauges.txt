@@ -29,7 +29,8 @@ CREATE TABLE gauges (gaugeKey INTEGER PRIMARY KEY AUTOINCREMENT, -- key used in 
                      maxTemperature DOUBLE DEFAULT 120, -- maximum allowed gauge reading in F
                      calcFlow TEXT, -- SQL to calculate a flow
                      calcGauge TEXT, -- SQL to calculate a gauge
-                     sortKey TEXT -- How to sort gauges
+                     sortKey TEXT, -- How to sort gauges
+                     qNoShow INTEGER DEFAULT 0 -- display this entry or not in levels?
                      );
 CREATE INDEX idUSGSGaugesIndex ON gauges(idUSGS);
 CREATE INDEX idCBTTGaugesIndex ON gauges(idCBTT);
