@@ -467,8 +467,8 @@ public:
       if (!run.empty()) s << ",name";
       if (!page.empty()) s << ",pageNumber";
       s << ") VALUES (" << cnt << "," << bk.bookKey;
-      if (!run.empty()) s << "," << s.quotedString(run);
-      if (!page.empty()) s << "," << s.quotedString(page);
+      if (!run.empty()) s << "," << s.quote(run);
+      if (!page.empty()) s << "," << s.quote(page);
       s << ");";
       s.query();
     }
@@ -482,10 +482,10 @@ public:
       if (!bk.edition.empty()) s << ",edition";
       if (!bk.url.empty()) s << ",url";
       s << ") VALUES (" << bk.bookKey;
-      if (!bk.name.empty()) s << "," << s.quotedString(bk.name);
-      if (!bk.author.empty()) s << "," << s.quotedString(bk.author);
-      if (!bk.edition.empty()) s << "," << s.quotedString(bk.edition);
-      if (!bk.url.empty()) s << "," << s.quotedString(bk.url);
+      if (!bk.name.empty()) s << "," << s.quote(bk.name);
+      if (!bk.author.empty()) s << "," << s.quote(bk.author);
+      if (!bk.edition.empty()) s << "," << s.quote(bk.edition);
+      if (!bk.url.empty()) s << "," << s.quote(bk.url);
       s << ");";
       s.query();
     }

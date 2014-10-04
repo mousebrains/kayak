@@ -83,8 +83,8 @@ public:
   Info getLike(const size_t key);
 
   typedef std::set<Info> tInfo;
-  tInfo getInfo(const MyDB::Stmt::tInts& keys);
-  tInfo getLike(const MyDB::Stmt::tInts& keys);
+  tInfo getInfo(const Types::Keys& keys);
+  tInfo getLike(const Types::Keys& keys);
   tInfo getAll();
 
   void putInfo(const Info& info); // Write updated info back to database
@@ -99,7 +99,7 @@ public:
     bool qCalc;
   }; // LevelInfo
   typedef std::vector<LevelInfo> tLevelInfo;
-  tLevelInfo levelInfo(const MyDB::Stmt::tInts& gaugeKeys);
+  tLevelInfo levelInfo(const MyDB::tInts& gaugeKeys);
 };
 
 std::ostream& operator << (std::ostream& os, const Gauges::Limits& l);

@@ -24,21 +24,17 @@ CommonData::decodeType(const std::string& str)
   return LASTTYPE;
 }
 
-CommonData::tKeys
+Types::Keys
 CommonData::allKeys()
 {
   MyDB::Stmt s(mDB);
   s << "SELECT DISTINCT " << mFields.key() << " FROM " << mFields.table() << ";";
-
-  MyDB::Stmt::tInts k(s.queryInts());
-  tKeys keys;
-
-  keys.insert(k.begin(), k.end());
-  return keys; 
+  const Types::Ints a(s.queryInts());
+  return Types::Keys(a.begin(), a.end());
 }
 
 void
-CommonData::dropRows(const tKeys& keys)
+CommonData::dropRows(const Types::Keys& keys)
 {
   mDB.dropRows(mFields.table(), keys);
 }
@@ -49,7 +45,7 @@ CommonData::nRows(const int key)
   MyDB::Stmt s(mDB);
   s << "SELECT count(*) FROM " << mFields.table() 
     << " WHERE " << mFields.key() << "=" << key << ";";
-  MyDB::Stmt::tInts a(s.queryInts());
+  MyDB::tInts a(s.queryInts());
   return a.empty() ? 0 : (size_t) a[0];
 }
 

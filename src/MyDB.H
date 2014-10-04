@@ -1,6 +1,7 @@
 #ifndef INC_MyDB_H_
 #define INC_MyDB_H_
 
+#include "Types.H"
 #include <sqlite3.h>
 #include <iosfwd>
 #include <sstream>
@@ -11,6 +12,10 @@
 
 class MyDB {
 public:
+  typedef Types::Ints tInts;
+  typedef Types::Doubles tDoubles;
+  typedef Types::Strings tStrings;
+
   class Stmt : public std::ostringstream {
   private:
     MyDB& mDB;
@@ -49,9 +54,6 @@ public:
     std::string getString() {return getString(mIndex++);}
     std::string getBlob() {return getBlob(mIndex++);}
 
-    typedef std::vector<std::string> tStrings;
-    typedef std::vector<int> tInts;
-    typedef std::vector<double> tDoubles;
     typedef std::vector<std::pair<std::string, int> > tStringInt;
 
     void query();
@@ -60,11 +62,9 @@ public:
     tDoubles queryDoubles();
     tStringInt queryStringInt();
 
-    void quoteString(const std::string& str);
-    static std::string quotedString(const std::string& str);
+    static std::string quote(const std::string& str) {return Types::quote(str);}
   }; // Stmt
 
-  typedef std::set<size_t> tRows;
   typedef std::multimap<time_t, size_t> tTimeKeys;
 
   typedef std::pair<int, time_t> tKeyTime;
@@ -95,14 +95,9 @@ public:
 
   int lastInsertRowid();
 
-  void dropRows(const std::string& table, const tRows& rowids);
+  void dropRows(const std::string& table, const Types::Keys& rowids);
 
   void checkPoint();
 };
-
-std::ostream& operator << (std::ostream& os, const MyDB::Stmt::tStrings& a);
-std::ostream& operator << (std::ostream& os, const MyDB::Stmt::tInts& a);
-std::ostream& operator << (std::ostream& os, const MyDB::Stmt::tDoubles& a);
-std::ostream& operator << (std::ostream& os, const MyDB::tRows& a);
 
 #endif // INC_MyDB_H_

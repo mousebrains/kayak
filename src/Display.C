@@ -4,6 +4,7 @@
 #include "HTML.H"
 #include "Convert.H"
 #include "Calc.H"
+#include "Tokens.H"
 #include "Master.H"
 #include <cmath>
 #include <sstream>
@@ -34,10 +35,10 @@ namespace {
 
   std::string selectType(const DataGet& obs) {
     const Data::Type& t(obs.type());
-    const MyDB::Stmt::tInts& types(obs.types());
+    const MyDB::tInts& types(obs.types());
     std::ostringstream oss;
     oss << "<select name='t'>\n";
-    for (MyDB::Stmt::tInts::const_iterator it(types.begin()), et(types.end()); it != et; ++it) {
+    for (MyDB::tInts::const_iterator it(types.begin()), et(types.end()); it != et; ++it) {
       const Data::Type type((Data::Type) *it);
       oss << "<option value='" << type << "'"
           << (t == type ? " selected" : "")
@@ -359,4 +360,17 @@ Display::maybeHRef(std::ostream& os,
      << "</li>\n";
 
   return true;
+}
+
+Types::Keys
+Display::dehashKeys(const CGI& cgi,
+                    const std::string& key)
+{
+  const Tokens toks(cgi.get(key), " ,\n\t");
+  Types::Keys a;
+  
+  for (Tokens::const_iterator it(toks.begin()), et(toks.end()); it != et; ++it) {
+    a.insert(Master::deHash(*it));
+  }
+  return a;
 }

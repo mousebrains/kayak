@@ -120,12 +120,6 @@ Display::levels()
     const Levels levels(state);
     return process(Levels(state));
   }
-  MyDB::Stmt::tInts keys;
-  {
-    const Tokens tokens(cgi.get("h", std::string()), " ,\n\t");
-    for (Tokens::const_iterator it(tokens.begin()), et(tokens.end()); it != et; ++it) {
-      keys.push_back(Convert::strTo<int>(*it));
-    }
-  }
+  Types::Keys keys(dehashKeys(cgi, "h"));
   return process(Levels(keys));
 }

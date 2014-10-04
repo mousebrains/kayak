@@ -26,7 +26,7 @@ namespace {
     }
   }
  
-  MyDB::Stmt::tStrings translate(std::string str) {
+  MyDB::tStrings translate(std::string str) {
     typedef std::set<std::string> tState;
     typedef std::map<std::string, std::string> tLoc;
     static const tState toState = {
@@ -63,7 +63,7 @@ namespace {
       {"middle fork", "MF"}
       };
    
-    MyDB::Stmt::tStrings a;
+    MyDB::tStrings a;
     str = String::tolower(str);
 
     for (tLoc::const_iterator it(phrases.begin()), et(phrases.end()); it != et; ++it) { 
@@ -115,24 +115,15 @@ GaugeTranslate::operator () (const std::string& str)
     s << "SELECT "
       << fields.description()
       << "," << fields.location()
-      << " FROM " << fields.table() << " WHERE " << fields.str() << "=";
-    s.quoteString(str);
-    s << ";"; 
+      << " FROM " << fields.table() << " WHERE " << fields.str() << "="
+      << s.quote(str)
+      << ";"; 
 
-    MyDB::Stmt::tStrings a(s.queryStrings());
+    MyDB::tStrings a(s.queryStrings());
 
     Info info;
     if (a.empty()) { // Insert into translation table with a best guess translation
       a = translate(str);
-      // MyDB::Stmt s1(mDB);
-      // s1 << "INSERT INTO " << fields.table() << " VALUES("
-         // << s1.quotedString(str)
-         // << ","
-         // << s1.quotedString(a[0])
-         // << ","
-         // << s1.quotedString(a[1])
-         // << ");";
-      // s1.query();
     }
     info.description = a[0];
     info.location = a[1];

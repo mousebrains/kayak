@@ -9,10 +9,10 @@ main (int argc,
   PruneData pd;
 
   Data data;
-  CommonData::tKeys keys(data.allKeys());
-  CommonData::tKeys k;
+  Types::Keys keys(data.allKeys());
+  Types::Keys k;
  
-  for (CommonData::tKeys::const_iterator it(keys.begin()), et(keys.end()); it != et; ++it) {
+  for (Types::Keys::const_iterator it(keys.begin()), et(keys.end()); it != et; ++it) {
     for (int i(Data::FLOW); i < Data::LASTTYPE; ++i) { // Walk through all data types
       Data::tTimeKeys a(data.timeKeys(*it, (Data::Type) i));
       Data::tTimeKeys::size_type n(pd(a));

@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <cmath>
 
@@ -130,7 +131,7 @@ MyDB::lastInsertRowid()
 
 void
 MyDB::dropRows(const std::string& table,
-               const tRows& rowid)
+               const Types::Keys& rowid)
 {
   std::ostringstream oss;
   oss << "DELETE FROM " << table << " WHERE rowid == ?;";
@@ -138,7 +139,7 @@ MyDB::dropRows(const std::string& table,
 
   beginTransaction();
 
-  for (tRows::const_reverse_iterator it(rowid.rbegin()), et(rowid.rend()); it != et; ++it) {
+  for (Types::Keys::const_reverse_iterator it(rowid.rbegin()), et(rowid.rend()); it != et; ++it) {
     s.bind(*it);
     s.step();
     s.reset();
@@ -362,7 +363,7 @@ MyDB::Stmt::query()
   }
 }
 
-MyDB::Stmt::tStrings
+MyDB::tStrings
 MyDB::Stmt::queryStrings()
 {
   tStrings a;
@@ -381,7 +382,7 @@ MyDB::Stmt::queryStrings()
   return a;
 }
 
-MyDB::Stmt::tInts
+MyDB::tInts
 MyDB::Stmt::queryInts()
 {
   tInts a;
@@ -400,7 +401,7 @@ MyDB::Stmt::queryInts()
   return a;
 }
 
-MyDB::Stmt::tDoubles
+MyDB::tDoubles
 MyDB::Stmt::queryDoubles()
 {
   tDoubles a;
@@ -449,111 +450,4 @@ MyDB::Stmt::queryStringInt()
   }
 
   return a;
-}
-
-void
-MyDB::Stmt::quoteString(const std::string& str)
-{
-  if (str.empty()) {
-    *(this) << "null";
-    return;
-  }
-
-  const char quote('\'');
-  std::string::size_type j(str.find(quote));
-
-  if (j == str.npos) { // no quotes in string
-    *this << quote << str << quote;
-    return;
-  }
-
-  std::string::size_type i(0);
-
-  *this << quote;
-
-  while (j != str.npos) {
-   if (i != j) {
-      *this << str.substr(i,j-i);
-   }
-    *this << quote;
-    i = j;
-    j = str.find(quote, j+1);
-  }
-  *this << str.substr(i) << quote;
-}
-
-std::string
-MyDB::Stmt::quotedString(const std::string& str)
-{
-  if (str.empty()) return "null";
-
-  const std::string quote("'");
-  std::string::size_type j(str.find(quote));
-
-  if (j == str.npos) { // no quotes in string
-    return quote + str + quote;
-  }
-
-  std::string::size_type i(0);
-  std::string a(quote);
-
-  while (j != str.npos) {
-    if (i != j) {
-      a += str.substr(i,j-i) + quote;
-    } else {
-      a += quote;
-    }
-    i = j;
-    j = str.find(quote, j+1);
-  }
-  a += str.substr(i) + quote;
-  return a;
-}
-
-std::ostream&
-operator << (std::ostream& os,
-             const MyDB::Stmt::tStrings& a)
-{
-  std::string delim;
-  for (MyDB::Stmt::tStrings::const_iterator it(a.begin()), et(a.end()); it != et; ++it) {
-    os << delim << *it;
-    delim = ",";
-  }
-  return os;
-}
-
-std::ostream&
-operator << (std::ostream& os,
-             const MyDB::Stmt::tInts& a)
-{
-  std::string delim;
-  for (MyDB::Stmt::tInts::const_iterator it(a.begin()), et(a.end()); it != et; ++it) {
-    os << delim << *it;
-    delim = ",";
-  }
-  return os;
-}
-
-std::ostream&
-operator << (std::ostream& os,
-             const MyDB::Stmt::tDoubles& a)
-{
-  std::string delim;
-  for (MyDB::Stmt::tDoubles::const_iterator it(a.begin()), et(a.end()); it != et; ++it) {
-    os << delim << *it;
-    delim = ",";
-  }
-  return os;
-}
-
-std::ostream&
-operator << (std::ostream& os,
-             const MyDB::tRows& a)
-{
-  std::string delim;
-  for (MyDB::tRows::const_iterator it(a.begin()), et(a.end()); it != et; ++it) {
-    os << delim << *it;
-    delim = ",";
-  }
-  return os;
 }

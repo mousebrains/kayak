@@ -40,10 +40,9 @@ public:
   CommonSource& source() {return mSource;}
   CommonURLs& urls() {return mURLs;}
 
-  typedef std::set<size_t> tKeys;
-  tKeys allKeys();
+  Types::Keys allKeys();
 
-  void dropRows(const tKeys& keys);
+  void dropRows(const Types::Keys& keys);
   size_t nRows(const int key);
 
   void checkPoint() {mDB.checkPoint();}

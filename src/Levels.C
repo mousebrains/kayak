@@ -174,7 +174,7 @@ Levels::Levels(const std::string& state)
   load(oss.str());
 }
 
-Levels::Levels(const MyDB::Stmt::tInts& keys)
+Levels::Levels(const Types::Keys& keys)
 {
   if (keys.empty()) {
     load(std::string());
@@ -183,7 +183,7 @@ Levels::Levels(const MyDB::Stmt::tInts& keys)
   std::ostringstream oss;
   oss << " WHERE " << fields.key();
   if (keys.size() == 1) {
-    oss << "=" << keys[0];
+    oss << "=" << keys;
   } else { // keys.size() > 1
     oss << " IN (" << keys << ")";
   }
@@ -195,9 +195,9 @@ Levels::states()
 {
   MyDB::Stmt s(mDB);
   s << "SELECT " << fields.state() << " FROM " << fields.table() << ";";
-  MyDB::Stmt::tStrings a(s.queryStrings());
-  tStates states;
-  for (MyDB::Stmt::tStrings::size_type i(0), e(a.size()); i < e; ++i) {
+  MyDB::tStrings a(s.queryStrings());
+  Levels::tStates states;
+  for (MyDB::tStrings::size_type i(0), e(a.size()); i < e; ++i) {
     Tokens toks(a[i], ", \t\n");
     states.insert(toks.begin(), toks.end());
   }
@@ -209,15 +209,15 @@ Levels::update()
 {
   Data data; 
   typedef CommonSource::tSourceKey2GaugeKey tKey2Key; // map int->int
-  const tKey2Key data2gauge(data.source().dataKeys(MyDB::Stmt::tInts()));
+  const tKey2Key data2gauge(data.source().dataKeys(MyDB::tInts()));
 
   if (data2gauge.empty()) { // No data sources found
     mDB.query(std::string("DELETE FROM ") + fields.table()); // Clear out table
     return; 
   }
 
-  MyDB::Stmt::tInts dataKeys; // vector of data keys
-  MyDB::Stmt::tInts gaugeKeys; // vector of gauge keys
+  MyDB::tInts dataKeys; // vector of data keys
+  MyDB::tInts gaugeKeys; // vector of gauge keys
 
   { // populate data and gauge keys vectors
     std::set<int> gkeys;
@@ -227,7 +227,7 @@ Levels::update()
         gkeys.insert(it->second); // Make gaugeKeys unique
       }
     }
-    gaugeKeys = MyDB::Stmt::tInts(gkeys.begin(), gkeys.end());
+    gaugeKeys = MyDB::tInts(gkeys.begin(), gkeys.end());
   }
 
   typedef std::vector<LInfo> tLInfo;

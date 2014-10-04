@@ -60,7 +60,7 @@ LIBSRC += MyDB.C PNGCanvas.C Paths.C PruneData.C Rating.C ReadFile.C Table.C afs
 LIBSRC += DisplayData.C DisplayGauges.C
 LIBSRC += Calc.C TimeIt.C Curl.C XMLParser.C GaugeTranslate.C StateCounty.C
 LIBSRC += ParserUSGS0.C ParserUSGS1.C ParserNOAA0.C 
-LIBSRC += String.C
+LIBSRC += String.C Types.C
 
 .PHONY: all distclean clean install install.cgi install.programs
 .PRECIOUS: obj/%.o

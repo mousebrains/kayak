@@ -86,32 +86,18 @@ int
 Display::gauges()
 {
   const CGI cgi;
-  MyDB::Stmt::tInts keys;
-
-  if (cgi.isSet("h")) {
-    const Tokens tokens(cgi.get("h", std::string()), " ,\n\t");
-    MyDB::Stmt::tInts keys;
-    for (Tokens::const_iterator it(tokens.begin()), et(tokens.end()); it != et; ++it) {
-      keys.push_back(Master::deHash(*it));
-    }
-  // } else { // Look for like hash
-    // const Tokens tokens(cgi.get("l", std::string()), " ,\n\t");
-    // MyDB::Stmt::tInts keys;
-    // for (Tokens::const_iterator it(tokens.begin()), et(tokens.end()); it != et; ++it) {
-      // keys.push_back(Master::deHash(*it));
-    // }
-    // info = gauges.getLike(keys);
-  }
-
+  Types::Keys keys(dehashKeys(cgi, "h"));
   Gauges gauges;
   const Gauges::tInfo info(gauges.getInfo(keys));
 
+  Types::Keys gkeys;
+
   for (Gauges::tInfo::const_iterator it(info.begin()), et(info.end()); it != et; ++it) {
-    keys.push_back(it->gaugeKey);
+    gkeys.insert(it->gaugeKey);
   }
 
   Master master;
-  const Master::tKey2KeyNameLocation keyMap(master.gaugeKey2KeyNameLocation(keys));
+  const Master::tKey2KeyNameLocation keyMap(master.gaugeKey2KeyNameLocation(gkeys));
 
-  return mkTable(info, keyMap, master, Levels(keys));
+  return mkTable(info, keyMap, master, Levels(gkeys));
 }

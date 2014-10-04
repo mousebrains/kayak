@@ -22,15 +22,8 @@ namespace {
 int
 Display::info()
 {
-  MyDB::Stmt::tInts keys;
-  {
-    const CGI cgi;
-    const Tokens tokens(cgi.get("h", std::string()), " ,\n\t");
-    for (Tokens::const_iterator it(tokens.begin()), et(tokens.end()); it != et; ++it) {
-      keys.push_back(Master::deHash(*it));
-    }
-  }
-
+  const CGI cgi;
+  const Types::Keys keys(dehashKeys(cgi, "h"));
   Master master;
   const Master::tInfo info(master.getInfo(keys));
   Gauges gauges;

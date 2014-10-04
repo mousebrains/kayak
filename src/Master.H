@@ -16,8 +16,8 @@ public:
 
   MyDB& db() {return mDB;}
 
-  MyDB::Stmt::tInts stateKeysWithGauges(const std::string& state);
-  MyDB::Stmt::tInts keysWithGauges(const MyDB::Stmt::tInts& keys);
+  MyDB::tInts stateKeysWithGauges(const std::string& state);
+  MyDB::tInts keysWithGauges(const MyDB::tInts& keys);
   
   typedef std::set<std::string> tSet;
   tSet allStates();
@@ -99,7 +99,7 @@ public:
   Info getInfo(const size_t key);
 
   typedef std::vector<Info> tInfo;
-  tInfo getInfo(const MyDB::Stmt::tInts& keys);
+  tInfo getInfo(const Types::Keys& keys);
   tInfo getLike(const std::string& sql);
   tInfo getLike(const size_t key);
   tInfo getAll();
@@ -113,7 +113,7 @@ public:
   };
 
   typedef std::multimap<int, KeyNameLocation> tKey2KeyNameLocation;
-  tKey2KeyNameLocation gaugeKey2KeyNameLocation(const MyDB::Stmt::tInts& gaugeKeys);
+  tKey2KeyNameLocation gaugeKey2KeyNameLocation(const Types::Keys& gaugeKeys);
 };
 
 #endif // INC_Master_H_

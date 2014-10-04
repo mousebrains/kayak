@@ -18,10 +18,10 @@ public:
 
   void setGauge(const std::string& name, const int gaugeKey);
 
-  MyDB::Stmt::tInts gaugeKey2Keys(const size_t gaugeKey);
+  MyDB::tInts gaugeKey2Keys(const size_t gaugeKey);
 
   typedef std::map<int, int> tSourceKey2GaugeKey;
-  tSourceKey2GaugeKey dataKeys(const MyDB::Stmt::tInts& gaugeKeys);
+  tSourceKey2GaugeKey dataKeys(const MyDB::tInts& gaugeKeys);
 };
 
 #endif // INC_CommonSource_H_

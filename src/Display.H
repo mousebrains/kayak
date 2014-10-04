@@ -1,11 +1,14 @@
 #ifndef INC_Display_H_
 #define INC_Display_H_
 
+#include "Types.H"
 #include <string>
+#include <set>
 #include <iosfwd>
 
 class DataGet;
 class Master;
+class CGI;
 
 namespace Display {
   std::string dateForm(const DataGet& obs,
@@ -19,6 +22,8 @@ namespace Display {
   int info();
   int database();
   int data();
+
+  Types::Keys dehashKeys(const CGI& cgi, const std::string& key);
 
   template <typename T>
   bool maybe(std::ostream& os, const T& val, 

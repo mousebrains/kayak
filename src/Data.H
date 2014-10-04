@@ -42,10 +42,10 @@ public:
 
   typedef std::multimap<time_t, double> tObs;
 
-  tObs observations(const MyDB::Stmt::tInts& keys, const Type t, 
+  tObs observations(const MyDB::tInts& keys, const Type t, 
                     const time_t tMin=0, const time_t tMax=0);
 
-  MyDB::Stmt::tInts types(const MyDB::Stmt::tInts& keys); // Which data types are known these source keys
+  MyDB::tInts types(const MyDB::tInts& keys); // Which data types are known these source keys
 
   struct AnObs {
     int key;
@@ -61,7 +61,7 @@ public:
   }; // AnObs
   typedef std::set<AnObs> tAnObs;
 
-  tAnObs observations(const MyDB::Stmt::tInts& keys, const time_t tMin=0, const time_t tMax=0);
+  tAnObs observations(const MyDB::tInts& keys, const time_t tMin=0, const time_t tMax=0);
 
   struct RawObs {
     int key;
@@ -74,7 +74,7 @@ public:
   }; // RawObs
 
   typedef std::vector<RawObs> tRawObs;
-  tRawObs rawObservations(const MyDB::Stmt::tInts& keys, 
+  tRawObs rawObservations(const MyDB::tInts& keys, 
                           const time_t tMin = 0, const time_t tMax=0);
 };
 

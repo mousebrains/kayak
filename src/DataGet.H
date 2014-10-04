@@ -20,7 +20,7 @@ private:
   Data::Type mType;
   
   size_t mGaugeKey;
-  MyDB::Stmt::tInts mSourceKeys;
+  MyDB::tInts mSourceKeys;
 
   double mLow;
   double mHigh;
@@ -35,7 +35,7 @@ private:
   std::string mYLabel;
   std::string mUnits;
 
-  MyDB::Stmt::tInts mTypes;
+  MyDB::tInts mTypes;
 
   void fetch(time_t stime, time_t etime, bool qOne); // Popuplate DataGet from the master table key
 
@@ -79,7 +79,7 @@ public:
   std::string json() const;
   std::ostream& json(std::ostream& os) const;
 
-  const MyDB::Stmt::tInts& types() const {return mTypes;}
+  const MyDB::tInts& types() const {return mTypes;}
 
   double roundY(const double y) const;
   static double roundY(const double y, const Data::Type type);

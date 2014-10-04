@@ -11,8 +11,8 @@ Calc::Calc(const int gaugeKey)
 {
   MyDB::Stmt s(mDB);
   s << "SELECT calcFlow,calcGauge FROM gauges WHERE gaugeKey=" << gaugeKey << ";";
-  MyDB::Stmt::tStrings result(s.queryStrings());
-  const MyDB::Stmt::tStrings::size_type n(result.size());
+  MyDB::tStrings result(s.queryStrings());
+  const MyDB::tStrings::size_type n(result.size());
   if (n > 0 && !result[0].empty()) { // A flow calculation
     split(result[0], Data::FLOW);
   } else if (n > 1 && !result[1].empty()) { // A gauge calculation

@@ -30,7 +30,7 @@ StateCounty::state(const int code)
     MyDB::Stmt s(mDB);
     s << "SELECT DISTINCT " << fields.state() << " FROM " << fields.table()
       << " WHERE " << fields.stateKey() << "=" << code << ";";
-    MyDB::Stmt::tStrings a(s.queryStrings());
+    MyDB::tStrings a(s.queryStrings());
     it = mStates.insert(std::make_pair(code, a.empty() ? std::string() : a[0])).first;
   }
   return it->second;
@@ -48,7 +48,7 @@ StateCounty::county(const int state,
       << " WHERE " << fields.stateKey() << "=" << state 
       << " AND " << fields.countyKey() << "=" << county
       << ";";
-    MyDB::Stmt::tStrings a(s.queryStrings());
+    MyDB::tStrings a(s.queryStrings());
     it = mCounties.insert(std::make_pair(code, a.empty() ? std::string() : pruneCounty(a[0]))).first;
   }
   return it->second;

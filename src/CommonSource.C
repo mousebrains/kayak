@@ -24,7 +24,7 @@ CommonSource::setGauge(const std::string& name,
   }
 }
 
-MyDB::Stmt::tInts
+MyDB::tInts
 CommonSource::gaugeKey2Keys(const size_t gaugeKey)
 {
   MyDB::Stmt s(mDB);
@@ -36,7 +36,7 @@ CommonSource::gaugeKey2Keys(const size_t gaugeKey)
 }
 
 CommonSource::tSourceKey2GaugeKey
-CommonSource::dataKeys(const MyDB::Stmt::tInts& gaugeKeys)
+CommonSource::dataKeys(const MyDB::tInts& gaugeKeys)
 {
   MyDB::Stmt s(mDB);
 

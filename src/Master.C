@@ -17,11 +17,11 @@ Master::allStates()
 {
   MyDB::Stmt s(mDB);
   s << "SELECT DISTINCT " << fields.state() << " FROM " << fields.table() << ";";
-  MyDB::Stmt::tStrings result(s.queryStrings());
+  MyDB::tStrings result(s.queryStrings());
 
   tSet a;
 
-  for (MyDB::Stmt::tStrings::const_iterator it(result.begin()), et(result.end()); it != et; ++it) {
+  for (MyDB::tStrings::const_iterator it(result.begin()), et(result.end()); it != et; ++it) {
     const Tokens toks(*it);
     a.insert(toks.begin(), toks.end());
   }
@@ -33,7 +33,7 @@ Master::qModifiedSince(const time_t t)
 {
   MyDB::Stmt s(mDB);
   s << "SELECT max(" << fields.modified() << ") FROM " << fields.table() << ";";
-  const MyDB::Stmt::tInts result(s.queryInts());
+  const MyDB::tInts result(s.queryInts());
 
   return result.empty() ? true : ((t-60) <= (time_t) result[0]);
 }
@@ -44,7 +44,7 @@ Master::gaugeKey(const int key)
   MyDB::Stmt s(mDB);
   s << "SELECT " << fields.gaugeKey() << " FROM " << fields.table()
     << " WHERE " << fields.key() << "=" << key << ";";
-  const MyDB::Stmt::tInts result(s.queryInts());
+  const MyDB::tInts result(s.queryInts());
   return (result.empty() || (result[0] < 0)) ? 0 : result[0];
 }
 
@@ -56,7 +56,7 @@ Master::gaugeKey2key(const int gaugeKey)
   s << "SELECT " << fields.key() << " FROM " << fields.table() << " WHERE "
     << fields.gaugeKey() << "=" << gaugeKey << ";";
 
-  const MyDB::Stmt::tInts result(s.queryInts());
+  const MyDB::tInts result(s.queryInts());
 
   return (result.empty() || (result[0] < 0)) ? 0 : result[0];
 }
@@ -64,7 +64,7 @@ Master::gaugeKey2key(const int gaugeKey)
 #include <iostream>
 
 Master::tKey2KeyNameLocation 
-Master::gaugeKey2KeyNameLocation(const MyDB::Stmt::tInts& gaugeKeys)
+Master::gaugeKey2KeyNameLocation(const Types::Keys& gaugeKeys)
 {
   MyDB::Stmt s(mDB);
 
@@ -276,7 +276,7 @@ Master::getInfo(const size_t key)
 }
 
 Master::tInfo
-Master::getInfo(const MyDB::Stmt::tInts& keys)
+Master::getInfo(const Types::Keys& keys)
 {
   if (keys.empty()) return getAll();
 
@@ -330,7 +330,7 @@ Master::getAll()
   return getLike(oss.str());
 }
 
-MyDB::Stmt::tInts
+MyDB::tInts
 Master::stateKeysWithGauges(const std::string& state)
 {
   MyDB::Stmt s(mDB);
@@ -342,8 +342,8 @@ Master::stateKeysWithGauges(const std::string& state)
   return s.queryInts();
 }
 
-MyDB::Stmt::tInts
-Master::keysWithGauges(const MyDB::Stmt::tInts& keys)
+MyDB::tInts
+Master::keysWithGauges(const MyDB::tInts& keys)
 {
   MyDB::Stmt s(mDB);
   s << "SELECT " << fields.key() 

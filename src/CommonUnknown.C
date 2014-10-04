@@ -18,7 +18,7 @@ CommonUnknown::usage(const int key)
   MyDB::Stmt s(mDB);
   s << "SELECT " << mFields.usage() << " FROM " << mFields.table() 
     << " WHERE " << mFields.key() << "=" << key << ";";
-  MyDB::Stmt::tInts a(s.queryInts());
+  MyDB::tInts a(s.queryInts());
   return a.empty() ? SEEN : (Usage) a[0];
 }
 
