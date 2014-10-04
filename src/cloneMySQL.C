@@ -494,8 +494,10 @@ public:
   void saveGauges(MyDB& db) {
     TimeIt stime;
     MyDB::Stmt s(db);
-    s << "INSERT OR REPLACE INTO gauges (gaugeKey,name,latitude,longitude,description,location,idUSGS,idCBTT"
-      << ",state,elevation,drainageArea) VALUES(?,?,?,?,?,?,?,?,?,?,?);";
+    s << "INSERT OR REPLACE INTO gauges "
+      << "(gaugeKey,name,latitude,longitude,description,location,idUSGS,idCBTT"
+      << ",state,elevation,drainageArea,sortKey,qNoShow) "
+      << "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);";
     db.beginTransaction();
     int cnt(1);
     for (tGauges::iterator it(mGauges.begin()), et(mGauges.end()); it != et; ++it, ++cnt) {
@@ -512,6 +514,8 @@ public:
       s.bind(info.state);
       s.bind(info.elevation);
       s.bind(info.drainageArea);
+      s.bind(info.sortKey);
+      s.bind(info.qNoShow);
       s.step();
       s.reset();
     }
@@ -692,6 +696,9 @@ Master::addGauge(const MasterRow& row)
   // info.floodStage;
   // info.calcFlow;
   // info.calcGauge;
+  info.sortKey = row.sortKey();
+  info.qNoShow = row.qNoShow();
+
   info.name = !info.idUSGS.empty() ? info.idUSGS :
               !info.idCBTT.empty() ? info.idCBTT : std::string();
 
