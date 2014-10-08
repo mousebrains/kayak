@@ -28,14 +28,36 @@ std::ostream& operator << (std::ostream& os, const tSet& a) {
   return os;
 }
 
+std::string
+fixId(const std::string& str)
+{
+  typedef std::map<std::string, std::string> tMap;
+  static const tMap cbttMap = {
+    {"NSJO", "NSGO3"},
+    };
+
+  tMap::const_iterator it(cbttMap.find(str));
+  if (it != cbttMap.end()) return it->second;
+
+  if (str.size() != 4) return str;
+
+  switch (str[str.size() - 1]) {
+    case 'I': return str + "1"; // Idaho
+    case 'O': return str + "3"; // Oregon
+    case 'W': return str + "1"; // Washington
+  }
+
+  return str;
+} // fixId
+
 class DataTables {
 public:
   struct DataTable {
     mutable bool qUsed;
     std::string table;
-    std::string type;
+    Data::Type type;
     std::string gauge;
-    DataTable(const std::string& tbl, const std::string& ty, const std::string& g)
+    DataTable(const std::string& tbl, const Data::Type ty, const std::string& g)
       : qUsed(false), table(tbl), type(ty), gauge(g) {}
     explicit DataTable(const std::string& g) : qUsed(false), gauge(g) {}
     bool operator < (const DataTable& rhs) const {return gauge < rhs.gauge;}
@@ -55,7 +77,10 @@ public:
       const std::string::size_type i(it->find('_'));
       if (i == it->npos) continue;
       if (sql.maxDataTime(*it) < threshold) continue;
-      mDataTables.insert(DataTable(*it, it->substr(0,i), it->substr(i+1)));
+      const Data::Type type(Data::decodeType(it->substr(0,i)));
+      if (type == Data::LASTTYPE) continue; // unknown type
+      const std::string name(fixId(it->substr(i+1)));
+      mDataTables.insert(DataTable(*it, type, name));
     }
     std::cout << mDataTables.size() << " current data tables out of " << tables.size() 
               << " in " << stime << " seconds" << std::endl;
@@ -237,21 +262,6 @@ MasterRow::addParsers()
 void
 MasterRow::fixIds()
 {
-  typedef std::map<std::string, std::string> tMap;
-  static const tMap cbttMap = {
-    {"BULO", "BULO3"},
-    {"BUSO", "BUSO3"},
-    {"DONO", "DONO3"},
-    {"NSJO", "NSGO3"},
-    {"OWYO", "OWYO3"},
-    {"PAIO", "PAIO3"},
-    {"PHLO", "PHLO3"},
-    {"PWDO", "PWDO3"},
-    {"THFO", "THFO3"},
-    {"UNYO", "UNYO3"},
-    {"VALO", "VALO3"},
-    };
-
   std::string usgs(usgs_id());
   std::string cbtt(cbtt_id());
   std::string sNumber(stationNumber());
@@ -308,9 +318,9 @@ MasterRow::fixIds()
   if (!usgs.empty()) {
     set("idUSGS", usgs);
   }
+
   if (!cbtt.empty()) {
-    tMap::const_iterator it(cbttMap.find(cbtt));
-    set("idCBTT", it == cbttMap.end() ? cbtt : it->second);
+    set("idCBTT", fixId(cbtt));
   }
 } // MasterRow::fixIds
 
@@ -761,7 +771,7 @@ saveData(MySQL& sql,
   for (DataTables::const_iterator it(tbls.begin()), et(tbls.end()); it != et; ++it) {
     Master::tSources::const_iterator jt(sources.find(it->gauge));
     if (jt == sources.end()) continue; // Not known
-    const Data::Type type(Data::decodeType(it->type));
+    const Data::Type type(it->type);
     if (type == Data::LASTTYPE) continue; // unknown type
     MySQL::tData data(sql.data(it->table));
     std::cout << "Loaded " << data.size() << " points from " << it->table << std::endl;
