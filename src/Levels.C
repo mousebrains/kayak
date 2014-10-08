@@ -216,18 +216,18 @@ Levels::update()
     return; 
   }
 
-  MyDB::tInts dataKeys; // vector of data keys
-  MyDB::tInts gaugeKeys; // vector of gauge keys
+  Types::Ints dataKeys; // vector of data keys
+  Types::Ints gaugeKeys; // vector of gauge keys
 
   { // populate data and gauge keys vectors
-    std::set<int> gkeys;
+    Types::Keys gkeys; // Set, so we'll end up with unique entries
     for (tKey2Key::const_iterator it(data2gauge.begin()), et(data2gauge.end()); it != et; ++it) {
       if (it->second > 0) {
         dataKeys.push_back(it->first); // dataKeys are unique
         gkeys.insert(it->second); // Make gaugeKeys unique
       }
     }
-    gaugeKeys = MyDB::tInts(gkeys.begin(), gkeys.end());
+    gaugeKeys = Types::Ints(gkeys.begin(), gkeys.end()); // Vector of unique guage keys
   }
 
   typedef std::vector<LInfo> tLInfo;
