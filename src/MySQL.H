@@ -5,6 +5,8 @@
 #include <iosfwd>
 #include <string>
 #include <vector>
+#include <set>
+#include <map>
 
 class MySQL {
 public:

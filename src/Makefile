@@ -76,6 +76,10 @@ bin/cloneMySQL: cloneMySQL.C MySQL.C $(MYLIB)
 	@ mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(MYSQLFLAGS) -o $@ $+ $(LDFLAGS) $(LIBS) $(MYSQLLIBS)
 
+bin/cloneData: cloneData.C MySQL.C $(MYLIB)
+	@ mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(MYSQLFLAGS) -o $@ $+ $(LDFLAGS) $(LIBS) $(MYSQLLIBS)
+
 bin/png: png.C $(MYLIB)
 	@ mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -o $@ $+ $(LDFLAGS) $(LIBS) $(FTLIBS) $(PNGLIBS)
