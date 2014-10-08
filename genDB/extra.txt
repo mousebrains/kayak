@@ -68,20 +68,27 @@ UPDATE gauges SET idUSGS='14070500' WHERE idCBTT='DEBO3'; -- Deschutes below ben
 
 -- Fix CBTT IDs
 
-UPDATE gauges SET idCBTT='CREO3' WHERE idCBTT='CREO'; -- Crescent Creek at Crescent Lake
-UPDATE dataSource SET name='CREO3' WHERE name='CREO'; -- Crescent Creek at Crescent Lake
+-- Oregon xxxO -> xxxO3
 
-UPDATE gauges SET idCBTT='PRVO3' WHERE idCBTT='PRVO'; -- Crooked river near Prineville
-UPDATE dataSource SET name='PRVO3' WHERE name='PRVO'; -- Crooked river near Prineville
+UPDATE gauges SET idCBTT=(SELECT idCBTT || '3' FROM gauges WHERE idCBTT LIKE '%o') WHERE idCBTT LIKE '%o';
 
-UPDATE gauges SET idCBTT='CRSO3' WHERE idCBTT='CRSO'; -- Crooked river at Smith Rock
-UPDATE dataSource SET name='CRSO3' WHERE name='CRSO'; -- Crooked river at Smith Rock
+UPDATE OR IGNORE dataSource SET name=(SELECT name || '3' FROM dataSource WHERE name LIKE '%o') WHERE name LIKE '%o';
 
-UPDATE dataSource SET name='LAPO3' WHERE name='LAPO'; -- Little Deschutes near La Pine
-UPDATE dataSource SET name='WICO3' WHERE name='WICO'; -- Deschutes near Wickiup
-UPDATE dataSource SET name='BENO3' WHERE name='BENO'; -- Deschutes near Bend
-UPDATE dataSource SET name='DEBO3' WHERE name='DEBO'; -- Deschutes below Bend
-UPDATE dataSource SET name='OCHO3' WHERE name='OCHO'; -- Ochoco Creek below Ochoco Resv
+-- Idaho xxxI -> xxxI3
+
+UPDATE gauges SET idCBTT=(SELECT idCBTT || '1' FROM gauges WHERE idCBTT LIKE '%i') WHERE idCBTT LIKE '%i';
+
+UPDATE OR IGNORE dataSource SET name=(SELECT name || '1' FROM dataSource WHERE name LIKE '%i') WHERE name LIKE '%i';
+
+-- Washington xxxW -> xxxW3
+
+UPDATE gauges SET idCBTT=(SELECT idCBTT || '1' FROM gauges WHERE idCBTT LIKE '%w') WHERE idCBTT LIKE '%w';
+
+UPDATE OR IGNORE dataSource SET name=(SELECT name || '1' FROM dataSource WHERE name LIKE '%w') WHERE name LIKE '%w';
+
+-- Link gaugeKey to dataSource if gaugeKey in dataSource is zero
+
+UPDATE dataSource SET gaugeKey=(SELECT gaugeKey FROM gauges WHERE idUSGS IN (SELECT name FROM dataSource WHERE gaugeKey=0)) WHERE name IN (SELECT idUSGS FROM gauges WHERE idUSGS IN (SELECT name FROM dataSource WHERE gaugeKey=0));
 
 -- Rogue below Prospect
 INSERT OR REPLACE INTO dataSource (name,gaugeKey) VALUES('RPRO3',(SELECT gaugekey FROM gauges WHERE idCBTT='RPRO3'));
