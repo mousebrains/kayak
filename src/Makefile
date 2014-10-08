@@ -32,6 +32,7 @@ MYSQLLIBS  = $(shell mysql_config --libs)
 MYSQLLIBS += -l mysqlpp -Wl,-rpath $(LOCALLIB)
 
 EXE += bin/cloneMySQL
+EXE += bin/cloneData
 endif
 
 ARFLAGS = ruc
