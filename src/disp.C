@@ -8,7 +8,9 @@
 #include "Display.H"
 #include "HTTP.H"
 #include "CGI.H"
+#include "MyException.H"
 #include <iostream>
+#include <map>
 
 int 
 main (int argc,
@@ -19,30 +21,34 @@ main (int argc,
 
   const std::string page(cgi.get(key, std::string()));
 
-  if (page.empty() || (page == "m")) { // Main page
-    return Display::mainPage();
+  try {
+    if (page.empty() || (page == "m")) { // Main page
+      return Display::mainPage();
+    }
+    if (page == "l") { // levels page
+      return Display::levels();
+    }
+    if (page == "g") { // gauges page
+      return Display::gauges();
+    }
+    if (page == "d") { // data json
+      return Display::data();
+    }
+    if ((page == "t") || (page == "Table")) { // Table
+      return Display::table();
+    }
+    if ((page == "p") || (page == "Plot")) { // Plot
+      return Display::plot();
+    }
+    if ((page == "i") || (page == "Info")) { // Master table info
+      return Display::info();
+    }
+    if (page == "db" || (page == "Database")) { // Database 
+      return Display::database();
+    }
+    return HTTP(std::cout).errorPage("Unknown page '" + page + "' to display");
+  } catch (MyException& e) {
+    return HTTP(std::cout).errorPage(std::string("Exception caught, ") + e.what());
   }
-  if (page == "l") { // levels page
-    return Display::levels();
-  }
-  if (page == "g") { // gauges page
-    return Display::gauges();
-  }
-  if (page == "d") { // data json
-    return Display::data();
-  }
-  if ((page == "t") || (page == "Table")) { // Table
-    return Display::table();
-  }
-  if ((page == "p") || (page == "Plot")) { // Plot
-    return Display::plot();
-  }
-  if ((page == "i") || (page == "Info")) { // Master table info
-    return Display::info();
-  }
-  if (page == "db" || (page == "Database")) { // Database 
-    return Display::database();
-  }
- 
-  return HTTP(std::cout).errorPage("Unknown page '" + page + "' to display");
+  return HTTP(std::cout).errorPage("Failed for some unknown reason");
 }
