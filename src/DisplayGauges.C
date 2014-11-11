@@ -67,8 +67,8 @@ namespace {
       Display::maybeCalc(html, a.calcFlow, master, "Flow Calculation: ");
       Display::maybeCalc(html, a.calcGauge, master, "Gauge Calculation: ");
       Display::maybe(html, a.gaugeKey, "Gauge Key: ");
-      Display::maybe(html, a.idUSGS, "USGS ID: ");
-      Display::maybe(html, a.idCBTT, "CBTT ID: ");
+      Display::maybeHRef(html, a.idUSGS, HTML::usgsIdURL(a.idUSGS), "USGS ID: ");
+      Display::maybeHRef(html, a.idCBTT, HTML::cbttIdURL(a.idCBTT), "CBTT ID: ");
       Display::maybe(html, a.idUSBR, "USBR ID: ");
       Display::maybe(html, a.idUnit, "Hydrologic Unit: ");
       Display::maybeMinMax(html, a.minFlow, a.maxFlow, "Flow Limits: ", " CFS");
