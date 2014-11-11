@@ -6,6 +6,8 @@
 #include <cmath>
 #include <vector>
 #include <map>
+#include <cerrno>
+#include <cstring>
 
 namespace {
   time_t tzOffset(const std::string& tz) {
@@ -191,7 +193,7 @@ Convert::toTime(const std::string& str)
     };
 
   for (size_t i(0), e(formats.size()); i < e; ++i) {
-    time_t t;
+    time_t t(0);
     if (mkTime(str, formats[i], t)) return t;
   }
   std::cerr << "Unable to parse '" << str << "'" << std::endl;
