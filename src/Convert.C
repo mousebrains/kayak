@@ -256,12 +256,17 @@ Convert::strTo(const std::string& str,
 {
   std::istringstream iss(str);
   T t;
-  iss >> t;
 
-  if (flag) {
-    *flag = str.size() == (size_t) iss.tellg();
-  }
-
+  if (iss >> t) {
+    if (flag) {
+      *flag = iss.eof();
+    }
+    return t;
+  } 
+ 
+  std::cerr << "Error in Convert::strTo '" << str << "', " 
+            << strerror(errno)
+            << std::endl; 
   return t;
 }
 
