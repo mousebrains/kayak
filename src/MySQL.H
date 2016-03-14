@@ -1,7 +1,7 @@
 #ifndef INC_MySQL_H_
 #define INC_MySQL_H_
 
-#include <mysql++/mysql++.h>
+#include <mysql.h>
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -18,10 +18,16 @@ public:
 
 private:
   const std::string mDBName;
-  mysqlpp::Connection mConnection;
-  mysqlpp::Query mQuery;
+  MYSQL *mConnection;
 
   tTables mTables;
+
+  bool qRetry(const std::string& str);
+
+  void initialize();
+
+  void queryNoReturn(const std::string& str);
+  MYSQL_RES *queryReturn(const std::string& str);
 public:
   MySQL(const std::string& dbname);
   ~MySQL();
@@ -32,6 +38,8 @@ public:
   time_t maxDataTime(const std::string& table);
 
   tRows master(const std::string& table);
+
+  static std::string fixId(const std::string& str);
 };
 
 std::ostream& operator << (std::ostream& os, const MySQL::tMaster& m);
