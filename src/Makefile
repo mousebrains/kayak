@@ -26,12 +26,11 @@ LDFLAGS += -lsqlite3
 SQLITEFLAGS = -I$(LOCALINC)
 
 ifndef SKIPMYSQL
-MYSQLFLAGS  = $(shell mysql_config --cflags)
+MYSQLFLAGS  = $(shell $(MYSQL_CONFIG) --cflags)
 MYSQLFLAGS += -I$(LOCALINC)
-MYSQLLIBS  = $(shell mysql_config --libs)
-MYSQLLIBS += -l mysqlpp -Wl,-rpath $(LOCALLIB)
+MYSQLLIBS  = $(shell $(MYSQL_CONFIG) --libs)
 
-EXE += bin/cloneMySQL
+EXE += bin/cloneMaster
 EXE += bin/cloneData
 endif
 
@@ -72,7 +71,7 @@ bin/%: %.C $(MYLIB)
 	@ mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -o $@ $+ $(LDFLAGS) $(LIBS)
 
-bin/cloneMySQL: cloneMySQL.C MySQL.C $(MYLIB)
+bin/cloneMaster: cloneMaster.C MySQL.C $(MYLIB)
 	@ mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(MYSQLFLAGS) -o $@ $+ $(LDFLAGS) $(LIBS) $(MYSQLLIBS)
 
