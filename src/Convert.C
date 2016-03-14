@@ -8,6 +8,7 @@
 #include <map>
 #include <cerrno>
 #include <cstring>
+#include <typeinfo>
 
 namespace {
   time_t tzOffset(const std::string& tz) {
