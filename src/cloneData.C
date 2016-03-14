@@ -21,8 +21,8 @@ main (int argc,
     char **argv)
 {
   int maxCount(argc > 1 ? atoi(argv[1]) : 1000000000);
-  MySQL dsql("levels_data");
-  const MySQL::tTables& dTables(dsql.tables());
+  MySQL sql("levels_data");
+  const MySQL::tTables& dTables(sql.tables());
   MyDB db;
   Data data;
   const tSet ids(getIds(db));
@@ -37,21 +37,12 @@ main (int argc,
     const std::string::size_type offset(it->find('_'));
     if (offset == it->npos) continue;
     const Data::Type type(Data::decodeType(it->substr(0,offset)));
-    std::string name(it->substr(offset + 1));
+    const std::string name(MySQL::fixId(it->substr(offset + 1)));
     tSet::const_iterator kt(ids.find(name));
-    if (kt == ids.end()) {
-      if (name.empty()) continue;
-      switch (name[name.size()-1]) {
-        case 'O': kt = ids.find(name + "3"); break;
-        case 'W': 
-        case 'I': kt = ids.find(name + "1"); break;
-      }
-      if (kt == ids.end()) continue;
-      std::cout << "Remapping " << name << " to " << *kt << std::endl;
-    }
+    if (kt == ids.end()) continue;
     ++cnt;
-    MySQL::tData tbl(dsql.data(*it));
-    std::cout << type << " " << name << " " << *kt << " " << tbl.size() << std::endl;
+    MySQL::tData tbl(sql.data(*it));
+    std::cout << "Data for " << type << " " << name << " n " << tbl.size() << std::endl;
     for (MySQL::tData::const_iterator jt(tbl.begin()), jet(tbl.end()); jt != jet; ++jt) {
       data.add(*kt, jt->first, Convert::strTo<double>(jt->second), type, std::string());
     } 
