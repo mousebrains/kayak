@@ -264,11 +264,17 @@ Convert::strTo(const std::string& str,
       *flag = iss.eof();
     }
     return t;
-  } 
- 
-  std::cerr << "Error in Convert::strTo '" << str << "', " 
-            << strerror(errno)
-            << std::endl; 
+  }
+
+  if (flag) {
+    *flag = false;
+  } else {
+    std::cerr << "Error in Convert::strTo '" << str << "', type " 
+	      << typeid(t).name()
+	      << ", " 
+              << strerror(errno)
+              << std::endl; 
+  }
   return t;
 }
 
