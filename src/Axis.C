@@ -2,6 +2,7 @@
 #include "Canvas.H"
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 
 class Seen {
 private:
@@ -37,7 +38,7 @@ Axis::Axis(Canvas& canvas,
   : mCanvas(canvas)
   , mLHS(lhs)
   , mRHS(rhs)
-  , mRange(fabs(rhs - lhs))
+  , mRange(std::abs(rhs - lhs))
   , mRho(rho / ppi)  // Convert from ticks/inch to ticks/pixel
   , mFontSize(fontSize)
   , mFontSizeMin(5 < fontSize ? 5 : fontSize)
@@ -336,16 +337,16 @@ Axis::legibility(const double lhs,
         labelPos.push_back(info.pos[j]);
         if (j == 0) { // first tick, adjust to be inside the plot box
           const int distance((mRHSFrame > mLHSFrame ? 1 : -1) *
-                             round(fabs(labelPos[j] - mLHSFrame) - width[j]/2));
+                             round(std::abs(labelPos[j] - mLHSFrame) - width[j]/2));
           labelPos[j] -= distance < 0 ? 0 : distance;
         } // first tick
         if (j == (nTicks - 1)) { // Last tick, pull label inside box
           const int distance((mRHSFrame > mLHSFrame ? 1 : -1) *
-                             round(fabs(labelPos[j] - mRHSFrame) - width[j]/2));
+                             round(std::abs(labelPos[j] - mRHSFrame) - width[j]/2));
           labelPos[j] += distance < 0 ? 0 : distance;
         } // last tick
         if (j > 0) { // check overlap between labels
-          const int distance(round(fabs(labelPos[j-1] - labelPos[j]) -
+          const int distance(round(std::abs(labelPos[j-1] - labelPos[j]) -
                                    (width[j-1] + width[j]) / 2));
           const double sc(overlapScore(distance, fs));
           oScore =  oScore < sc ? oScore : sc;
@@ -378,7 +379,7 @@ Axis::mkLabel(const double x,
   if (x == 0) {
     return Label("0", 1, false);
   }
-  const double ax(fabs(x));
+  const double ax(std::abs(x));
   const char *format("%g");
   double score(ax >= 1e-4 && ax < 1e6);
 
@@ -440,12 +441,12 @@ tAxis::mkTime(const double x) const
 
   // Step by months 
   struct tm a(mStartTime);
-  const int wholeMonths(floor(fabs(x))); // Whole months to step
-  int weeks(round((fabs(x) - wholeMonths) * 4)); // weeks to step
+  const int wholeMonths(floor(std::abs(x))); // Whole months to step
+  int weeks(round((std::abs(x) - wholeMonths) * 4)); // weeks to step
 
   if (x < 0) { // Step backwards in months
     a.tm_mon -= wholeMonths; // backwards appropriate number of months;
-    a.tm_year -= (int) (floor((double) fabs(a.tm_mon) / 12)); // backup up number of years
+    a.tm_year -= (int) (floor((double) std::abs(a.tm_mon) / 12)); // backup up number of years
   } else { // Step forwards in months
     a.tm_mon += wholeMonths; // Advance appropriate number of months
     a.tm_year += (int) floor((double) a.tm_mon / 12); // Advance appropriate number of years
