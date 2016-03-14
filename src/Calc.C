@@ -142,6 +142,50 @@ Calc::mkName()
   return mName;
 }
 
+unsigned int
+Calc::Field::key() const
+{
+  const std::string a(keyString());
+  int result(0);
+
+  for (std::string::size_type i(a.size()); i > 0; --i) {
+    const char c(a[i-1]);
+    result *= 36; // % Shift current result
+    if ((c >= '0') && (c <= '9')) {
+      result += c - '0';
+    } else if ((c >= 'A') && (c <= 'Z')) {
+      result += (c - 'A') + 10;
+    } else if ((c >= 'a') && (c <= 'z')) {
+      result += (c - 'a') + 10;
+    } else {
+     std::cerr << "Unsupported character(" << c << ") in key(" << a << ") at position " << i << std::endl;
+     exit (1);
+    }
+  }
+
+  return result;
+}
+
+void
+Calc::Field::encode(unsigned int key, 
+                    const std::string& comment, 
+                    const Data::Type type)
+{
+  std::string keyValue(key ? "" : "0");
+
+  while (key) {
+   const char a(key % 36); // 
+   if (a < 10) {
+    keyValue.append(1, a + '0');
+   } else { // >= 10
+    keyValue.append(1, (a - 10) + 'a');
+   }
+   key /= 36;
+  } 
+  
+  mField = keyValue + "::" + comment + "::" + Convert::toStr(type);
+}
+
 std::ostream&
 operator << (std::ostream& os,
              const Calc& calc)

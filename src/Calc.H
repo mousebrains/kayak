@@ -20,10 +20,9 @@ public:
       const std::string::size_type i(mField.find("::"));
       return i == mField.npos ? std::string() : mField.substr(0,i);
     }
-    int key() const {
-      const std::string a(keyString());
-      return a.empty() ? 0 : Convert::strTo<int>(a);
-    }
+
+    unsigned int key() const;
+
     std::string comment() const {
       const std::string::size_type i(mField.find("::"));
       const std::string::size_type j(mField.rfind("::"));
@@ -33,9 +32,9 @@ public:
       const std::string::size_type i(mField.rfind("::"));
       return i == mField.npos ? Data::LASTTYPE : Data::decodeType(mField.substr(i+2));
     }
-    void encode(const int key, const std::string& comment, const Data::Type type) {
-      mField = Convert::toStr(key) + "::" + comment + "::" + Convert::toStr(type);
-    }
+
+    void encode(unsigned int key, const std::string& comment, const Data::Type type);
+
     bool operator < (const Field& rhs) const {return mField < rhs.mField;}
   }; // Field
 private:
