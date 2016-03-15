@@ -722,12 +722,19 @@ Levels::Info::tableRow(std::ostream& os,
 
   const std::string hash(Master::mkHash(key));
 
+  std::string className(qOld ? "old" : std::string());
+  if (className.empty() && ((type == Data::FLOW) || (type == Data::GAUGE))) {
+    className = (level == Level::LOW) ? "lo" :
+                (level == Level::OKAY) ? "ok" :
+                (level == Level::HIGH) ? "hi" :
+                std::string();
+  }
+
   os << "<tr><th>" << label << "</th>";
-  value(os, type, qOld ? "old" : std::string(), hash);
+  value(os, type, className, hash);
   time(os, type, "%Y-%m-%d %H:%M");
   os << "<td><a href='?o=t&amp;t=" << type 
      << "&amp;h=" << hash << "'>Table</a></td>"
-     << "<td><a href='?o=db&amp;h=" << hash << "'>Database</a></td>"
      << "</tr>";
 }
 
