@@ -48,6 +48,7 @@ Display::info()
 
   HTML html;
   html << html.header()
+       << html.baseURL()
        << html.myStyle()
        << "<title>Run Information</title>\n"
        << "</head>\n<body>\n";

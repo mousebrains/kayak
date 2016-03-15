@@ -84,6 +84,7 @@ namespace {
 
     HTML html;
     html << html.header()
+         << html.baseURL()
          << "<title>" << title << "</title>\n"
          << html.myStyle()
          << html.myScript()
