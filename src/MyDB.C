@@ -59,7 +59,7 @@ namespace {
         }
         break;
     }
- 
+
     throw MyException(msg + ", " + id);
   }
 }
@@ -120,7 +120,7 @@ void
 MyDB::errorCheck(const int rc,
                  const std::string& msg)
 {
-  errChk(mDB, rc, msg);
+  errChk(mDB, rc, msg + ", db(" + mFilename + ")");
 }
  
 int
@@ -222,7 +222,7 @@ MyDB::Stmt::errorCheck(const int rc,
   if ((rc == SQLITE_OK) || (rc == SQLITE_DONE) || (rc == SQLITE_BUSY)) {
     return rc;
   }
-  return errChk(mDB.mDB, rc, s + ", " + str());
+  return errChk(mDB.mDB, rc, s + ", " + str() + " db(" + mDB.filename() + ")");
 }
 
 void
