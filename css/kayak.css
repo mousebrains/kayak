@@ -7,9 +7,9 @@ form {display: inline-block;}
 
 .hdr {text-align: center; font-weight: bold;}
 
-.old {background-color:red;}
+.old {background-color:Fuchsia;}
 
-.hi {background-color:red;}
+.hi {background-color:FireBrick;}
 .ok {background-color:paleGreen;}
 .lo {background-color:goldenRod;}
 
