@@ -24,9 +24,9 @@ namespace {
 
     std::string hdr("<tr><th>Name</th><th>Date</th>");
 
-    if (levels.qFlow()) hdr += "<th>Flow</br>CFS</th>";
-    if (levels.qGauge()) hdr += "<th>Height</br>Feet</th>";
-    if (levels.qTemperature()) hdr += "<th>Temp</br>F</th>";
+    if (levels.qFlow()) hdr += "<th>Flow<br>CFS</th>";
+    if (levels.qGauge()) hdr += "<th>Height<br>Feet</th>";
+    if (levels.qTemperature()) hdr += "<th>Temp<br>F</th>";
     if (levels.qClass()) hdr += "<th>Class</th>";
     hdr += "</tr>\n";
 
