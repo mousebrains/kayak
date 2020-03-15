@@ -1,0 +1,6 @@
+#! /bin/bash
+
+mysql --batch <../schema/schema.sql && \
+./old2new_info.py && \
+./old2new_data.py && \
+./fixParameters

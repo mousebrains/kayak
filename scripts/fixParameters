@@ -1,0 +1,16 @@
+#! /bin/bash
+#
+# Adjust the parameters for my location
+
+mysql --batch <<%%EOF%%
+UPDATE parameters SET value='/home/tpw/kayaking2' WHERE ident='rootDir';
+UPDATE parameters SET value='/home/tpw/public_html/kayaking2' WHERE ident='webPageDir';
+
+SET SQL_SAFE_UPDATES=0;
+
+UPDATE section SET noShow=TRUE WHERE id IN (
+     SELECT section2state.section 
+            FROM section2state
+            INNER JOIN state ON state.id=section2state.state AND state.name='Kansas'
+     );
+%%EOF%%
