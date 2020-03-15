@@ -3,3 +3,9 @@
 
 # Ignore local overrides ot Makefile
 Makefile.local
+
+# Python
+__pycache__
+
+# Ignore old copies
+old
