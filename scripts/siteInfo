@@ -5,10 +5,8 @@
 ROOT=`dirname $0` # Where am I located at
 MAILTO='pat@mousebrains.com'
 
-BINDIR=/Users/Pat/tpw/kayak/src/bin
+BINDIR=$ROOT/../src/bin
 FETCH=$BINDIR/fetch
-MAILER='2>&1 | $EXEROOT/mailFilter $MAILTO'
-MAILER=
 
 # Get site information from the USGS
 #

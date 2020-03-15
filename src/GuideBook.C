@@ -87,6 +87,10 @@ GuideBook::loadInfo(const int key)
     info.url = s.getString(4);
 
     const Book& book(loadBook(mDB, info.bookKey));
+    if (book.name.empty()) { // No book, so skip
+      continue;
+    }
+
     info.name = book.name;
     info.author = book.author;
     info.edition = book.edition;

@@ -43,7 +43,7 @@ main (int argc,
     if ((page == "i") || (page == "Info")) { // Master table info
       return Display::info();
     }
-    if (page == "db" || (page == "Database")) { // Database 
+    if ((page == "db") || (page == "Database")) { // Database
       return Display::database();
     }
     return HTTP(std::cout).errorPage("Unknown page '" + page + "' to display");

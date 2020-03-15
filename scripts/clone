@@ -3,9 +3,7 @@
 ROOT=`dirname $0`/..
 
 time make -C $ROOT/genDB install
-
 time $ROOT/src/bin/cloneMaster
-
 time $ROOT/src/bin/cloneData
 
 time $ROOT/scripts/siteInfo

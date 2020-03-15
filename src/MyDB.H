@@ -81,6 +81,7 @@ private:
   typedef std::set<std::string> tSet;
 public:
   static void setFilename(const std::string& filename);
+  const std::string filename() const {return mFilename;}
 
   MyDB();
   explicit MyDB(const std::string filename);

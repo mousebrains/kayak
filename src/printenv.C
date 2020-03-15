@@ -2,6 +2,7 @@
 #include "HTTP.H"
 #include "CGI.H"
 #include <iostream>
+#include <unistd.h>
 
 int 
 main (int argc,
@@ -14,6 +15,9 @@ main (int argc,
   html << html.header()
        << "<title>Print Environment</title>"
        << "</head>\n<body>\n";
+
+  html << "<H1>Login</H1>\n"
+       << getlogin() << "\n";
 
   html << "<H1>Args</H1>\n"
        << "<OL>\n";

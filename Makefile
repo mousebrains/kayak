@@ -6,6 +6,7 @@ all clean install::
 	make -C templates $@
 	make -C css $@
 	make -C javascripts $@
+	make -C icons $@
 
 install::
 	rsync --archive fonts $(PATHS_FILES_ROOT)/fonts

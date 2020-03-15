@@ -104,7 +104,11 @@ obj/MyDB.o: MyDB.C
 
 obj/Paths.o: Paths.C
 	@ mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(SQLITEFLAGS) -D PATHS_USER_ROOT='"$(PATHS_USER_ROOT)"' -D PATHS_FILES_ROOT='"$(PATHS_FILES_ROOT)"' -D PATHS_WEB_BASE='"$(PATHS_WEB_BASE)"' -MD -MT $@ -c -o $@ $<
+	$(CXX) $(CXXFLAGS) $(SQLITEFLAGS) \
+		-D PATHS_USER_ROOT='"$(PATHS_USER_ROOT)"' \
+		-D PATHS_FILES_ROOT='"$(PATHS_FILES_ROOT)"' \
+		-D PATHS_WEB_BASE='"$(PATHS_WEB_BASE)"' \
+		-MD -MT $@ -c -o $@ $<
 
 obj/%.o: %.C
 	@ mkdir -p $(dir $@)

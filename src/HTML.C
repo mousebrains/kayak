@@ -36,13 +36,13 @@ HTML::myStyle()
 std::string 
 HTML::myScript()
 {
-  return "<script src='scripts/kayak.js'></script>\n";
+  return "<script src='scripts/kayak.min.js'></script>\n";
 }
 
 std::string
 HTML::baseURL()
 {
-  return "<base href='/kayaking2'>\n";
+  return "<base target=_self href='" + Paths::webBase() + "'></base>\n";
 }
 
 std::string 

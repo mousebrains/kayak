@@ -582,7 +582,7 @@ public:
         bk.name = "Soggy Sneakers";
         bk.author = "WKCC";
         bk.edition = "4th";
-        bk.url = "http://www.wkcc.org/content/soggy-sneakers";
+        bk.url = "http://www.wkcc.org/soggy_sneakers";
         run = "Run: " + run;
       } else if (book.find("Idaho") == 0) {
         bk.name = "Idaho - The Whitewater State";
