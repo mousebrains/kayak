@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS rating CASCADE; -- Rating tables
 CREATE TABLE rating ( -- Rating tables
   id INTEGER AUTO_INCREMENT PRIMARY KEY, -- rating index
   url TEXT NOT NULL, -- where data is pulled from
-  parser TEXT NOT NULL, -- which parser to use
+  parser TEXT, -- which parser to use
   t TIMESTAMP, -- Time of last data fetch
   UNIQUE(parser(256), url(512))
 ); -- Transform flow to gauge or vice versa
@@ -61,7 +61,7 @@ INSERT INTO dataType (name, units, lowerLimit, upperLimit) VALUES
 DROP TABLE IF EXISTS calc CASCADE; -- Calculation sources
 CREATE TABLE calc ( -- Calculation sources
   id INTEGER AUTO_INCREMENT PRIMARY KEY, -- calc index
-  dataType INTEGER REFERENCES datatype(id) ON DELETE CASCADE, -- Data type produced
+  dataType INTEGER REFERENCES datatype(id) ON DELETE CASCADE ON UPDATE CASCADE, -- Data type produced
   expr TEXT NOT NULL, -- How to calculate value
   time TEXT NOT NULL, -- What to calculate time from
   note TEXT,
@@ -85,16 +85,40 @@ CREATE TABLE IF NOT EXISTS URL ( -- Data source URLs
   INDEX(t)
 ); -- URL
 
+DROP TABLE IF EXISTS source CASCADE; -- Data sources
+CREATE TABLE source ( -- Data sources
+  id INTEGER AUTO_INCREMENT PRIMARY KEY, -- data source index
+  url INTEGER REFERENCES url(id) ON DELETE CASCADE ON UPDATE CASCADE, -- Which URL supplied this data source
+  calc INTEGER REFERENCES calc(id) ON DELETE CASCADE ON UPDATE CASCADE, -- Which calculation supplied this data source
+  name TEXT NOT NULL, -- Name of this data source
+  agency TEXT, -- Which agency provides this source
+  CHECK (((url IS NOT NULL) AND (calc IS NULL)) OR
+    ((url IS NULL) AND (calc IS NOT NULL))),
+  UNIQUE(name(512), url, calc),
+  INDEX(name(512)),
+  INDEX(url),
+  INDEX(calc)
+); -- Data source
+
+DROP TABLE IF EXISTS gauge2source CASCADE; -- Gauge to source mapping
+CREATE TABLE gauge2source ( -- Gauge to source mapping
+  gauge INTEGER REFERENCES gauge(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  src INTEGER REFERENCES source(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  PRIMARY KEY(gauge, src),
+  INDEX(src)
+);
 
 DROP TABLE IF EXISTS data CASCADE; -- Observations
 CREATE TABLE IF NOT EXISTS data ( -- Observations
   id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, -- Row identification
+  src INTEGER REFERENCES source(id) ON DELETE CASCADE ON UPDATE CASCADE, -- Source association
   t TIMESTAMP NOT NULL, -- Time of the observation
-  url INTEGER REFERENCES url(id) ON DELETE CASCADE ON UPDATE CASCADE, -- Data source URL
   dataType INTEGER REFERENCES dataType(id) ON DELETE CASCADE ON UPDATE CASCADE, -- data type
   value FLOAT, -- Value of the observation
+  UNIQUE(t,src),
   INDEX (t),
-  INDEX(url)
+  INDEX(src)
+  INDEX(dataType)
 ); -- data
 
 DROP TABLE IF EXISTS section CASCADE; -- River section
@@ -112,7 +136,7 @@ CREATE TABLE section ( -- River section
   basinArea FLOAT, -- Drainage area above this section in square miles
   elevation FLOAT, -- Elevation in feet of this section
   elevationLost FLOAT, -- Feet drop of this section
-  sectionLength FLOAT, -- Length of the section in miles
+  length FLOAT, -- Length of the section in miles
   gradient FLOAT, -- feet/mile gradient
   features TEXT, -- Description of features in the section
   latitude FLOAT, -- Latitude in decimal degrees of the section
@@ -166,8 +190,8 @@ INSERT INTO guideBook (title, subTitle, edition, author, url) VALUES
 
 DROP TABLE IF EXISTS section2GuideBook; -- section to guide book  linkage
 CREATE TABLE section2GuideBook ( -- section to guide book  linkage
-  section INTEGER REFERENCES section(id) ON DELETE CASCADE,
-  guideBook INTEGER REFERENCES guideBook(id) ON DELETE CASCADE,
+  section INTEGER REFERENCES section(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  guideBook INTEGER REFERENCES guideBook(id) ON DELETE CASCADE ON UPDATE CASCADE,
   page TEXT DEFAULT NULL, -- page number (May contain letters)
   run TEXT DEFAULT NULL, -- run number (May contain letters)
   url TEXT DEFAULT NULL, -- url to particular section
@@ -189,8 +213,8 @@ CREATE TABLE state (
 -- Which state does a section belong to
 DROP TABLE IF EXISTS section2state CASCADE;
 CREATE TABLE section2state (
-  section INTEGER NOT NULL REFERENCES section(id) ON DELETE CASCADE, 
-  state INTEGER NOT NULL REFERENCES state(id) ON DELETE CASCADE,
+  section INTEGER NOT NULL REFERENCES section(id) ON DELETE CASCADE ON UPDATE CASCADE, 
+  state INTEGER NOT NULL REFERENCES state(id) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY (section, state),
   INDEX (state)
 ); -- section -> state mapping
@@ -213,12 +237,12 @@ INSERT INTO level (name, style) VALUES
 -- section to level linkage
 DROP TABLE IF EXISTS section2level;
 CREATE TABLE section2level (
-  section INTEGER NOT NULL REFERENCES section(id) ON DELETE CASCADE,
-  level INTEGER NOT NULL REFERENCES level(id) ON DELETE CASCADE,
+  section INTEGER NOT NULL REFERENCES section(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  level INTEGER NOT NULL REFERENCES level(id) ON DELETE CASCADE ON UPDATE CASCADE,
   low FLOAT, -- lower limit for this level, NULL is no lower limit
-  lowDatatype INTEGER NOT NULL REFERENCES dataType(id) ON DELETE CASCADE,
+  lowDatatype INTEGER NOT NULL REFERENCES dataType(id) ON DELETE CASCADE ON UPDATE CASCADE,
   high FLOAT, -- upper limit for this level, NULL is no upper limit
-  highDatatype INTEGER NOT NULL REFERENCES dataType(id) ON DELETE CASCADE,
+  highDatatype INTEGER NOT NULL REFERENCES dataType(id) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY (section, level),
   INDEX (level)
 ); -- section2level
@@ -244,12 +268,12 @@ Because of the large range of difficulty that exists beyond Class IV, Class V is
 -- How to calculate class of a section
 DROP TABLE IF EXISTS class CASCADE;
 CREATE TABLE class (
-  section INTEGER REFERENCES section(id) ON DELETE CASCADE, -- Which section this applies to
+  section INTEGER REFERENCES section(id) ON DELETE CASCADE ON UPDATE CASCADE, -- Which section this applies to
   name TEXT NOT NULL, -- display string
   low FLOAT, -- Lower limit, NULL -> no lower limit
-  lowDatatype INTEGER NOT NULL REFERENCES dataType(id) ON DELETE CASCADE,
+  lowDatatype INTEGER NOT NULL REFERENCES dataType(id) ON DELETE CASCADE ON UPDATE CASCADE,
   high FLOAT, -- Upper limit, NULL -> no upper limit
-  highDatatype INTEGER NOT NULL REFERENCES dataType(id) ON DELETE CASCADE,
+  highDatatype INTEGER NOT NULL REFERENCES dataType(id) ON DELETE CASCADE ON UPDATE CASCADE,
   CHECK (low <= high),
   INDEX(section,name(256))
 ); -- Difficulty rating
