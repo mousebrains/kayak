@@ -2,21 +2,20 @@
 #
 # This builds the entry page for levels, i.e. displays states
 #
+# July-2022, Pat Welch, pat@mousebrains.com
+#
 from argparse import ArgumentParser
 from TPWUtils.DB import DB
 from TPWUtils import Logger
 import logging
+from Parameter import getParameter
 import os
 import os.path
 import time
 from tempfile import NamedTemporaryFile
+from FileSignature import fileSignature
 
-def getParameter(cur, ident:str) -> str:
-    cur.execute("SELECT value FROM parameters WHERE ident=%s;", (ident,))
-    for row in cur: return row[0]
-    return None
-  
-def loadFile(fn):
+def loadFile(fn:str):
     if not os.path.isfile(fn): return str()
 
     with open(fn, "r") as fp:
@@ -40,14 +39,14 @@ def mkStates(tgt) -> list:
     tgt.execute("DROP TABLE mkIndex;")
     return a
   
-def mkRow(key, label):
+def mkRow(key:str, label:str) -> str:
     line = "<tr>"
     line+= f"<th><a href='?P={key}.html'>{label}</a>&nbsp;</th>"
     line+= f"<td><a href='?P={key}.text'>Text Version</a></td>"
     line+= "</tr>\n"
     return line
 
-def mkIndex(tgt, fn, head, tail): 
+def mkIndex(tgt, fn:str, head:str, tail:str): 
     logging.info("Making %s", fn) 
     states = mkStates(tgt)
 
@@ -63,13 +62,20 @@ def mkIndex(tgt, fn, head, tail):
         fp.write("</table>\n")
         fp.write(tail)
 
-    os.chmod(tfn, 0o664)
-    os.rename(tfn, fn) 
+    sig0 = fileSignature(fn)
+    sig1 = fileSignature(tfn)
+    if not sig0 or not sig1 or (sig0 != sig1):
+        logging.info("Moving %s -> %s", tfn, fn)
+        os.chmod(tfn, 0o664)
+        os.rename(tfn, fn) 
+    else:
+        logging.info("Unlinking %s", tfn)
+        os.unlink(tfn)
     
 parser = ArgumentParser()
-parser.add_argument("-f", "--force", action="store_true", help="Force rebuilding main page")
 DB.addArgs(parser) # Database related options
 Logger.addArgs(parser) # Logging related options
+parser.add_argument("-f", "--force", action="store_true", help="Force rebuilding main page")
 args = parser.parse_args()
 
 Logger.mkLogger(args, fmt="%(asctime)s %(levelname)s: %(message)s")
@@ -92,5 +98,7 @@ try:
 
         if qRebuild:
             mkIndex(cur, indexFile, loadFile(templateHead), loadFile(templateTail))
+        else:
+            logging.info("No need to rebuild %s", indexFile)
 except:
     logging.exception("Unexpected exception")

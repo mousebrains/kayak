@@ -7,7 +7,7 @@ from TPWUtils import Logger
 from TPWUtils.DB import DB
 import logging
 import re
-from int2hash import int2hash
+from TPWUtils.int2hash import int2hash
 from stateAbbreviations import state2code
 import sys
 
