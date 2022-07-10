@@ -2,6 +2,8 @@
 # 
 # Copy from old style levels_information database to new style in wkccLevels
 #
+# July-2022, Pat Welch, pat@mousebrains.com
+
 from argparse import ArgumentParser
 from TPWUtils import Logger
 from TPWUtils.DB import DB
@@ -181,9 +183,11 @@ def procSection(tgt, row):
                'elevation_lost': 'elevationLost',
                'length': 'length',
                'gradient': 'gradient',
+               'high_flow': 'highFlow',
                'features': 'features',
                'latitude': 'latitude',
                'longitude': 'longitude',
+               'low_flow': 'lowFlow',
                'map_name': 'mapName',
                'no_show': 'noShow',
                'notes': 'notes',

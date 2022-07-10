@@ -2,6 +2,8 @@
 # 
 # Copy from old style database to new style
 #
+# July-2022, Pat Welch, pat@mousebrains.com
+
 from argparse import ArgumentParser
 from TPWUtils import Logger
 from TPWUtils.DB import DB
