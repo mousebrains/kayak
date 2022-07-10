@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS data ( -- Observations
   value FLOAT, -- Value of the observation
   UNIQUE(t,src),
   INDEX (t),
-  INDEX(src)
+  INDEX(src),
   INDEX(dataType)
 ); -- data
 
@@ -148,7 +148,9 @@ CREATE TABLE section ( -- River section
   mapName TEXT, -- Name of map to use
   noShow BOOLEAN, -- Should this section be displayed?
   notes TEXT, -- Extra notes on this section
+  lowFlow FLOAT, -- Low flow level
   optimalFlow FLOAT, -- optimal flow level
+  highFlow FLOAT, -- high flow level
   region TEXT, -- Region of the secction
   remoteness TEXT, -- How remote is the section
   scenery TEXT, -- What is the scenery like?
