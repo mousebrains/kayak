@@ -67,9 +67,9 @@ class DB:
                         passwd=info["password"],
                         database=info["database"])
 
-    def cursor(self, dictionary:bool=False):
+    def cursor(self, dictionary:bool=False, buffered:bool=False):
         if self.__db is None: self.__open()
-        return self.__db.cursor(dictionary=dictionary)
+        return self.__db.cursor(buffered=buffered, dictionary=dictionary)
 
     def close(self):
         if self.__db is not None:
