@@ -10,6 +10,7 @@ import yaml
 import subprocess
 import os.path
 import logging
+import time
 import sys
 
 def runit(cmd:tuple, input:bytes=None) -> bool:
@@ -46,31 +47,48 @@ def rebuild(fn:str, info:dict) -> bool: # Patch up the info, so after copyInfo.p
 
     return runit(cmd, sql)
 
+def addNegArg(parser:ArgumentParser, opt:str, helparg:str=None, negate:str="no") -> ArgumentParser:
+    grp = parser.add_mutually_exclusive_group()
+    grp.add_argument(f"--{opt}", action="store_true", dest=opt, default=True,
+        help=f"Do {helparg}" if helparg else "Take action {opt}")
+    grp.add_argument(f"--{negate}{opt}", action="store_false", dest=opt, 
+        help=f"Don't do {helparg}" if helparg else "Don't take action {opt}")
+    return parser
+
 parser = ArgumentParser()
 Logger.addArgs(parser)
 parser.add_argument("schema", type=str, nargs="+",
 	metavar="foo.sql", help="Schema file to load(s)")
 parser.add_argument("--dbrc", type=str, metavar="filename", default="~/.kayakingrc",
 	help="RC file to load")
-parser.add_argument("--noschema", action="store_true", help="Don't load schema(s)")
-parser.add_argument("--noinfo", action="store_true", help="Don't run copyInfo.py")
-parser.add_argument("--nopatch", action="store_true", help="Don't run patch.py")
-parser.add_argument("--nodata", action="store_true", help="Don't run copyData.py")
-parser.add_argument("--copyInfo", type=str, default="./copyInfo.py", help="copyInfo.py command")
-parser.add_argument("--patch", type=str, default="./patch.py", help="patch.py command")
-parser.add_argument("--copyData", type=str, default="./copyData.py", help="copyData.py command")
+addNegArg(parser, "schema", "load schema(s)")
+addNegArg(parser, "info", "run copyInfo.py")
+addNegArg(parser, "patch", "run patch.py")
+addNegArg(parser, "data", "run copyData.py")
+grp = parser.add_argument_group(description="Command paths")
+grp.add_argument("--cmd_copyInfo", type=str, default="./copyInfo.py", help="copyInfo.py command")
+grp.add_argument("--cmd_patch", type=str, default="./patch.py", help="patch.py command")
+grp.add_argument("--cmd_copyData", type=str, default="./copyData.py", help="copyData.py command")
 args = parser.parse_args()
 
 Logger.mkLogger(args, fmt="%(asctime)s %(levelname)s: %(message)s")
 
-if not args.noschema:
+if args.schema:
     info = mkInfo(args.dbrc)
     for fn in args.schema:
+        stime = time.time()
         if rebuild(fn, info): sys.exit(1)
+        logging.info("Took %s seconds to process %s", time.time() - stime, fn)
 
-if not args.noinfo: 
-    if runit([args.copyInfo, "--verbose"]): sys.exit(1)
-if not args.nopatch:
-    if runit([args.patch, "--verbose"]): sys.exit(1)
-if not args.nodata:
-    if runit([args.copyData, "--verbose"]): sys.exit(1)
+if args.info: 
+    stime = time.time()
+    if runit([args.cmd_copyInfo, "--verbose"]): sys.exit(1)
+    logging.info("Took %s seconds to copyInfo", time.time() - stime)
+if args.patch:
+    stime = time.time()
+    if runit([args.cmd_patch, "--verbose"]): sys.exit(1)
+    logging.info("Took %s seconds to patch", time.time() - stime)
+if args.data:
+    stime = time.time()
+    if runit([args.cmd_copyData, "--verbose"]): sys.exit(1)
+    logging.info("Took %s seconds to copyData", time.time() - stime)
