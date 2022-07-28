@@ -7,8 +7,8 @@ CREATE TABLE rating ( -- Rating tables
   id INTEGER AUTO_INCREMENT PRIMARY KEY, -- rating index
   url TEXT NOT NULL, -- where data is pulled from
   parser TEXT, -- which parser to use
-  t TIMESTAMP, -- Time of last data fetch
-  UNIQUE(parser(256), url(512))
+  t TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- Time of last data fetch
+  UNIQUE INDEX(parser(256), url(512))
 ); -- Transform flow to gauge or vice versa
 
 DROP TABLE IF EXISTS ratingData CASCADE;
@@ -37,7 +37,7 @@ CREATE TABLE gauge ( -- Gauge information
   snotelID TEXT, -- SNOTEL id
   usgsID TEXT, -- USGS id
   rating INTEGER REFERENCES rating(id) ON DELETE SET NULL, -- Which rating supplied this gauge
-  UNIQUE(name(256))
+  INDEX(name(256))
 ); -- gauge
 
 DROP TABLE IF EXISTS dataType CASCADE; -- Observation data types
@@ -47,8 +47,7 @@ CREATE TABLE dataType (
   units TEXT NOT NULL,
   lowerLimit FLOAT NOT NULL DEFAULT -1e7, -- Minimum allowed value
   upperLimit FLOAT NOT NULL DEFAULT  1e7, -- Maximum allowed value
-  UNIQUE (name(32)),
-  INDEX (name(32))
+  UNIQUE INDEX(name(32))
 ); -- dataType
 
 INSERT INTO dataType (name, units, lowerLimit, upperLimit) VALUES
@@ -65,21 +64,20 @@ CREATE TABLE calc ( -- Calculation sources
   expr TEXT NOT NULL, -- How to calculate value
   time TEXT NOT NULL, -- What to calculate time from
   note TEXT,
-  UNIQUE(dataType, expr(512))
+  UNIQUE INDEX(dataType, expr(512))
 ); -- Derived gauges
 
-DROP TABLE IF EXISTS url CASCADE; -- Data source
+DROP TABLE IF EXISTS URL CASCADE; -- Data source
 CREATE TABLE IF NOT EXISTS URL ( -- Data source URLs
   url TEXT, -- URL of the data source
   id INTEGER NOT NULL AUTO_INCREMENT UNIQUE, -- row id
-  t TIMESTAMP, -- Time of last data fetch
-  parser TEXT NOT NULL, -- which parser to process this URL with
+  t TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- Time of last data fetch
+  parser TEXT DEFAULT NULL, -- which parser to process this URL with
   hours SET ('0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',
 	    '10', '11', '12', '13', '14', '15', '16', '17', '18', '19',
-	    '20', '21', '22', '23'), -- hours to fetch the URL
+	    '20', '21', '22', '23'), -- hours to not fetch the URL
   qFetch BOOLEAN NOT NULL DEFAULT TRUE, -- Should this URL be fetched?
   PRIMARY KEY(url(512)),
-  INDEX(id),
   INDEX(parser(512)),
   INDEX(qFetch),
   INDEX(t)
@@ -94,7 +92,7 @@ CREATE TABLE source ( -- Data sources
   agency TEXT, -- Which agency provides this source
   CHECK (((url IS NOT NULL) AND (calc IS NULL)) OR
     ((url IS NULL) AND (calc IS NOT NULL))),
-  UNIQUE(name(512), url, calc),
+  UNIQUE INDEX(name(512), url, calc),
   INDEX(name(512)),
   INDEX(url),
   INDEX(calc)
@@ -115,8 +113,7 @@ CREATE TABLE IF NOT EXISTS data ( -- Observations
   t TIMESTAMP NOT NULL, -- Time of the observation
   dataType INTEGER REFERENCES dataType(id) ON DELETE CASCADE ON UPDATE CASCADE, -- data type
   value FLOAT, -- Value of the observation
-  UNIQUE(t,src),
-  INDEX (t),
+  UNIQUE INDEX(t,src),
   INDEX(src),
   INDEX(dataType)
 ); -- data
@@ -124,7 +121,7 @@ CREATE TABLE IF NOT EXISTS data ( -- Observations
 DROP TABLE IF EXISTS section CASCADE; -- River section
 CREATE TABLE section ( -- River section
   id INTEGER AUTO_INCREMENT PRIMARY KEY, -- section table index key (Also used for hash value)
-  tUpdate TIMESTAMP, -- Last time record was updated
+  tUpdate TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- Last time record was updated
   gauge INTEGER REFERENCES gauge(id)  ON DELETE SET NULL, -- which gauge to use
   name TEXT not NULL, -- Name of the section, by default river(name)
   displayName TEXT NOT NULL, -- Name to be displayed
@@ -136,7 +133,7 @@ CREATE TABLE section ( -- River section
   basinArea FLOAT, -- Drainage area above this section in square miles
   elevation FLOAT, -- Elevation in feet of this section
   elevationLost FLOAT, -- Feet drop of this section
-  length FLOAT, -- Length of the section in miles
+  distance FLOAT, -- Length of the section in miles
   gradient FLOAT, -- feet/mile gradient
   features TEXT, -- Description of features in the section
   latitude FLOAT, -- Latitude in decimal degrees of the section
@@ -146,7 +143,7 @@ CREATE TABLE section ( -- River section
   latitudeEnd FLOAT, -- Latitude in decimal degrees of the section
   longitudeEnd FLOAT, -- Longitude in decimal degrees of the section
   mapName TEXT, -- Name of map to use
-  noShow BOOLEAN, -- Should this section be displayed?
+  qHide BOOLEAN DEFAULT false, -- Should this section not be displayed?
   notes TEXT, -- Extra notes on this section
   optimalFlow FLOAT, -- optimal flow level
   region TEXT, -- Region of the secction
@@ -155,7 +152,7 @@ CREATE TABLE section ( -- River section
   season TEXT, -- When to run the section
   watershedType TEXT, -- What type of watershed is this section
   awID INTEGER, -- American Whitewater river ID
-  UNIQUE(name(512))
+  UNIQUE KEY(name(256), gauge)
 );
 
 DROP TABLE IF EXISTS guideBook CASCADE; -- Guide books
@@ -166,7 +163,7 @@ CREATE TABLE guideBook ( -- Guide books
   edition TEXT, -- Which edition
   author TEXT, -- who wrote/published the guide book
   url TEXT, -- URL to the guide book
-  UNIQUE (title(256), subTitle(256), edition(32)) 
+  UNIQUE INDEX(title(256), subTitle(256), edition(32)) 
 ); -- guideBook
 
 INSERT INTO guideBook (title, subTitle, edition, author, url) VALUES
@@ -205,10 +202,67 @@ CREATE TABLE state (
   id INTEGER AUTO_INCREMENT PRIMARY KEY, -- Index of state
   short TEXT NOT NULL, -- State name abbreviation
   name TEXT NOT NULL, -- Full state name
-  UNIQUE(short(4)),
-  INDEX(short(4)),
-  UNIQUE(name(25))
+  UNIQUE INDEX(short(4)),
+  UNIQUE INDEX(name(25))
 ); -- List of state
+
+INSERT INTO state (name,short) VALUES
+  ('Alabama','AL'),
+  ('Alaska','AK'),
+  ('Arizona','AZ'),
+  ('Arkansas','AR'),
+  ('California','CA'),
+  ('Colorado','CO'),
+  ('Connecticut','CT'),
+  ('Delaware','DE'),
+  ('District of Columbia','DC'),
+  ('Florida','FL'),
+  ('Georgia','GA'),
+  ('Hawaii','HI'),
+  ('Idaho','ID'),
+  ('Illinois','IL'),
+  ('Indiana','IN'),
+  ('Iowa','IA'),
+  ('Kansas','KS'),
+  ('Kentucky','KY'),
+  ('Louisiana','LA'),
+  ('Maine','ME'),
+  ('Maryland','MD'),
+  ('Massachusetts','MA'),
+  ('Michigan','MI'),
+  ('Minnesota','MN'),
+  ('Mississippi','MS'),
+  ('Missouri','MO'),
+  ('Montana','MT'),
+  ('Nebraska','NE'),
+  ('Nevada','NV'),
+  ('New Hampshire','NH'),
+  ('New Jersey','NJ'),
+  ('New Mexico','NM'),
+  ('New York','NY'),
+  ('North Carolina','NC'),
+  ('North Dakota','ND'),
+  ('Northern Mariana Islands','MP'),
+  ('Ohio','OH'),
+  ('Oklahoma','OK'),
+  ('Oregon','OR'),
+  ('Palau','PW'),
+  ('Pennsylvania','PA'),
+  ('Puerto Rico','PR'),
+  ('Rhode Island','RI'),
+  ('South Carolina','SC'),
+  ('South Dakota','SD'),
+  ('Tennessee','TN'),
+  ('Texas','TX'),
+  ('Utah','UT'),
+  ('Vermont','VT'),
+  ('Virgin Islands','VI'),
+  ('Virginia','VA'),
+  ('Washington','WA'),
+  ('West Virginia','WV'),
+  ('Wisconsin','WI'),
+  ('Wyoming','WY')
+;
 
 -- Which state does a section belong to
 DROP TABLE IF EXISTS section2state CASCADE;
@@ -225,8 +279,8 @@ CREATE TABLE level (
   id INTEGER AUTO_INCREMENT PRIMARY KEY, -- index
   name TEXT, -- name of the level, low, okay, high, ...
   style TEXT, -- HTML style to use
-  UNIQUE(name(32)),
-  UNIQUE(style(256))
+  UNIQUE INDEX(name(32)),
+  UNIQUE INDEX(style(256))
 ); -- level
 
 INSERT INTO level (name, style) VALUES 
@@ -299,7 +353,7 @@ CREATE TABLE description (
   prefix TEXT, -- display prefix
   suffix TEXT, -- display suffix
   info TEXT,
-  UNIQUE(columnName(128))
+  UNIQUE INDEX(columnName(128))
 ); -- description
 
 
@@ -315,16 +369,17 @@ CREATE TABLE builder(
   nameHTML TEXT
 ); -- builder
 
+-- TPW Not using anymore
 -- web page description
 DROP TABLE IF EXISTS description CASCADE;
-CREATE TABLE description (
-  sortKey INTEGER PRIMARY KEY,
-  columnName TEXT,
-  type TEXT,
-  prefix TEXT,
-  suffix TEXT,
-  info TEXT
-); -- description
+-- CREATE TABLE description (
+  -- sortKey INTEGER PRIMARY KEY,
+  -- columnName TEXT,
+  -- type TEXT,
+  -- prefix TEXT,
+  -- suffix TEXT,
+  -- info TEXT
+-- ); -- description
 
 DROP TABLE IF EXISTS edit CASCADE;
 CREATE TABLE edit (
