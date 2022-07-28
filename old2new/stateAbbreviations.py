@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 state2code = {
     'Alabama': 'AL',
     'Alaska': 'AK',
@@ -55,3 +57,7 @@ state2code = {
     'Wisconsin': 'WI',
     'Wyoming': 'WY',
 }
+
+if __name__ == '__main__':
+    for key in sorted(state2code):
+        print(f"  ('{key}','{state2code[key]}'),")
