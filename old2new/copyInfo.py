@@ -10,89 +10,277 @@ from TPWUtils.DB import DB
 import logging
 import re
 from TPWUtils.int2hash import int2hash
-from stateAbbreviations import state2code
+import time
 import sys
 
-def copyTable(tgt, newTbl, oldCols, oldDB, oldTbl):
+def execTimeit(tit:str, cur, sql:str, args:list=None) -> None:
+    stime = time.time()
+    try:
+        cur.execute(sql, args);
+        logging.info("Took %s seconds to %s", time.time() - stime, tit)
+    except Exception as e:
+        logging.error("Took %s seconds to %s", time.time() - stime, tit)
+        logging.error("SQL\n%s", sql)
+        if args: logging.error("ARGS %s", args)
+        raise e
+
+    
+def copyTable(tgt, newTbl, oldCols, oldDB, oldTbl) -> None:
     cols = ",".join(oldCols) if oldCols else "*"
     sql = "INSERT IGNORE INTO " + newTbl
     sql+= " SELECT " + cols + " FROM " + oldDB + "." + oldTbl
     sql+= ";"
-    tgt.execute(sql);
+    execTimeit("Copy " + newTbl, tgt, sql)
 
-def chompURLs(tgt) -> dict:
-    # First fill url table from levels_data.url2name as inactive URLs
-    name2url = {}
-    tgt.execute('SELECT url,name FROM levels_data.url2name;')
-    rows = tgt.fetchall() # Get all the rows so I can reuse tgt
-    sql = 'INSERT IGNORE INTO URL (url,qFetch) VALUES(%s,FALSE);'
-    for row in rows:
-      (url, name) = row
-      name2url[name] = url
-      tgt.execute(sql, (url,))
+def mkTempMaster(tgt) -> None:
+    sql = "CREATE TEMPORARY TABLE tpwMaster SELECT"
+    sql+= " *"
+    # sql+= ",COALESCE(sort_key,display_name,name,usgs_id,cbtt_id,geos_id,nws_id,nwsli_id"
+    # sql+= ",snotel_id) AS sectionName"
+    # sql+= ",COALESCE(usgs_id,cbtt_id,geos_id,nws_id,nwsli_id,snotel_id,name,sort_key) AS gaugeName"
+    sql+= " FROM levels_information.MergedMaster;"
+    execTimeit("tpwMaster", tgt, sql)
 
-    tgt.execute('SELECT URL,parser,hours from levels_information.URLparse;')
-    rows = tgt.fetchall() # Get all the rows so I can reuse tgt
-    for row in rows:
-        (url, parser, hours) = row
-        args = [url, True]
-        cols = ["url", "qFetch"]
-        if parser and len(parser):
-           args.append(parser)
-           cols.append("parser")
+def massageMaster(tgt) -> None:
+    # adjust column mis-alignment for edited rows
+    cols = {}
+    cols['0z3'] = dict(
+	watershed_type = "usgs_id",
+	usgs_id = "userName",
+	userName = "StationNumber",
+	StationNumber = "usgs_id",
+	state = "source_name",
+	source_name = "sort_key",
+	sort_key = "snotel_id",
+	snotel_id = "section",
+	section = "season",
+	season = "scenery",
+	scenery = "RunNumber",
+	RunNumber = "river_name",
+	river_name = "remoteness",
+	remoteness = "region",
+	region = "randomKey",
+	randomKey = "PageNumber",
+	pageNumber = "optimal_flow",
+	optimal_flow = "nwsli_id",
+	nwsli_id = "nws_id",
+	nws_id = "notes",
+	merged_dbs = "map_name",
+	map_name = "low_flow",
+	low_flow = "longitude",
+	longitude = "length",
+	length = "latitude",
+	latitude = "high_flow",
+	high_flow = "guide_book",
+	guide_book = "gradient",
+	gradient = "geos_id",
+	geos_id = "gauge_location",
+	gauge_location = "flood_stage",
+	flood_stage = "NULL",
+	features = "email",
+	email = "elevation_lost",
+	elevation_lost = "elevation",
+	elevation = "drainage_area",
+	drainage_area = "drainage",
+	drainage = "display_name",
+	display_name = "difficulties",
+	difficulties = "description",
+	)
+    cols["7p3"] = dict(
+	userName = "StationNumber",
+	StationNumber = "usgs_id",
+	randomKey = "PageNumber",
+	PageNumber = "NULL",
+	gauge_location = "flood_stage",
+	flood_stage = "NULL",
+	email = "elevation_lost",
+	elevation_lost = "NULL",
+	)
+    cols["au"]  = dict(
+	randomKey = "PageNumber",
+	PageNumber = "NULL",
+	email = "NULL",
+	elevation_lost = "NULL",
+	)
+    cols["j5"]  = dict(
+	userName = "StationNumber",
+	StationNumber = "usgs_id",
+	randomKey = "PageNumber",
+	PageNumber = "NULL",
+	email = "elevation_lost",
+	elevation_lost = "elevation",
+	elevation = "NULL",
+	class_flow = "NULL",
+	)
+    cols["j5"]["class"] = "class_flow"
+   
+    for key in cols:
+        fields = []
+        for item in cols[key]: fields.append(item + "=" + cols[key][item]) 
+        sql  = "UPDATE tpwMaster SET " + ",".join(fields) + " WHERE HashValue=%s"
+        execTimeit(f"Massage {key}", tgt, sql, (key,))
 
-        hrs = set(range(24))
-        if hours: # 
-            for hr in hours.split(','): hrs.remove(abs(int(hr)))
-        args.append(','.join(map(str, hrs)))
-        cols.append("hours")
+def chompURLs(tgt) -> None:
+    sql = "CREATE TEMPORARY TABLE tpwURLs SELECT url,max(time) as t FROM levels_data.url2name"
+    sql+= " GROUP BY url"
+    sql+= ";"
+    execTimeit("tpwURLs", tgt, sql)
 
-        sql = "INSERT INTO URL (" + ",".join(cols) + ")"
-        sql+= " VALUES (" + ",".join(["%s"] * len(args))
-        sql+= ") ON DUPLICATE KEY UPDATE parser=VALUES(parser),hours=VALUES(hours),qFetch=TRUE;"
-        tgt.execute(sql, args)
+    sql = "INSERT INTO URL (url,t,parser,hours,qFetch)"
+    sql+= " SELECT u2n.url,u2n.t,pp.parser,pp.hours,FALSE AS qFetch"
+    sql+= " FROM tpwURLs as u2n"
+    sql+= " LEFT JOIN levels_information.URLparse as pp"
+    sql+= " ON u2n.url=pp.URL"
+    sql+= ";"
+    execTimeit("url2name", tgt, sql)
+    execTimeit("Drop tpwURLs", tgt, "DROP TEMPORARY TABLE IF EXISTS tpwURLs;")
+    execTimeit("NULL Parser", tgt, "UPDATE URL SET parser=NULL WHERE parser='';")
 
-    # Now get url ids
-    tgt.execute('SELECT id,url FROM URL;')
+def procRating(tgt) -> None:
+    sql = "INSERT IGNORE INTO rating (url,parser,t)"
+    sql+= " SELECT cfs_to_gauge_data AS url,cfs_to_gauge_converter AS parser, NULL as t"
+    sql+= " FROM tpwMaster WHERE cfs_to_gauge_data IS NOT NULL;"
+    execTimeit("rating", tgt, sql)
 
-    url2id = {}
-    for row in tgt: url2id[row[1]] = row[0]
+def procGauge(tgt):
+    execTimeit("tpwGauge DROP", tgt, "DROP TEMPORARY TABLE IF EXISTS tpwGauge;")
+    sql = "CREATE TEMPORARY TABLE tpwGauge"
+    sql+= " SELECT"
+    sql+= " COALESCE(usgs_id,cbtt_id,geos_id,nws_id,nwsli_id,snotel_id,db_name) AS name"
+    sql+= ",COALESCE(bank_full) AS bankFull"
+    sql+= ",COALESCE(flood_stage) AS floodStage"
+    sql+= ",COALESCE(gauge_location) AS location"
+    sql+= ",COALESCE(latitude) AS latitude"
+    sql+= ",COALESCE(longitude) AS longitude"
+    sql+= ",COALESCE(StationNumber) AS stationID"
+    sql+= ",COALESCE(cbtt_id) AS cbtt_id"
+    sql+= ",COALESCE(geos_id) AS geos_id"
+    sql+= ",COALESCE(nws_id) AS nws_id"
+    sql+= ",COALESCE(nwsli_id) AS nwsli_id"
+    sql+= ",COALESCE(snotel_id) AS snotel_id"
+    sql+= ",COALESCE(usgs_id) AS usgs_id"
+    sql+= ",rr.id as rating"
+    sql+= ",HashValue"
+    sql+= ",db_name"
+    sql+= " FROM tpwMaster"
+    sql+= " LEFT JOIN rating AS rr"
+    sql+= " ON cfs_to_gauge_data=rr.url AND cfs_to_gauge_converter=rr.parser"
+    sql+= " WHERE db_name IS NOT NULL"
+    sql+= " GROUP BY db_name"
+    sql+= ";"
+    execTimeit("tpwGauge", tgt, sql)
 
+    sql = "ALTER TABLE tpwGauge ADD COLUMN id INTEGER AUTO_INCREMENT PRIMARY KEY FIRST;"
+    execTimeit("tpwGauge id", tgt, sql)
+
+    execTimeit("tpwHash2Gauge DROP", tgt, "DROP TEMPORARY TABLE IF EXISTS tpwHash2Gauge")
+    sql = "CREATE TEMPORARY TABLE tpwHash2Gauge SELECT HashValue,id FROM tpwGauge;"
+    execTimeit("tpwHash2Gauge", tgt, sql)
+
+    execTimeit("tpwGauge DROP HashValue", tgt, "ALTER TABLE tpwGauge DROP COLUMN HashValue;")
+    execTimeit("tpwGauge DROP db_name", tgt, "ALTER TABLE tpwGauge DROP COLUMN db_name;")
+
+    execTimeit("UNSAFE", tgt, "SET SQL_SAFE_UPDATES=0;")
+    execTimeit("gauge Delete", tgt, "DELETE FROM gauge;")
+    execTimeit("SAFE", tgt, "SET SQL_SAFE_UPDATES=1;")
+    execTimeit("gauge", tgt, "INSERT INTO gauge SELECT * FROM tpwGauge;")
+    execTimeit("tpwGauge DROP", tgt, "DROP TEMPORARY TABLE tpwGauge")
+
+def procSection(tgt):
+    execTimeit("Big enable", tgt, "SET SQL_BIG_SELECTS=1;")
+    sql = "CREATE TEMPORARY TABLE tpwSec SELECT"
+    sql+= " date AS tUpdate"
+    sql+= ",gg.id AS gauge"
+    sql+= ",COALESCE(sort_key,display_name,name,usgs_id,cbtt_id,geos_id,nws_id,nwsli_id,snotel_id) AS name"
+    sql+= ",display_name AS displayName"
+    sql+= ",sort_key AS sortName"
+    sql+= ",Nature AS nature"
+    sql+= ",description"
+    sql+= ",difficulties"
+    sql+= ",drainage AS basin"
+    sql+= ",drainage_area AS basinArea"
+    sql+= ",elevation"
+    sql+= ",elevation_lost AS elevationLost"
+    sql+= ",length AS distance"
+    sql+= ",gradient"
+    sql+= ",features"
+    sql+= ",latitude"
+    sql+= ",longitude"
+    sql+= ",NULL AS latitudeStart"
+    sql+= ",NULL AS longitudeStart"
+    sql+= ",NULL AS latitudeEnd"
+    sql+= ",NULL AS longitudeEnd"
+    sql+= ",map_name AS mapName"
+    sql+= ",no_show AS qHide"
+    sql+= ",notes AS notes"
+    sql+= ",optimal_flow AS optimalFlow"
+    sql+= ",region"
+    sql+= ",remoteness"
+    sql+= ",scenery"
+    sql+= ",season"
+    sql+= ",watershed_type AS watershedType"
+    sql+= ",NULL AS awID"
+    sql+= ",mm.HashValue AS HashValue"
+    sql+= " FROM tpwMaster as mm"
+    sql+= " LEFT JOIN tpwHash2Gauge AS gg ON gg.HashValue=mm.HashValue"
+    sql+= ";"
+    execTimeit("tpwSec", tgt, sql)
+    execTimeit("Big disable", tgt, "SET SQL_BIG_SELECTS=0;")
+
+    execTimeit("tpwSec ID", tgt,
+	"ALTER TABLE tpwSec ADD COLUMN id INTEGER AUTO_INCREMENT PRIMARY KEY FIRST;")
+    execTimeit("tpwHash2Section", tgt,
+	"CREATE TEMPORARY TABLE tpwHash2Section SELECT HashValue,id FROM tpwSec;");
+    execTimeit("tpwSec drop Hash", tgt, "ALTER TABLE tpwSec DROP COLUMN HashValue;")
+    execTimeit("section", tgt, "INSERT INTO section SELECT * from tpwSec;")
+
+def procState(tgt):
+    execTimeit("tpwState Drop", tgt, "DROP TABLE IF EXISTS tpwState;")    
+    sql = "CREATE TABLE tpwState SELECT"
+    sql+= " mm.HashValue"
+    sql+= ",mm.state"
+    sql+= ",st.id AS stateID"
+    sql+= ",sec.id AS sectionID"
+    sql+= " FROM tpwMaster AS mm"
+    sql+= " LEFT JOIN state AS st ON st.name=mm.state"
+    sql+= " LEFT JOIN tpwHash2Section AS sec ON sec.HashValue=mm.HashValue"
+    sql+= " WHERE mm.state IS NOT NULL;"
+    execTimeit("tpwState", tgt, sql)
+
+    sql = "INSERT INTO section2state SELECT"
+    sql+= " sectionID as section"
+    sql+= ",stateID AS state"
+    sql+= " FROM tpwState"
+    sql+= " WHERE stateID is NOT NULL;"
+    execTimeit("state single", tgt, sql)
+
+    sql = "SELECT sectionID,state FROM tpwState WHERE stateID is NULL;"
+    execTimeit("multi-state", tgt, sql)
+    names = set()
+    secState = {}
+    for row in tgt:
+        states = set()
+        for state in row[1].split():
+            state = state.replace("_", " ")
+            states.add(state)
+            names.add(state)
+        secState[row[0]] = states
+   
+    sql = "SELECT id,name FROM state WHERE name IN ('" + "','".join(list(names)) + "');"
+    execTimeit("state IDs", tgt, sql)
     name2id = {}
-    for name in name2url: name2id[name] = url2id[name2url[name]]
+    for row in tgt: name2id[row[1]] = row[0]
+   
+    fields = [] 
+    values = [] 
+    for section in secState:
+        for st in secState[section]:
+            if st not in name2id: continue
+            fields.append("(%s,%s)")
+            values.extend((section, name2id[st]))
+    sql = "INSERT INTO section2state VALUES" + ",".join(fields) + ";"
+    execTimeit("multi-state", tgt, sql, values)
 
-    return name2id
-
-def procGauge(tgt, row):
-    if row['db_name'] is None: return None
-
-    mapping = {'bank_full': 'bankFull', 'flood_stage': 'floodStage', 'gauge_location': 'location',
-        'latitude': 'latitude',
-        'longitude': 'longitude',
-        'StationNumber': 'stationID',
-        'cbtt_id': 'cbttID',
-        'geos_id': 'geosID',
-        'nws_id': 'nwsID',
-        'nwsli_id': 'nwsliID',
-        'snotel_id': 'snotelID',
-        'usgs_id': 'usgsID',
-        'ratingID': 'rating'}
-
-    names = ['name']
-    fmt = ['%s']
-    values = [row['db_name']]
-
-    for key in mapping:
-        if row[key] is not None: 
-            names.append(mapping[key])
-            values.append(row[key])
-            fmt.append('%s')
-
-    sql = 'INSERT IGNORE INTO gauge ({}) VALUES({});'.format(','.join(names), ','.join(fmt))
-    tgt.execute(sql, values)
-    tgt.execute('SELECT id FROM gauge WHERE name=%s', (values[0],))
-    for item in tgt: return item[0]
-    return None
 
 def parseCalc(expr, hash2row) -> str:
     ''' Replace old style hash::name::typ with updated hash and names '''
@@ -121,15 +309,6 @@ def procCalc(tgt, row, hash2row, datatypes) -> None:
 
     return tgt.lastrowid
 
-def procRating(tgt, row:list) -> int:
-    if row['cfs_to_gauge_data'] is None: return None
-    url = row['cfs_to_gauge_data']
-    parser = row['cfs_to_gauge_converter']
-    tgt.execute('INSERT IGNORE INTO rating (url, parser) VALUES(%s, %s);', (url, parser))
-    tgt.execute('SELECT id FROM rating WHERE parser=%s AND url=%s', (parser, url))
-    for item in tgt: return item[0]
-    return None
-
 def mkSource(tgt, row, name, url, calc) -> None:
     tgt.execute('INSERT INTO source (url,calc,name,agency) VALUES(%s,%s,%s,%s);',
                (url, calc, name, row['source_name']));
@@ -157,82 +336,6 @@ def procSource(tgt, row, name2url) -> None:
         else:
             logging.warning('db_name=%s not known', name)
 
-def mkSectionName(row:list, sectionNames:set) -> str:
-    keys = ['name', 'cbtt_id', 'geos_id', 'nws_id', 'nwsli_id', 'snotel_id', 'usgs_id', 'sort_key']
-    for key in keys:
-        if (row[key] is not None) and (row[key] not in sectionNames):
-            sectionNames.add(row[key])
-            return row[key]
-
-    logging.warning('Unable to build section name')
-    for key in sorted(row): logging.warning('row[%s] = %s', key, row[key])
-    raise Exception('Unable to build section name')
-
-def procSection(tgt, row):
-    # for key in sorted(row): logging.info('row[%s] = %s', key, row[key])
-
-    mapping = {'gaugeID': 'gauge', 
-               'sort_key': 'sortName',
-               'Nature': 'nature',
-               'description': 'description',
-               'difficulties': 'difficulties',
-               'display_name': 'displayName',
-               'drainage': 'basin',
-               'drainage_area': 'basinArea',
-               'elevation': 'elevation',
-               'elevation_lost': 'elevationLost',
-               'length': 'length',
-               'gradient': 'gradient',
-               'features': 'features',
-               'latitude': 'latitude',
-               'longitude': 'longitude',
-               'map_name': 'mapName',
-               'no_show': 'noShow',
-               'notes': 'notes',
-               'optimal_flow': 'optimalFlow',
-               'region': 'region',
-               'remoteness': 'remoteness',
-               'scenery': 'scenery',
-               'season': 'season',
-               'watershed_type': 'watershedType'
-              };
-
-    names = ['name']
-    fmt = ['%s']
-    values = [row['sectionName']]
-
-    for key in mapping:
-        if row[key] is not None: 
-            names.append(mapping[key])
-            values.append(row[key])
-            fmt.append('%s')
-
-    sql = 'INSERT INTO section ({}) VALUES({});'.format(','.join(names), ','.join(fmt))
-
-    tgt.execute(sql, values)
-    tgt.execute('SELECT id FROM section WHERE name=%s', (values[0],))
-    for item in tgt: return item[0]
-    return None
-
-def buildState(tgt, row, states) -> dict:
-    if row['state'] is None: return None
-    ids = []
-    for state in row['state'].split():
-        if state not in states:
-            name = re.sub('_', ' ', state)
-            codigo = state2code[name] if name in state2code else None
-            tgt.execute('INSERT INTO state (short,name) VALUES(%s,%s);', (codigo, name))
-            states[state] = tgt.lastrowid
-        ids.append(states[state])
-          
-    return ids
-
-def procState(tgt, row, states) -> None:
-    if row['stateID'] is None: return
-    for state in row['stateID']:
-        tgt.execute('INSERT INTO section2state (section,state) VALUES(%s,%s);',
-                    (row['sectionID'], state));
-      
 def procGuideBook(tgt, row):
     if row['guide_book'] is None: return None
     mapping = {
@@ -321,8 +424,12 @@ def mkDatatypes(tgt) -> dict:
     return a
 
 def chompMaster(tgt, cur, name2url:dict):
-    cur.execute('SELECT * FROM Master ORDER BY river_name;')
-    rows = cur.fetchall()
+    procRating(tgt) # Independent
+    procGauge(tgt) # after rating
+    procSection(tgt) # after gauge
+    # procCalc(tgt)
+    # procState(tgt) # After section construction
+    return True
     hash2row = {}
     states = {}
     sectionNames = set()
@@ -331,25 +438,16 @@ def chompMaster(tgt, cur, name2url:dict):
     for row in rows: # populate gauge table
         hash2row[row['HashValue']] = row
         row['sectionName'] = mkSectionName(row, sectionNames)
-        row['ratingID'] = procRating(tgt, row)
-        row['gaugeID'] = procGauge(tgt, row)
-        row['stateID'] = buildState(tgt, row, states)
+        # row['stateID'] = buildState(tgt, row, states)
 
     for row in rows: # Populate calc table, which needs a fully populated hash2row dictionary
         row['calcID'] = procCalc(tgt, row, hash2row, datatypes)
         procSource(tgt, row, name2url)
         row['sectionID'] = procSection(tgt, row)
-        procState(tgt, row, states)
+        # procState(tgt, row, states)
         procGuideBook(tgt, row)
         procStatus(tgt, row, datatypes)
         procClass(tgt, row, datatypes)
-
-def chompInfo(tgt):
-    name = "levels_information"
-    copyTable(tgt, 'parameters', None, name, 'Parameters')
-    copyTable(tgt, 'description', None, name, 'Description')
-    copyTable(tgt, 'edit', None, name, 'Edit')
-    copyTable(tgt, 'mapBuilder', None, name, 'MapBuilder')
 
 parser = ArgumentParser()
 DB.addArgs(parser) # Database related arguments
@@ -361,8 +459,16 @@ Logger.mkLogger(args, fmt="%(asctime)s %(levelname)s: %(message)s")
 with DB(args) as tgtDB, DB(args, "levels_information") as srcDB:
     tgt = tgtDB.cursor()
     tgt.execute("BEGIN;")
-    chompInfo(tgt)
+    copyTable(tgt, "parameters", None, "levels_information", "Parameters")
+    copyTable(tgt, "edit",       None, "levels_information", "Edit")
+    copyTable(tgt, "mapBuilder", None, "levels_information", "MapBuilder")
     name2url = chompURLs(tgt)
-    src = srcDB.cursor(dictionary=True)
-    chompMaster(tgt, src, name2url)
+    mkTempMaster(tgt) # Create a name for this table using coalesce
+    massageMaster(tgt) # Massage some rows
+    procRating(tgt)
+    procGauge(tgt) # after rating
+    procSection(tgt) # after gauge
+    procState(tgt) # After section
+    # src = srcDB.cursor(dictionary=True)
+    # chompMaster(tgt, src, name2url)
     tgt.execute("COMMIT;")
