@@ -9,7 +9,7 @@ from TPWUtils import Logger
 from TPWUtils.DB import DB
 import logging
 
-def patch(tgt) -> None: # Patch up the info, so after copyInfo.py
+def patchDescription(tgt) -> None: # Patch up the info, so after copyInfo.py
     tgt.execute("SET SQL_SAFE_UPDATES=0;") # Turn off safe updates
 
     # Drop rows
@@ -73,5 +73,5 @@ Logger.mkLogger(args, fmt="%(asctime)s %(levelname)s: %(message)s")
 with DB(args) as tgtDB:
     tgt = tgtDB.cursor()
     tgt.execute("BEGIN;")
-    patch(tgt)
+    # patchDescription(tgt) # No longer being used
     tgt.execute("COMMIT;")
