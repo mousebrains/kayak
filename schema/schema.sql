@@ -185,8 +185,8 @@ INSERT INTO guideBook (title, subTitle, edition, author, url) VALUES
               'https://www.americanwhitewater.org/content/River/view/?')
 ;
 
-DROP TABLE IF EXISTS section2GuideBook; -- section to guide book  linkage
-CREATE TABLE section2GuideBook ( -- section to guide book  linkage
+DROP TABLE IF EXISTS section2guideBook; -- section to guide book  linkage
+CREATE TABLE section2guideBook ( -- section to guide book  linkage
   section INTEGER REFERENCES section(id) ON DELETE CASCADE ON UPDATE CASCADE,
   guideBook INTEGER REFERENCES guideBook(id) ON DELETE CASCADE ON UPDATE CASCADE,
   page TEXT DEFAULT NULL, -- page number (May contain letters)
@@ -194,7 +194,7 @@ CREATE TABLE section2GuideBook ( -- section to guide book  linkage
   url TEXT DEFAULT NULL, -- url to particular section
   PRIMARY KEY(section, guideBook),
   INDEX (guideBook)
-); -- section2GuideBook
+); -- section2guideBook
 
 -- List of states
 DROP TABLE IF EXISTS state;
@@ -325,9 +325,9 @@ CREATE TABLE class (
   section INTEGER REFERENCES section(id) ON DELETE CASCADE ON UPDATE CASCADE, -- Which section this applies to
   name TEXT NOT NULL, -- display string
   low FLOAT, -- Lower limit, NULL -> no lower limit
-  lowDatatype INTEGER NOT NULL REFERENCES dataType(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  lowDatatype INTEGER REFERENCES dataType(id) ON DELETE CASCADE ON UPDATE CASCADE, -- NULL->Flow
   high FLOAT, -- Upper limit, NULL -> no upper limit
-  highDatatype INTEGER NOT NULL REFERENCES dataType(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  highDatatype INTEGER REFERENCES dataType(id) ON DELETE CASCADE ON UPDATE CASCADE, -- NULL->Flow
   CHECK (low <= high),
   INDEX(section,name(256))
 ); -- Difficulty rating
