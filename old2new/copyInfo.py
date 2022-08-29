@@ -121,9 +121,18 @@ def massageMaster(tgt) -> None:
         execTimeit(f"Massage {key}", tgt, sql, (key,))
 
 def chompURLs(tgt) -> None:
-    sql = "CREATE TEMPORARY TABLE tpwURLs SELECT url,max(time) as t FROM levels_data.url2name"
-    sql+= " GROUP BY url"
-    sql+= ";"
+    sql = "CREATE TEMPORARY TABLE tpwU2N SELECT"
+    sql+= " url"
+    sql+= ",name"
+    sql+= ",max(time) AS t"
+    sql+= " FROM levels_data.url2name"
+    sql+= " GROUP BY url,name;"
+    execTimeit("tpwU2N", tgt, sql)
+
+    execTimeit("tpwU2N ALTER", tgt, 
+	"ALTER TABLE tpwU2N ADD INDEX(name(512)), ADD INDEX(url(512))")
+
+    sql = "CREATE TEMPORARY TABLE tpwURLs SELECT url,max(t) as t FROM tpwU2N GROUP BY url;"
     execTimeit("tpwURLs", tgt, sql)
 
     sql = "INSERT INTO URL (url,t,parser,hours,qFetch)"
@@ -132,9 +141,18 @@ def chompURLs(tgt) -> None:
     sql+= " LEFT JOIN levels_information.URLparse as pp"
     sql+= " ON u2n.url=pp.URL"
     sql+= ";"
-    execTimeit("url2name", tgt, sql)
+    execTimeit("URL", tgt, sql)
     execTimeit("Drop tpwURLs", tgt, "DROP TEMPORARY TABLE IF EXISTS tpwURLs;")
     execTimeit("NULL Parser", tgt, "UPDATE URL SET parser=NULL WHERE parser='';")
+
+    execTimeit("U2N Alter", tgt, "ALTER TABLE tpwU2N ADD COLUMN id INTEGER;")
+
+    sql = "UPDATE"
+    sql+= " tpwU2N AS u2n"
+    sql+= ",URL"
+    sql+= " SET u2n.id=URL.id"
+    sql+= " WHERE u2n.url=URL.url;"
+    execTimeit("U2N ID", tgt, sql)
 
 def procRating(tgt) -> None:
     sql = "INSERT IGNORE INTO rating (url,parser,t)"
@@ -234,9 +252,8 @@ def procSection(tgt):
     execTimeit("tpwSec drop Hash", tgt, "ALTER TABLE tpwSec DROP COLUMN HashValue;")
     execTimeit("section", tgt, "INSERT INTO section SELECT * from tpwSec;")
 
-def procState(tgt):
-    execTimeit("tpwState Drop", tgt, "DROP TABLE IF EXISTS tpwState;")    
-    sql = "CREATE TABLE tpwState SELECT"
+def procState(tgt) -> None:
+    sql = "CREATE TEMPORARY TABLE tpwState SELECT"
     sql+= " mm.HashValue"
     sql+= ",mm.state"
     sql+= ",st.id AS stateID"
@@ -281,173 +298,238 @@ def procState(tgt):
     sql = "INSERT INTO section2state VALUES" + ",".join(fields) + ";"
     execTimeit("multi-state", tgt, sql, values)
 
+def procGuideBook(tgt) -> None:
+    sql = "CREATE TEMPORARY TABLE tpwGB SELECT"
+    sql+= " sec.id AS section"
+    sql+= ",NULL AS guideBook"
+    sql+= ",PageNumber AS page"
+    sql+= ",RunNumber AS run"
+    sql+= ",NULL AS url"
+    sql+= ",guide_book"
+    sql+= " FROM tpwMaster AS mm"
+    sql+= " LEFT JOIN tpwHash2Section AS sec ON mm.HashValue=sec.HashValue"
+    sql+= " WHERE guide_book IS NOT NULL;"
+    execTimeit("tpwGB", tgt, sql)
+    execTimeit("tpwGB Alter", tgt, 
+	"ALTER TABLE tpwGB"
+	+ " MODIFY COLUMN guideBook INTEGER"
+	+ ",MODIFY COLUMN url TEXT"
+	+ ";")
 
-def parseCalc(expr, hash2row) -> str:
-    ''' Replace old style hash::name::typ with updated hash and names '''
-    pattern = r'([0-9A-Za-z]+)::([\w.:]+)::(flow|gauge)'
-    a = expr
-    for item in re.finditer(pattern, expr):
-        a0 = item.group(0)
-        (hval, name, typ) = item.groups()
-        if hval not in hash2row:
-            logging.error('Hash value, %s, not known', hval)
-            logging.error('expr %s', expr)
-            raise Exception('HashValue({}) in expression {} unknown'.format(hval, expr))
-        row = hash2row[hval]
-        gaugeID = int2hash(row['gaugeID'])
-        name = row['db_name']
-        a1 = '{}::{}::{}'.format(gaugeID, name, typ)
-        a = a.replace(a0, a1)
-    return a
-    
-def procCalc(tgt, row, hash2row, datatypes) -> None:
-    if row['calc_expr'] is None: return None
-    expr = parseCalc(row['calc_expr'], hash2row)
-    t = parseCalc(row['calc_time'], hash2row)
-    sql = 'INSERT INTO calc (dataType,expr,time,note) VALUES(%s,%s,%s,%s);'
-    tgt.execute(sql, (datatypes[row['calc_type']], expr, t, row['calc_notes']))
-
-    return tgt.lastrowid
-
-def mkSource(tgt, row, name, url, calc) -> None:
-    tgt.execute('INSERT INTO source (url,calc,name,agency) VALUES(%s,%s,%s,%s);',
-               (url, calc, name, row['source_name']));
-    srcID = tgt.lastrowid
-    tgt.execute('INSERT INTO gauge2source (gauge,src) VALUES(%s,%s);', (row['gaugeID'], srcID))
-    
-def procSource(tgt, row, name2url) -> None:
-    if row['db_name'] is None and row['merged_dbs'] is None and row['calcID'] is None:
-        return None
-    if row['merged_dbs'] is not None:
-        if row['calcID'] is not None:
-            for key in sorted(row): logging.error('row[%s] = %s', key, row[key])
-            raise Exception('Both merged_dbs and calcID are defined')
-        for name in row['merged_dbs'].split():
-            if name in name2url:
-                mkSource(tgt, row, name, name2url[name], None)
-            else:
-                logging.warning('merged db name=%s not known', name)
-    elif row['calcID'] is not None:
-        mkSource(tgt, row, row['db_name'], None, row['calcID'])
-    else: # use db_name
-        name = row['db_name']
-        if name in name2url:
-            mkSource(tgt, row, name, name2url[name], None)
-        else:
-            logging.warning('db_name=%s not known', name)
-
-def procGuideBook(tgt, row):
-    if row['guide_book'] is None: return None
-    mapping = {
+    books = {
          'Soggy Sneakers': ('Soggy Sneakers', '4th'),
          'Soggy Sneakers 3rd Ed.': ('Soggy Sneakers', '3rd'),
          'Idaho - The Whitewater State': ('Idaho', '1st'),
          'Whitewater Rivers Of Washington':('A Guide to the Whitewater Rivers of Washington','2nd'),
          'Whitewater Rivers of Washington':('A Guide to the Whitewater Rivers of Washington','2nd')
          }
+    execTimeit("UNSAFE", tgt, "SET SQL_SAFE_UPDATES=0;")
+    for gb in books:
+        book = books[gb]
+        sql = "UPDATE tpwGB AS tpw, guideBook AS gb SET tpw.guideBook=gb.id"
+        sql+= " WHERE tpw.guide_book=%s AND gb.title=%s AND gb.edition=%s;"
+        execTimeit(f"tpwGB {gb}", tgt, sql, (gb, book[0], book[1]))
 
-    item = mapping[row['guide_book']]
+    execTimeit("sec2GB DELETE", tgt, "DELETE FROM section2guideBook;")
+    execTimeit("SAFE", tgt, "SET SQL_SAFE_UPDATES=1;")
+    execTimeit("tpwGB Alter Drop", tgt, "ALTER TABLE tpwGB DROP COLUMN guide_book;")
+    execTimeit("sec2GB", tgt, "INSERT INTO section2guideBook SELECT * FROM tpwGB;")
+    execTimeit("tpwGB Drop", tgt, "DROP TABLE tpwGB;")
 
-    sql = 'INSERT INTO section2GuideBook (section,page,run,guideBook)' \
-        + ' SELECT %s as section, %s as page, %s as run, id as guideBook' \
-        + ' FROM guideBook WHERE title=%s AND edition=%s;'
-  
-    tgt.execute(sql, (row['sectionID'], row['PageNumber'], row['RunNumber'], item[0], item[1]))
-   
-def procStatus(tgt, row, datatypes): # Low/Okay/High
-    if row['low_flow'] is None and row['high_flow'] is None: return
-    lFlow = row['low_flow']
-    hFlow = row['high_flow']
-   
-    lDT = datatypes['flow']
-    hDT = datatypes['flow']
+def procClass(tgt) -> None: # Class rating
+    sql = "CREATE TEMPORARY TABLE tpwClass SELECT"
+    sql+= " sec.id AS section"
+    sql+= ",mm.class"
+    sql+= ",mm.class_flow"
+    sql+= " FROM tpwMaster AS mm"
+    sql+= " LEFT JOIN tpwHash2Section AS sec ON mm.HashValue=sec.HashValue"
+    sql+= " WHERE mm.class IS NOT NULL OR mm.class_flow IS NOT NULL;"
+    execTimeit("tpwClass", tgt, sql)
 
-    if lFlow is not None and lFlow[-2:] == 'ft':
-        lFlow = lFlow[0:-2]
-        lDT = datatypes['gauge']
- 
-    if hFlow is not None and hFlow[-2:] == 'ft':
-        hFlow = hFlow[0:-2]
-        hDT = datatypes['gauge']
+    # Unbounded descriptions
+    sql = "INSERT INTO class (section,name)"
+    sql+= " SELECT section,class FROM tpwClass"
+    sql+= " WHERE class_flow IS NULL;"
+    execTimeit("UNBOUNDED", tgt, sql)
 
-    sql = 'INSERT INTO section2level (section,low,lowDatatype,high,highDatatype,level)' \
-        + ' VALUES(%s,%s,%s,%s,%s,(SELECT id FROM level WHERE name=%s));'
+    # Dynamic descriptions
+    sql = "SELECT section,class_flow FROM tpwClass WHERE class_flow IS NOT NULL;"
+    execTimeit("BOUNDED", tgt, sql)
+    data = []
+    values = []
+    for row in tgt:
+        (section, items) = row
+        for item in items.split(","):
+            fields = item.split()
+            label = fields[0]
+            low = fields[1]
+            high = fields[2] if len(fields) > 2 else None
+            lDT = "gauge" if "ft" in low else "flow"
+            hDT = None if high is None else ("gauge" if "ft" in high else "flow")
+            data.extend((section, label, low, lDT, high, hDT))
+            values.append("%s,%s"
+		+ ",%s,(SELECT id FROM dataType WHERE name=%s)"
+		+ ",%s,(SELECT id FROM dataType WHERE name=%s)")
+    if data:
+        sql = "INSERT INTO class VALUES (" + "),(".join(values) + ");"
+        execTimeit("Dynamic", tgt, sql, data)
+    execTimeit("tpwClass Drop", tgt, "DROP TABLE IF EXISTS tpwClass;")
+            
+def procLevel(tgt) -> None: # Low,Okay,High indicator
+    sql = "CREATE TEMPORARY TABLE tpwLevel SELECT"
+    sql+= " sec.id AS section"
+    sql+= ",mm.low_flow"
+    sql+= ",mm.high_flow"
+    sql+= ",REGEXP_REPLACE(mm.low_flow, 'ft', '') AS lowVal"
+    sql+= ",REGEXP_REPLACE(mm.high_flow, 'ft', '') AS highVal"
+    sql+= ",0 AS lowDT"
+    sql+= ",0 AS highDT"
+    sql+= " FROM tpwMaster AS mm"
+    sql+= " LEFT JOIN tpwHash2Section AS sec ON mm.HashValue=sec.HashValue"
+    sql+= " WHERE mm.low_flow IS NOT NULL OR mm.high_flow IS NOT NULL;"
+    execTimeit("tpwLevel", tgt, sql)
 
-    if lFlow is None: 
-        tgt.execute(sql, (row['sectionID'], None, hDT, hFlow, hDT, 'Okay'))
-        tgt.execute(sql, (row['sectionID'], hFlow, hDT, None, hDT, 'High'))
-    elif hFlow is None:
-        tgt.execute(sql, (row['sectionID'], None, lDT, lFlow, lDT, 'Low'))
-        tgt.execute(sql, (row['sectionID'], lFlow, lDT, None, lDT, 'Okay'))
-    else: # Both high and low flows defined
-        tgt.execute(sql, (row['sectionID'], None, lDT, lFlow, lDT, 'Low'))
-        tgt.execute(sql, (row['sectionID'], lFlow, lDT, hFlow, hDT, 'Okay'))
-        tgt.execute(sql, (row['sectionID'], hFlow, hDT, None, hDT, 'High'))
+    execTimeit("UNSAFE", tgt, "SET SQL_SAFE_UPDATES=0;")
 
-def procClass(tgt, row, datatypes): # Class rating
-    if row['class'] is None and row['class_flow'] is None: return
-    sql = 'INSERT INTO class (section,name,low,lowDatatype,high,highDatatype)' \
-        + ' VALUES(%s,%s,%s,%s,%s,%s);'
+    sql = "UPDATE tpwLevel AS ll,dataType AS dt SET"
+    sql+= " ll.lowDT=dt.id"
+    sql+= " WHERE ll.low_flow=ll.lowVal AND dt.name='flow';"
+    execTimeit("tpwLevel Low Flow DT", tgt, sql)
 
-    if row['class_flow'] is None:
-        dt = datatypes['flow']
-        tgt.execute(sql, (row['sectionID'], row['class'], None, dt, None, dt))
-        return
+    sql = "UPDATE tpwLevel AS ll,dataType AS dt SET"
+    sql+= " ll.lowDT=dt.id"
+    sql+= " WHERE ll.low_flow!=ll.lowVal AND dt.name='gauge';"
+    execTimeit("tpwLevel Low Gauge DT", tgt, sql)
 
-    cnt = 0 
-    for item in row['class_flow'].split(','):
-        cnt += 1
-        fields = item.split()
-        name = fields[0]
-        lFlow = fields[1]
-        hFlow = fields[2] if len(fields) > 2 else None
-        lDT = datatypes['flow']
-        hDT = lDT
-        if lFlow[-2:] == 'ft':
-            lDT = datatypes['gauge']
-            lFlow = lFlow[0:-2]
-        if hFlow is not None and hFlow[-2:] == 'ft':
-            hDT = datatypes['gauge']
-            hFlow = hFlow[0:-2]
-        if hFlow is not None: # Both sides specified
-            tgt.execute(sql, (row['sectionID'], name, lFlow, lDT, hFlow, hDT))
-        elif cnt == 1: # Only one side specified on first entry
-            tgt.execute(sql, (row['sectionID'], name, None, lDT, lFlow, lDT))
-        else: # Only one side specified on not first entry
-            tgt.execute(sql, (row['sectionID'], name, hFlow, hDT, None, hDT))
+    sql = "UPDATE tpwLevel AS ll,dataType AS dt SET"
+    sql+= " ll.highDT=dt.id"
+    sql+= " WHERE ll.high_flow=ll.highVal AND dt.name='flow';"
+    execTimeit("tpwLevel High Flow DT", tgt, sql)
 
-def mkDatatypes(tgt) -> dict:
-    a = {}
-    tgt.execute('SELECT id,name FROM dataType;')
-    for row in tgt: 
-       a[row[1]] = row[0]
-    return a
+    sql = "UPDATE tpwLevel AS ll,dataType AS dt SET"
+    sql+= " ll.highDT=dt.id"
+    sql+= " WHERE ll.high_flow!=ll.highVal AND dt.name='gauge';"
+    execTimeit("tpwLevel High Gauge DT", tgt, sql)
 
-def chompMaster(tgt, cur, name2url:dict):
-    procRating(tgt) # Independent
-    procGauge(tgt) # after rating
-    procSection(tgt) # after gauge
-    # procCalc(tgt)
-    # procState(tgt) # After section construction
-    return True
-    hash2row = {}
-    states = {}
-    sectionNames = set()
-    datatypes = mkDatatypes(tgt)
+    execTimeit("sec2lev DELETE", tgt, "DELETE FROM section2level;")
+    execTimeit("SAFE", tgt, "SET SQL_SAFE_UPDATES=1;")
 
-    for row in rows: # populate gauge table
-        hash2row[row['HashValue']] = row
-        row['sectionName'] = mkSectionName(row, sectionNames)
-        # row['stateID'] = buildState(tgt, row, states)
+    sql = "INSERT INTO section2level (section,level,high,highDatatype)"
+    sql+= " SELECT section,ll.id,lowVal,lowDT FROM tpwLevel"
+    sql+= " LEFT JOIN level AS ll ON ll.name='Low'"
+    sql+= " WHERE low_flow IS NOT NULL;"
+    execTimeit("sec2lev low", tgt, sql)
 
-    for row in rows: # Populate calc table, which needs a fully populated hash2row dictionary
-        row['calcID'] = procCalc(tgt, row, hash2row, datatypes)
-        procSource(tgt, row, name2url)
-        row['sectionID'] = procSection(tgt, row)
-        # procState(tgt, row, states)
-        procGuideBook(tgt, row)
-        procStatus(tgt, row, datatypes)
-        procClass(tgt, row, datatypes)
+    sql = "INSERT INTO section2level (section,level,low,lowDatatype,high,highDataType)"
+    sql+= " SELECT section,ll.id,lowVal,lowDT,highVal,highDT FROM tpwLevel"
+    sql+= " LEFT JOIN level AS ll ON ll.name='Okay'"
+    sql+= " WHERE low_flow IS NOT NULL AND high_flow IS NOT NULL;"
+    execTimeit("sec2lev okay", tgt, sql)
+
+    sql = "INSERT INTO section2level (section,level,low,lowDatatype)"
+    sql+= " SELECT section,ll.id,highVal,highDT FROM tpwLevel"
+    sql+= " LEFT JOIN level AS ll ON ll.name='High'"
+    sql+= " WHERE high_flow IS NOT NULL;"
+    execTimeit("sec2lev high", tgt, sql)
+
+    execTimeit("tpwLevel Drop", tgt, "DROP TABLE IF EXISTS tpwLevel;")
+
+def procSource(tgt) -> None:
+    sql = "CREATE TEMPORARY TABLE tpwSrc0 SELECT"
+    sql+= " gg.id AS gauge"
+    sql+= ",mm.db_name"
+    sql+= ",mm.merged_dbs"
+    sql+= ",mm.calc_expr"
+    sql+= ",mm.calc_type"
+    sql+= ",mm.calc_time"
+    sql+= ",mm.calc_notes"
+    sql+= ",mm.source_name as agency"
+    sql+= " FROM tpwMaster AS mm"
+    sql+= " LEFT JOIN tpwHash2Gauge AS gg ON gg.HashValue=mm.HashValue"
+    sql+= " WHERE db_name IS NOT NULL OR merged_dbs IS NOT NULL OR calc_expr IS NOT NULL;"
+    execTimeit("tpwSrc0", tgt, sql)
+
+    procNotCalc(tgt)
+    procCalc(tgt)
+    execTimeit("tpwSrc0 Drop", tgt, "DROP TABLE IF EXISTS tpwSrc0")
+
+def procNotCalc(tgt) -> None:
+    sql = "CREATE TEMPORARY TABLE tpwSrc SELECT"
+    sql+= " gauge"
+    sql+= ",NULL AS url"
+    sql+= ",NULL AS calc"
+    sql+= ",db_name AS name"
+    sql+= ",agency"
+    sql+= " FROM tpwSrc0 AS tpw"
+    sql+= " WHERE db_name IS NOT NULL AND merged_dbs IS NULL AND calc_expr IS NULL;"
+    execTimeit("tpwSrc Simple", tgt, sql)
+
+    execTimeit("Merged", tgt, "SELECT gauge,merged_dbs FROM tpwSrc0 WHERE merged_dbs IS NOT NULL;")
+    data = []
+    values = []
+    for row in tgt:
+        (gauge, items) = row
+        for item in items.split():
+            data.extend([gauge, item])
+            values.append("%s,%s")
+    sql = "INSERT INTO tpwSrc (gauge,name) VALUES (" + "),(".join(values) + ");"
+    execTimeit("Merged", tgt, sql, data)
+
+    execTimeit("tpwSrc Alter", tgt,
+	"ALTER TABLE tpwSrc MODIFY COLUMN url INTEGER, MODIFY COLUMN calc INTEGER;")
+
+    execTimeit("UNSAFE", tgt, "SET SQL_SAFE_UPDATES=0;")
+    sql = "UPDATE tpwSrc AS src,tpwU2N AS u2n SET src.url=u2n.id WHERE src.name=u2n.name;"
+    execTimeit("URL2ID", tgt, sql)
+    execTimeit("Null merged", tgt, "UPDATE tpwSrc SET url=NULL WHERE url=0;")
+    execTimeit("Null merged", tgt, "UPDATE tpwSrc SET calc=NULL WHERE calc=0;")
+    execTimeit("SAFE", tgt, "SET SQL_SAFE_UPDATES=1;")
+
+    execTimeit("Add ID", tgt,
+	"ALTER TABLE tpwSrc ADD COLUMN id INTEGER AUTO_INCREMENT PRIMARY KEY;")
+
+    execTimeit("Source", tgt,
+	"INSERT INTO source (id,url,name,agency)"
+	+ " SELECT id,url,name,agency FROM tpwSrc WHERE url IS NOT NULL;")
+    execTimeit("G2S", tgt, "INSERT INTO gauge2source SELECT gauge,id FROM tpwSrc;")
+    execTimeit("tpwSrc Drop", tgt, "DROP TABLE tpwSrc;")
+
+def procCalc(tgt) -> None:
+    execTimeit("Calc", tgt, 
+	"CREATE TEMPORARY TABLE tpwCalc"
+	+ " SELECT gauge,db_name,calc_expr,calc_type,calc_time,calc_notes,agency FROM tpwSrc0"
+	+ " WHERE calc_expr IS NOT NULL AND calc_time IS NOT NULL and calc_type IS NOT NULL;")
+    execTimeit("Add ID", tgt,
+	"ALTER TABLE tpwCalc ADD COLUMN id INTEGER AUTO_INCREMENT PRIMARY KEY;")
+    sql = "INSERT INTO calc"
+    sql+= " SELECT"
+    sql+= " cc.id"
+    sql+= ",dt.id AS dataType"
+    sql+= ",cc.calc_expr AS expr"
+    sql+= ",cc.calc_time AS time"
+    sql+= ",cc.calc_notes AS note"
+    sql+= " FROM tpwCalc AS cc"
+    sql+= " LEFT JOIN dataType AS dt ON dt.name=cc.calc_type;"
+    execTimeit("calc", tgt, sql)
+    execTimeit("g2c", tgt, "INSERT INTO gauge2source SELECT gauge,id FROM tpwCalc;")
+    execTimeit("tpwCalc Drop", tgt, "DROP TABLE IF EXISTS tpwCalc")
+    
+def translateCalc(tgt, columnName:str) -> None:
+    execTimeit("xlat", tgt, "SELECT id," + columnName + " FROM calc;")
+    for row in tgt:
+        (calcID, expr) = row
+        print(calcID, expr)
+    return
+    result = []
+    toDrop = set(("flow", "gauge", "temperature"))
+    pattern = r"([a-z0-9]{1,3}::[A-Za-z0-9.]+::(" + r"|".join(toDrop) + r"))"
+    for field in re.split(pattern, expr):
+        if field in toDrop: continue
+        matches = re.fullmatch(r"([a-z0-9]{1,3})::[A-Za-z0-9.]+::(flow|gauge|temperature)", field)
+        if matches:
+            hashValue = matches[1]
+            dataType = matches[2]
+        print("Field", field, matches is not None)
 
 parser = ArgumentParser()
 DB.addArgs(parser) # Database related arguments
@@ -466,9 +548,13 @@ with DB(args) as tgtDB, DB(args, "levels_information") as srcDB:
     mkTempMaster(tgt) # Create a name for this table using coalesce
     massageMaster(tgt) # Massage some rows
     procRating(tgt)
-    procGauge(tgt) # after rating
-    procSection(tgt) # after gauge
-    procState(tgt) # After section
-    # src = srcDB.cursor(dictionary=True)
-    # chompMaster(tgt, src, name2url)
+    procGauge(tgt) # After rating
+    procSource(tgt) # After gauge
+    translateCalc(tgt, "expr") # After source
+    # translateCalc(tgt, "time") # After source
+    # procSection(tgt) # After gauge
+    # procState(tgt) # After section
+    # procGuideBook(tgt) # After section
+    # procClass(tgt) # After section
+    # procLevel(tgt) # After section
     tgt.execute("COMMIT;")
